@@ -292,7 +292,7 @@ func handleOpenAIConnection(chat *Chat, newMessage <-chan Message) {
 					},
 					ToolChoice:              "auto",
 					Temperature:             0.8,
-					MaxResponseOutputTokens: 8096,
+					MaxResponseOutputTokens: 4096,
 				},
 			}
 
