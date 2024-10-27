@@ -15,12 +15,12 @@ interface Message {
 interface SidebarProps {
   token: string;
   onSelectChat: (chatId: string) => void;
+  onCreateChat: (chatId: string) => void;
   onUnauthorized: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized }) => {
+const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onCreateChat, onUnauthorized }) => {
   const [chats, setChats] = useState<Chat[]>([]);
-  const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [newChatName, setNewChatName] = useState<string>('');
   const [isCreatingChat, setIsCreatingChat] = useState<boolean>(false);
   const newChatInputRef = useRef<HTMLInputElement>(null);
@@ -54,12 +54,11 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized }
 
   useEffect(() => {
     fetchChats().then(fetchedChats => {
-      if (fetchedChats && fetchedChats.length > 0 && !selectedChat) {
-        setSelectedChat(fetchedChats[0].id);
+      if (fetchedChats && fetchedChats.length > 0) {
         onSelectChat(fetchedChats[0].id);
       }
     });
-  }, [fetchChats, selectedChat, onSelectChat]);
+  }, [fetchChats, onSelectChat]);
 
   const createChat = async () => {
     if (!newChatName.trim()) return;
@@ -78,8 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized }
       }
       const newChat = await response.json();
       setChats(prevChats => [...prevChats, newChat]);
-      setSelectedChat(newChat.id);
-      onSelectChat(newChat.id);
+      onCreateChat(newChat.id);
       setNewChatName('');
       setIsCreatingChat(false);
     } catch (error) {
@@ -101,23 +99,13 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized }
         throw new Error('Failed to delete chat');
       }
       setChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
-      if (selectedChat === chatId) {
-        const remainingChats = chats.filter(chat => chat.id !== chatId);
-        if (remainingChats.length > 0) {
-          setSelectedChat(remainingChats[0].id);
-          onSelectChat(remainingChats[0].id);
-        } else {
-          setSelectedChat(null);
-        }
+      const remainingChats = chats.filter(chat => chat.id !== chatId);
+      if (remainingChats.length > 0) {
+        onSelectChat(remainingChats[0].id);
       }
     } catch (error) {
       console.error('Error deleting chat:', error);
     }
-  };
-
-  const handleSelectChat = (chatId: string) => {
-    setSelectedChat(chatId);
-    onSelectChat(chatId);
   };
 
   const truncateString = (str: string, num: number) => {
@@ -218,14 +206,14 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized }
           <li key={chat.id} style={{
             marginBottom: '10px',
             padding: '10px',
-            backgroundColor: chat.id === selectedChat ? '#3a3f4b' : 'transparent',
+            backgroundColor: 'transparent',
             borderRadius: '4px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
             <span
-              onClick={() => handleSelectChat(chat.id)}
+              onClick={() => onSelectChat(chat.id)}
               style={{ cursor: 'pointer', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
             >
               {truncateString(chat.name || chat.id, 20)}

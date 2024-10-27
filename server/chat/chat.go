@@ -19,7 +19,7 @@ type Chat struct {
 	Name      string    `json:"name"`
 	Messages  []Message `json:"messages"`
 	Clients   map[*websocket.Conn]bool `json:"-"`
-	Mutex     sync.Mutex `json:"-"`
+	Mutex     sync.RWMutex `json:"-"`
 }
 
 type Message struct {
@@ -77,9 +77,39 @@ type OpenAIError struct {
 	} `json:"error"`
 }
 
+type InputAudioTranscription struct {
+	Model string `json:"model"`
+}
+
+type TurnDetection struct {
+	Type              string  `json:"type"`
+	Threshold         float64 `json:"threshold"`
+	PrefixPaddingMs  int     `json:"prefix_padding_ms"`
+	SilenceDurationMs int     `json:"silence_duration_ms"`
+}
+
+type SessionUpdate struct {
+	EventID string  `json:"event_id"`
+	Type    string  `json:"type"`
+	Session Session `json:"session"`
+}
+
+type Session struct {
+	Modalities              []string                `json:"modalities"`
+	Instructions           string                   `json:"instructions"`
+	Voice                  string                   `json:"voice"`
+	InputAudioFormat       string                   `json:"input_audio_format"`
+	OutputAudioFormat      string                   `json:"output_audio_format"`
+	InputAudioTranscription InputAudioTranscription `json:"input_audio_transcription"`
+	TurnDetection          TurnDetection           `json:"turn_detection"`
+	ToolChoice              string                  `json:"tool_choice"`
+	Temperature             float64                 `json:"temperature"`
+	MaxResponseOutputTokens int                     `json:"max_response_output_tokens"`
+}
+
 var (
 	chats     = make(map[string]map[string]*Chat) // map[userEmail]map[chatID]*Chat
-	chatMutex sync.Mutex
+	chatMutex sync.RWMutex
 	upgrader  = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -110,6 +140,8 @@ func createChat(w http.ResponseWriter, r *http.Request) {
 	chatID := generateUniqueID()
 
 	chatMutex.Lock()
+	defer chatMutex.Unlock()
+
 	if _, exists := chats[creatorEmail]; !exists {
 		chats[creatorEmail] = make(map[string]*Chat)
 	}
@@ -120,7 +152,6 @@ func createChat(w http.ResponseWriter, r *http.Request) {
 		Messages:  []Message{},
 		Clients:   make(map[*websocket.Conn]bool),
 	}
-	chatMutex.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"chatID": chatID})
@@ -133,17 +164,8 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("WebSocket connection attempt for chat ID: %s, user: %s\n", chatID, userEmail)
 
-	chatMutex.Lock()
-	userChats, exists := chats[userEmail]
-	if !exists {
-		chatMutex.Unlock()
-		http.Error(w, "Chat not found", http.StatusNotFound)
-		return
-	}
-	chat, exists := userChats[chatID]
-	chatMutex.Unlock()
-
-	if !exists {
+	chat := getChat(userEmail, chatID)
+	if chat == nil {
 		http.Error(w, "Chat not found", http.StatusNotFound)
 		return
 	}
@@ -160,13 +182,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	chat.Mutex.Unlock()
 
 	// Send message history to the newly connected client
-	for _, msg := range chat.Messages {
-		err := conn.WriteJSON(msg)
-		if err != nil {
-			fmt.Printf("Error sending message history: %v\n", err)
-			return
-		}
-	}
+	sendMessageHistory(conn, chat)
 
 	// Create a channel to signal new messages
 	newMessage := make(chan Message)
@@ -175,29 +191,71 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	go handleOpenAIConnection(chat, newMessage)
 
 	// Handle messages from the user
+	handleUserMessages(conn, chat, newMessage)
+}
+
+func getChat(userEmail, chatID string) *Chat {
+	chatMutex.RLock()
+	defer chatMutex.RUnlock()
+
+	userChats, exists := chats[userEmail]
+	if !exists {
+		return nil
+	}
+	return userChats[chatID]
+}
+
+func sendMessageHistory(conn *websocket.Conn, chat *Chat) {
+	chat.Mutex.RLock()
+	defer chat.Mutex.RUnlock()
+
+	for _, msg := range chat.Messages {
+		if err := conn.WriteJSON(msg); err != nil {
+			fmt.Printf("Error sending message history: %v\n", err)
+			return
+		}
+	}
+}
+
+func handleUserMessages(conn *websocket.Conn, chat *Chat, newMessage chan<- Message) {
 	for {
 		var msg Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			chat.Mutex.Lock()
-			delete(chat.Clients, conn)
-			chat.Mutex.Unlock()
+			removeClient(chat, conn)
 			break
 		}
 
-		chat.Mutex.Lock()
-		chat.Messages = append(chat.Messages, msg)
-		for client := range chat.Clients {
-			err := client.WriteJSON(msg)
-			if err != nil {
-				client.Close()
-				delete(chat.Clients, client)
-			}
-		}
-		chat.Mutex.Unlock()
+		addMessageToChat(chat, msg)
+		broadcastMessage(chat, msg)
 
 		// Send the new message to OpenAI
 		newMessage <- msg
+	}
+}
+
+func removeClient(chat *Chat, conn *websocket.Conn) {
+	chat.Mutex.Lock()
+	defer chat.Mutex.Unlock()
+	delete(chat.Clients, conn)
+}
+
+func addMessageToChat(chat *Chat, msg Message) {
+	chat.Mutex.Lock()
+	defer chat.Mutex.Unlock()
+	chat.Messages = append(chat.Messages, msg)
+}
+
+func broadcastMessage(chat *Chat, msg Message) {
+	chat.Mutex.RLock()
+	defer chat.Mutex.RUnlock()
+
+	for client := range chat.Clients {
+		err := client.WriteJSON(msg)
+		if err != nil {
+			client.Close()
+			delete(chat.Clients, client)
+		}
 	}
 }
 
@@ -207,135 +265,52 @@ func handleOpenAIConnection(chat *Chat, newMessage <-chan Message) {
 
 	for {
 		if openAIConn == nil {
-			secretKey := os.Getenv("OPENAI_SECRET_KEY")
-			if secretKey == "" {
-				fmt.Println("Error: OPENAI_SECRET_KEY environment variable is not set")
-				return
-			}
-
-			openAIConn, _, err = websocket.DefaultDialer.Dial("wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01", http.Header{
-				"Authorization": []string{"Bearer " + secretKey},
-				"OpenAI-Beta":   []string{"realtime=v1"},
-			})
+			openAIConn, err = connectToOpenAI()
 			if err != nil {
 				fmt.Printf("Error connecting to OpenAI Realtime API: %v\n", err)
 				continue
 			}
 
-			// Start a goroutine to handle messages from OpenAI
-			go func() {
-				var currentMessage string
-				for {
-					_, message, err := openAIConn.ReadMessage()
-					fmt.Printf("Raw message from OpenAI:\n%s\n\n", string(message))
-					if err != nil {
-						fmt.Printf("Error reading message from OpenAI Realtime API: %v\n", err)
-						openAIConn.Close()
-						openAIConn = nil
-						return
-					}
-
-					var msgType OpenAIMessageType
-					if err := json.Unmarshal(message, &msgType); err != nil {
-						fmt.Printf("Error parsing message type from OpenAI: %v\n", err)
-						continue
-					}
-
-					switch msgType.Type {
-					case "response.text.delta":
-						var deltaMsg OpenAIResponseTextDelta
-						if err := json.Unmarshal(message, &deltaMsg); err != nil {
-							fmt.Printf("Error parsing delta message from OpenAI: %v\n", err)
-							continue
-						}
-						currentMessage += deltaMsg.Delta
-
-					case "response.text.done":
-						var doneMsg OpenAIResponseTextDone
-						if err := json.Unmarshal(message, &doneMsg); err != nil {
-							fmt.Printf("Error parsing done message from OpenAI: %v\n", err)
-							continue
-						}
-						assistantMsg := Message{
-							Sender:  "Assistant @OpenAI Realtime",
-							Content: currentMessage,
-						}
-
-						chat.Mutex.Lock()
-						chat.Messages = append(chat.Messages, assistantMsg)
-						for client := range chat.Clients {
-							err := client.WriteJSON(assistantMsg)
-							if err != nil {
-								fmt.Printf("Error sending message to client: %v\n", err)
-								client.Close()
-								delete(chat.Clients, client)
-							}
-						}
-						chat.Mutex.Unlock()
-
-						currentMessage = "" // Reset for the next message
-
-					default:
-						var errorMsg OpenAIError
-						if err := json.Unmarshal(message, &errorMsg); err != nil {
-							fmt.Printf("Error parsing error message from OpenAI: %v\n", err)
-							continue
-						}
-						if errorMsg.Error.Message != "" {
-							fmt.Printf("Error from OpenAI: %v\n", errorMsg.Error.Message)
-						}
-					}
-				}
-			}()
-		}
-
-		// Wait for a new message or connection error
-		select {
-		case msg := <-newMessage:
-			// Send conversation.item.create
-			conversationItem := ConversationItemCreate{
-				Type: "conversation.item.create",
-				Item: Item{
-					Type: "message",
-					Role: "user",
-					Content: []Content{
-						{
-							Type: "input_text",
-							Text: msg.Content,
-						},
+			// Send session update after connection
+			sessionUpdate := SessionUpdate{
+				EventID: uuid.New().String(),
+				Type:    "session.update",
+				Session: Session{
+					Modalities:    []string{"text", "audio"},
+					Instructions:  "You are a helpful language tutor.",
+					Voice:        "alloy",
+					InputAudioFormat: "pcm16",
+					OutputAudioFormat: "pcm16",
+					InputAudioTranscription: InputAudioTranscription{
+						Model: "whisper-1",
 					},
+					TurnDetection: TurnDetection{
+						Type:              "server_vad",
+						Threshold:         0.5,
+						PrefixPaddingMs:  300,
+						SilenceDurationMs: 500,
+					},
+					ToolChoice:              "auto",
+					Temperature:             0.8,
+					MaxResponseOutputTokens: 8096,
 				},
 			}
-			jsonConversationItem, err := json.Marshal(conversationItem)
-			if err != nil {
-				fmt.Printf("Error marshaling conversation.item.create: %v\n", err)
-				continue
-			}
-			fmt.Printf("Message out to OpenAI:\n%s\n\n", string(jsonConversationItem))
-			err = openAIConn.WriteJSON(conversationItem)
-			if err != nil {
-				fmt.Printf("Error sending conversation.item.create to OpenAI Realtime API: %v\n", err)
+
+			if err := openAIConn.WriteJSON(sessionUpdate); err != nil {
+				fmt.Printf("Error sending session update: %v\n", err)
 				openAIConn.Close()
 				openAIConn = nil
 				continue
 			}
 
-			// Send response.create
-			responseCreate := ResponseCreate{
-				Type: "response.create",
-				Response: Response{
-					Modalities: []string{"text"},
-				},
-			}
-			jsonResponseCreate, err := json.Marshal(responseCreate)
-			if err != nil {
-				fmt.Printf("Error marshaling response.create: %v\n", err)
-				continue
-			}
-			fmt.Printf("Message out to OpenAI:\n%s\n\n", string(jsonResponseCreate))
-			err = openAIConn.WriteJSON(responseCreate)
-			if err != nil {
-				fmt.Printf("Error sending response.create to OpenAI Realtime API: %v\n", err)
+			go handleOpenAIMessages(chat, openAIConn)
+		}
+
+		// Wait for a new message or connection error
+		select {
+		case msg := <-newMessage:
+			if err := sendMessageToOpenAI(openAIConn, msg); err != nil {
+				fmt.Printf("Error sending message to OpenAI: %v\n", err)
 				openAIConn.Close()
 				openAIConn = nil
 			}
@@ -343,12 +318,109 @@ func handleOpenAIConnection(chat *Chat, newMessage <-chan Message) {
 	}
 }
 
+func connectToOpenAI() (*websocket.Conn, error) {
+	secretKey := os.Getenv("OPENAI_SECRET_KEY")
+	if secretKey == "" {
+		return nil, fmt.Errorf("OPENAI_SECRET_KEY environment variable is not set")
+	}
+
+	conn, _, err := websocket.DefaultDialer.Dial("wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01", http.Header{
+		"Authorization": []string{"Bearer " + secretKey},
+		"OpenAI-Beta":   []string{"realtime=v1"},
+	})
+	return conn, err
+}
+
+func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
+	var currentMessage string
+	for {
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			fmt.Printf("Error reading message from OpenAI Realtime API: %v\n", err)
+			conn.Close()
+			return
+		}
+
+		fmt.Printf("Raw message from OpenAI:\n%s\n\n", string(message))
+
+		var msgType OpenAIMessageType
+		if err := json.Unmarshal(message, &msgType); err != nil {
+			fmt.Printf("Error parsing message type from OpenAI: %v\n", err)
+			continue
+		}
+
+		switch msgType.Type {
+		case "response.text.delta":
+			var deltaMsg OpenAIResponseTextDelta
+			if err := json.Unmarshal(message, &deltaMsg); err != nil {
+				fmt.Printf("Error parsing delta message from OpenAI: %v\n", err)
+				continue
+			}
+			currentMessage += deltaMsg.Delta
+
+		case "response.text.done":
+			assistantMsg := Message{
+				Sender:  "Assistant @OpenAI Realtime",
+				Content: currentMessage,
+			}
+
+			addMessageToChat(chat, assistantMsg)
+			broadcastMessage(chat, assistantMsg)
+
+			currentMessage = "" // Reset for the next message
+
+		default:
+			var errorMsg OpenAIError
+			if err := json.Unmarshal(message, &errorMsg); err != nil {
+				fmt.Printf("Error parsing error message from OpenAI: %v\n", err)
+				continue
+			}
+			if errorMsg.Error.Message != "" {
+				fmt.Printf("Error from OpenAI: %v\n", errorMsg.Error.Message)
+			}
+		}
+	}
+}
+
+func sendMessageToOpenAI(conn *websocket.Conn, msg Message) error {
+	conversationItem := ConversationItemCreate{
+		Type: "conversation.item.create",
+		Item: Item{
+			Type: "message",
+			Role: "user",
+			Content: []Content{
+				{
+					Type: "input_text",
+					Text: msg.Content,
+				},
+			},
+		},
+	}
+
+	if err := conn.WriteJSON(conversationItem); err != nil {
+		return fmt.Errorf("error sending conversation.item.create: %v", err)
+	}
+
+	responseCreate := ResponseCreate{
+		Type: "response.create",
+		Response: Response{
+			Modalities: []string{"text"},
+		},
+	}
+
+	if err := conn.WriteJSON(responseCreate); err != nil {
+		return fmt.Errorf("error sending response.create: %v", err)
+	}
+
+	return nil
+}
+
 func getUserChats(w http.ResponseWriter, r *http.Request) {
 	userEmail := r.Header.Get("X-User-Email")
 
-	chatMutex.Lock()
+	chatMutex.RLock()
 	userChats, exists := chats[userEmail]
-	chatMutex.Unlock()
+	chatMutex.RUnlock()
 
 	if !exists {
 		w.Header().Set("Content-Type", "application/json")
@@ -358,17 +430,18 @@ func getUserChats(w http.ResponseWriter, r *http.Request) {
 
 	result := make([]Chat, 0, len(userChats))
 	for _, chat := range userChats {
+		chat.Mutex.RLock()
 		result = append(result, Chat{
 			ID:        chat.ID,
 			CreatorID: chat.CreatorID,
 			Name:      chat.Name,
 			Messages:  chat.Messages,
 		})
+		chat.Mutex.RUnlock()
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(result)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(result); err != nil {
 		fmt.Printf("Error encoding JSON response: %v\n", err)
 	}
 }
@@ -398,10 +471,12 @@ func deleteChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	chat.Mutex.Lock()
 	// Close all WebSocket connections
 	for client := range chat.Clients {
 		client.Close()
 	}
+	chat.Mutex.Unlock()
 
 	// Remove the chat
 	delete(userChats, chatID)
