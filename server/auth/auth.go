@@ -86,13 +86,22 @@ func (s *GooglePublicKeyStore) fetchAndCachePublicKeys() (map[string]*rsa.Public
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Log the URL
+		var tokenString string
+
+		// Check for Authorization header first
 		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Missing authorization header", http.StatusUnauthorized)
-			return
+		if authHeader != "" {
+			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+		} else {
+			// If no Authorization header, check for token in URL parameters
+			tokenString = r.URL.Query().Get("token")
 		}
 
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		if tokenString == "" {
+			http.Error(w, "Missing authorization token", http.StatusUnauthorized)
+			return
+		}
 
 		if email, exists := profileStore.GetEmailByJWT(tokenString); exists {
 			r.Header.Set("X-User-Email", email)

@@ -14,5 +14,17 @@ sudo chown -R $HOST_UID:$HOST_GID /home/user /app
 # Ensure the user has write permissions to /app
 sudo chmod -R u+w /app
 
+# Create a file to store environment variables
+env_file="/home/user/.env_vars"
+echo "export OPENAI_SECRET_KEY='$OPENAI_SECRET_KEY'" > "$env_file"
+echo "export GOOGLE_API_SECRET='$GOOGLE_API_SECRET'" >> "$env_file"
+
+# Set correct permissions for the env_file
+chown $HOST_UID:$HOST_GID "$env_file"
+chmod 600 "$env_file"
+
+# Source the environment variables in the user's .bashrc
+echo "source $env_file" >> /home/user/.bashrc
+
 # Execute the command passed to docker run
 exec sudo -E -H -u user bash -c "$@"

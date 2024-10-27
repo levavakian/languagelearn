@@ -2,9 +2,62 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import Sidebar from './components/Sidebar';
+import Chat from './components/Chat';
+
+const darkModeColors = {
+  background: '#1e1e1e',
+  text: '#e0e0e0',
+  primary: '#3f51b5',
+  secondary: '#303030',
+  accent: '#7986cb',
+};
+
+const styles = {
+  app: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    height: '100vh',
+    backgroundColor: darkModeColors.background,
+    color: darkModeColors.text,
+  },
+  header: {
+    padding: '10px',
+    backgroundColor: darkModeColors.secondary,
+    display: 'flex',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    height: '60px',
+  },
+  button: {
+    backgroundColor: darkModeColors.primary,
+    color: darkModeColors.text,
+    border: 'none',
+    borderRadius: '4px',
+    padding: '10px 20px',
+    cursor: 'pointer',
+    boxShadow: '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)',
+  },
+  content: {
+    display: 'flex',
+    flex: 1,
+    overflow: 'hidden',
+  },
+  sidebar: {
+    width: '250px',
+    borderRight: `1px solid ${darkModeColors.accent}`,
+    height: 'calc(100vh - 60px)',
+  },
+  chatContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    overflow: 'hidden',
+  },
+};
 
 function App() {
   const [jwt, setJwt] = useState<string | null>(null);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 
   useEffect(() => {
     const storedJwt = localStorage.getItem('jwt');
@@ -28,56 +81,55 @@ function App() {
     console.log('Logout');
     setJwt(null);
     localStorage.removeItem('jwt');
+    setSelectedChatId(null);
   };
 
   const handleUnauthorized = () => {
     console.log('Unauthorized: Logging out');
     setJwt(null);
     localStorage.removeItem('jwt');
+    setSelectedChatId(null);
   };
 
   const handleSelectChat = (chatId: string) => {
     console.log('Selected chat:', chatId);
-    // Implement chat selection logic here
+    setSelectedChatId(chatId);
+  };
+
+  const renderAuthButton = () => {
+    if (jwt) {
+      return (
+        <button onClick={handleLogout} style={styles.button}>
+          Logout
+        </button>
+      );
+    } else {
+      return (
+        <GoogleLogin
+          onSuccess={handleLoginSuccess}
+          onError={handleLoginFailure}
+        />
+      );
+    }
   };
 
   return (
     <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
-      <div className="App" style={{ display: 'flex', height: '100vh' }}>
-        {jwt && (
-          <div style={{ width: '250px', borderRight: '1px solid #ccc' }}>
-            <Sidebar token={jwt} onSelectChat={handleSelectChat} onUnauthorized={handleUnauthorized} />
-          </div>
-        )}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <header className="App-header" style={{ flex: 1, position: 'relative' }}>
-            <div className="login-logout" style={{ position: 'absolute', top: 10, right: 10 }}>
-              {jwt ? (
-                <div>
-                  <button 
-                    onClick={handleLogout} 
-                    style={{
-                      backgroundColor: '#808080',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '10px 20px',
-                      cursor: 'pointer',
-                      boxShadow: '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)',
-                      marginRight: '10px'
-                    }}
-                  >
-                    Logout
-                  </button>
-                </div>
-              ) : (
-                <GoogleLogin
-                  onSuccess={handleLoginSuccess}
-                  onError={handleLoginFailure}
-                />
-              )}
+      <div style={styles.app}>
+        <header style={styles.header}>
+          {renderAuthButton()}
+        </header>
+        <div style={styles.content}>
+          {jwt && (
+            <div style={styles.sidebar}>
+              <Sidebar token={jwt} onSelectChat={handleSelectChat} onUnauthorized={handleUnauthorized} />
             </div>
-          </header>
+          )}
+          <div style={styles.chatContainer}>
+            {jwt && (
+              <Chat token={jwt} selectedChatId={selectedChatId} onUnauthorized={handleUnauthorized} />
+            )}
+          </div>
         </div>
       </div>
     </GoogleOAuthProvider>

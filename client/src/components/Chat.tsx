@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 interface Message {
@@ -16,14 +16,14 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(
-    selectedChatId ? `ws://localhost:8080/api/chat/${selectedChatId}/ws` : null,
+    selectedChatId ? `ws://localhost:8080/api/chat/${selectedChatId}/ws?token=${encodeURIComponent(token)}` : null,
     {
       shouldReconnect: () => true,
       reconnectAttempts: 10,
       reconnectInterval: 3000,
-      protocols: ['Bearer', token],
     }
   );
 
@@ -34,18 +34,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
     }
   }, [lastMessage]);
 
-  useEffect(() => {
-    if (selectedChatId) {
-      setMessages([]);
-      fetchChatHistory();
-    }
-  }, [selectedChatId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const fetchChatHistory = async () => {
+  const fetchChatHistory = useCallback(async () => {
     try {
       const response = await fetch(`/api/chat/${selectedChatId}/history`, {
         headers: {
@@ -65,7 +54,20 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
     } catch (error) {
       console.error('Error fetching chat history:', error);
     }
-  };
+  }, [selectedChatId, token, onUnauthorized]);
+
+  useEffect(() => {
+    if (selectedChatId) {
+      setMessages([]);
+      fetchChatHistory();
+      // Focus on the input when a chat is selected
+      inputRef.current?.focus();
+    }
+  }, [selectedChatId, fetchChatHistory]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleSendMessage = () => {
     if (inputMessage.trim() && readyState === ReadyState.OPEN) {
@@ -144,6 +146,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
         backgroundColor: '#21252b'
       }}>
         <textarea
+          ref={inputRef}
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyPress={(e) => {
@@ -183,4 +186,3 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
 };
 
 export default Chat;
-

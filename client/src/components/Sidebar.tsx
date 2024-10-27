@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 interface Chat {
   id: string;
@@ -23,6 +23,7 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized }
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [newChatName, setNewChatName] = useState<string>('');
   const [isCreatingChat, setIsCreatingChat] = useState<boolean>(false);
+  const newChatInputRef = useRef<HTMLInputElement>(null);
 
   const handleUnauthorizedResponse = (response: Response) => {
     if (response.status === 401 || response.status === 403) {
@@ -49,11 +50,16 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized }
       console.error('Error fetching chats:', error);
       return null;
     }
-  }, [token, handleUnauthorizedResponse]);
+  }, [token, onUnauthorized]);
 
   useEffect(() => {
-    fetchChats();
-  }, [fetchChats]);
+    fetchChats().then(fetchedChats => {
+      if (fetchedChats && fetchedChats.length > 0 && !selectedChat) {
+        setSelectedChat(fetchedChats[0].id);
+        onSelectChat(fetchedChats[0].id);
+      }
+    });
+  }, [fetchChats, selectedChat, onSelectChat]);
 
   const createChat = async () => {
     if (!newChatName.trim()) return;
@@ -71,14 +77,9 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized }
         throw new Error('Failed to create chat');
       }
       const newChat = await response.json();
-      const updatedChats = await fetchChats();
-      if (updatedChats) {
-        const createdChat = updatedChats.find((chat: Chat) => chat.id === newChat.chatID);
-        if (createdChat) {
-          setSelectedChat(createdChat.id);
-          onSelectChat(createdChat.id);
-        }
-      }
+      setChats(prevChats => [...prevChats, newChat]);
+      setSelectedChat(newChat.id);
+      onSelectChat(newChat.id);
       setNewChatName('');
       setIsCreatingChat(false);
     } catch (error) {
@@ -99,9 +100,15 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized }
       if (!response.ok) {
         throw new Error('Failed to delete chat');
       }
-      setChats(chats.filter(chat => chat.id !== chatId));
+      setChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
       if (selectedChat === chatId) {
-        setSelectedChat(null);
+        const remainingChats = chats.filter(chat => chat.id !== chatId);
+        if (remainingChats.length > 0) {
+          setSelectedChat(remainingChats[0].id);
+          onSelectChat(remainingChats[0].id);
+        } else {
+          setSelectedChat(null);
+        }
       }
     } catch (error) {
       console.error('Error deleting chat:', error);
@@ -114,11 +121,23 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized }
   };
 
   const truncateString = (str: string, num: number) => {
-    if (str.length <= num) {
+    if (str && str.length <= num) {
       return str;
     }
-    return str.slice(0, num) + '...';
+    return str ? str.slice(0, num) + '...' : '';
   };
+
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      createChat();
+    }
+  };
+
+  useEffect(() => {
+    if (isCreatingChat && newChatInputRef.current) {
+      newChatInputRef.current.focus();
+    }
+  }, [isCreatingChat]);
 
   return (
     <div className="sidebar" style={{
@@ -134,9 +153,11 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized }
       {isCreatingChat ? (
         <div style={{ marginBottom: '20px' }}>
           <input
+            ref={newChatInputRef}
             type="text"
             value={newChatName}
             onChange={(e) => setNewChatName(e.target.value)}
+            onKeyPress={handleKeyPress}
             placeholder="Enter chat name"
             style={{
               width: 'calc(100% - 20px)',
