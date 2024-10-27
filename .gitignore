@@ -1,3 +1,6 @@
+# go
+server/server
+
 # Logs
 logs
 *.log

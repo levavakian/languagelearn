@@ -8,8 +8,11 @@ HOST_GID=$(stat -c %g /app)
 sudo usermod -u $HOST_UID user
 sudo groupmod -g $HOST_GID user
 
-# Change ownership of the user's home directory
-sudo chown -R $HOST_UID:$HOST_GID /home/user
+# Change ownership of the user's home directory and /app directory
+sudo chown -R $HOST_UID:$HOST_GID /home/user /app
+
+# Ensure the user has write permissions to /app
+sudo chmod -R u+w /app
 
 # Execute the command passed to docker run
 exec sudo -E -H -u user bash -c "$@"
