@@ -15,11 +15,11 @@ interface Message {
 interface SidebarProps {
   token: string;
   onSelectChat: (chatId: string) => void;
-  onCreateChat: (chatId: string) => void;
   onUnauthorized: () => void;
+  selectedChatId: string | null;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onCreateChat, onUnauthorized }) => {
+const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized, selectedChatId }) => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [newChatName, setNewChatName] = useState<string>('');
   const [isCreatingChat, setIsCreatingChat] = useState<boolean>(false);
@@ -44,8 +44,13 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onCreateChat, on
         throw new Error('Failed to fetch chats');
       }
       const data = await response.json();
-      setChats(data);
-      return data;
+      // Sort chats by creation time or ID to maintain consistent order
+      const sortedChats = data.sort((a: Chat, b: Chat) => {
+        if (!a?.id || !b?.id) return 0;
+        return a.id.localeCompare(b.id);
+      });
+      setChats(sortedChats);
+      return sortedChats;
     } catch (error) {
       console.error('Error fetching chats:', error);
       return null;
@@ -54,11 +59,11 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onCreateChat, on
 
   useEffect(() => {
     fetchChats().then(fetchedChats => {
-      if (fetchedChats && fetchedChats.length > 0) {
+      if (fetchedChats && fetchedChats.length > 0 && !selectedChatId) {
         onSelectChat(fetchedChats[0].id);
       }
     });
-  }, [fetchChats, onSelectChat]);
+  }, [fetchChats, onSelectChat, selectedChatId]);
 
   const createChat = async () => {
     if (!newChatName.trim()) return;
@@ -76,10 +81,17 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onCreateChat, on
         throw new Error('Failed to create chat');
       }
       const newChat = await response.json();
-      setChats(prevChats => [...prevChats, newChat]);
-      onCreateChat(newChat.id);
+      setChats(prevChats => {
+        const updatedChats = [...prevChats, newChat].sort((a, b) => {
+          if (!a?.id || !b?.id) return 0;
+          return a.id.localeCompare(b.id);
+        });
+        return updatedChats;
+      });
       setNewChatName('');
       setIsCreatingChat(false);
+      // Only call onSelectChat
+      onSelectChat(newChat.id);
     } catch (error) {
       console.error('Error creating chat:', error);
     }
@@ -98,11 +110,14 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onCreateChat, on
       if (!response.ok) {
         throw new Error('Failed to delete chat');
       }
-      setChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
-      const remainingChats = chats.filter(chat => chat.id !== chatId);
-      if (remainingChats.length > 0) {
-        onSelectChat(remainingChats[0].id);
-      }
+      setChats(prevChats => {
+        const updatedChats = prevChats.filter(chat => chat.id !== chatId);
+        // If there are remaining chats, select the first one
+        if (updatedChats.length > 0) {
+          onSelectChat(updatedChats[0].id);
+        }
+        return updatedChats;
+      });
     } catch (error) {
       console.error('Error deleting chat:', error);
     }
@@ -203,23 +218,45 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onCreateChat, on
       )}
       <ul style={{ listStyle: 'none', padding: 0, overflowY: 'auto', flex: 1 }}>
         {chats.map(chat => (
-          <li key={chat.id} style={{
-            marginBottom: '10px',
-            padding: '10px',
-            backgroundColor: 'transparent',
-            borderRadius: '4px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
+          <li 
+            key={chat.id} 
+            onClick={() => onSelectChat(chat.id)}
+            style={{
+              marginBottom: '10px',
+              padding: '10px',
+              backgroundColor: selectedChatId === chat.id ? '#3a3f4b' : 'transparent',
+              borderRadius: '4px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              cursor: 'pointer'
+            }}
+            onMouseOver={(e) => {
+              if (selectedChatId !== chat.id) {
+                e.currentTarget.style.backgroundColor = '#3a3f4b';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (selectedChatId !== chat.id) {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
+          >
             <span
-              onClick={() => onSelectChat(chat.id)}
-              style={{ cursor: 'pointer', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+              style={{ 
+                flex: 1, 
+                overflow: 'hidden', 
+                textOverflow: 'ellipsis', 
+                whiteSpace: 'nowrap' 
+              }}
             >
               {truncateString(chat.name || chat.id, 20)}
             </span>
             <button
-              onClick={() => deleteChat(chat.id)}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent chat selection when clicking delete
+                deleteChat(chat.id);
+              }}
               style={{
                 backgroundColor: '#ff4d4d',
                 color: 'white',

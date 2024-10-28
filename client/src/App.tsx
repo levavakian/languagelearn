@@ -96,11 +96,6 @@ function App() {
     setSelectedChatId(chatId);
   };
 
-  const handleCreateChat = (chatId: string) => {
-    console.log('Created new chat:', chatId);
-    setSelectedChatId(chatId);
-  };
-
   const renderAuthButton = () => {
     if (jwt) {
       return (
@@ -130,8 +125,8 @@ function App() {
               <Sidebar 
                 token={jwt} 
                 onSelectChat={handleSelectChat} 
-                onCreateChat={handleCreateChat}
-                onUnauthorized={handleUnauthorized} 
+                onUnauthorized={handleUnauthorized}
+                selectedChatId={selectedChatId}
               />
             </div>
           )}
