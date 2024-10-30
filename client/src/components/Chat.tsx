@@ -84,26 +84,34 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
       setInputMessage('');
     }
   };
-
-  const handleAudioChunk = (chunk: Blob) => {
+  const handleAudioChunk = (chunk: Blob, isRecordingFinished: boolean) => {
     if (readyState === ReadyState.OPEN) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        // Convert ArrayBuffer to base64
-        const arrayBuffer = reader.result as ArrayBuffer;
-        const bytes = new Uint8Array(arrayBuffer);
-        let binary = '';
-        bytes.forEach(byte => binary += String.fromCharCode(byte));
-        const base64Audio = btoa(binary);
-        
+      if (isRecordingFinished) {
         const message = {
           sender: 'user',
-          content: base64Audio,
+          content: 'commit',
           type: 'audio' as const
         };
         sendMessage(JSON.stringify(message));
-      };
-      reader.readAsArrayBuffer(chunk);
+      } else {
+        const reader = new FileReader();
+        reader.onload = () => {
+          // Convert ArrayBuffer to base64
+          const arrayBuffer = reader.result as ArrayBuffer;
+          const bytes = new Uint8Array(arrayBuffer);
+          let binary = '';
+          bytes.forEach(byte => binary += String.fromCharCode(byte));
+          const base64Audio = btoa(binary);
+          
+          const message = {
+            sender: 'user',
+            content: base64Audio,
+            type: 'audio' as const
+          };
+          sendMessage(JSON.stringify(message));
+        };
+        reader.readAsArrayBuffer(chunk);
+      }
     }
   };
 

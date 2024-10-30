@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { audioService } from '../services/AudioService';
 
 interface MicProps {
-  onAudioChunk: (chunk: Blob) => void;
+  onAudioChunk: (chunk: Blob, isRecordingFinished: boolean) => void;
 }
 
 const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
@@ -24,8 +24,8 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
       if (e.key === 'V' && isShiftPressed.current) {
         e.preventDefault();
         try {
-          await audioService.startRecording((chunk) => {
-            onAudioChunk(chunk);
+          await audioService.startRecording((chunk: Blob) => {
+            onAudioChunk(chunk, false);
             setLastChunkTime(Date.now());
             
             if (chunkTimeoutRef.current) {
@@ -46,6 +46,7 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
       if (e.key === 'Shift') {
         isShiftPressed.current = false;
         audioService.stopRecording();
+        onAudioChunk(new Blob(), true); // Signal recording finished
       }
     };
 

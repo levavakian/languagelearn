@@ -109,6 +109,15 @@ type Session struct {
 	MaxResponseOutputTokens int                     `json:"max_response_output_tokens,omitempty"`
 }
 
+type InputAudioBufferAppend struct {
+	Type   string `json:"type"`
+	Audio  string `json:"audio"` // Base64 encoded audio data
+}
+
+type InputAudioBufferCommit struct {
+	Type string `json:"type"`
+}
+
 var (
 	chats     = make(map[string]map[string]*Chat) // map[userEmail]map[chatID]*Chat
 	chatMutex sync.RWMutex
@@ -395,29 +404,78 @@ func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
 }
 
 func sendMessageToOpenAI(conn *websocket.Conn, msg Message) error {
-	var content []Content
 	if msg.Type == "audio" {
-		content = []Content{
-			{
-				Type:  "input_audio",
-				Audio: msg.Content,
-			},
+		if msg.Content == "commit" {
+			// Send commit message when audio recording is finished
+			audioCommit := InputAudioBufferCommit{
+				Type: "input_audio_buffer.commit",
+			}
+
+			audioCommitBytes, err := json.Marshal(audioCommit)
+			if err != nil {
+				return fmt.Errorf("error marshaling input_audio_buffer.commit: %v", err)
+			}
+
+			fmt.Printf("Sending audio commit to OpenAI:\n%s\n\n", string(audioCommitBytes))
+
+			if err := conn.WriteJSON(audioCommit); err != nil {
+				return fmt.Errorf("error sending input_audio.buffer.commit: %v", err)
+			}
+
+			// Send response.create for audio
+			responseCreate := ResponseCreate{
+				Type: "response.create",
+				Response: Response{
+					Modalities: []string{"audio", "text"},
+				},
+			}
+
+			responseCreateBytes, err := json.Marshal(responseCreate)
+			if err != nil {
+				return fmt.Errorf("error marshaling response.create: %v", err)
+			}
+
+			fmt.Printf("Sending response create to OpenAI:\n%s\n\n", string(responseCreateBytes))
+
+			if err := conn.WriteJSON(responseCreate); err != nil {
+				return fmt.Errorf("error sending response.create: %v", err)
+			}
+
+			return nil
 		}
-	} else {
-		content = []Content{
-			{
-				Type: "input_text",
-				Text: msg.Content,
-			},
+
+		// Handle audio buffer append for non-commit messages
+		audioBuffer := InputAudioBufferAppend{
+			Type:   "input_audio_buffer.append",
+			Audio: msg.Content,
 		}
+
+		audioBufferBytes, err := json.Marshal(audioBuffer)
+		if err != nil {
+			return fmt.Errorf("error marshaling input_audio.buffer.append: %v", err)
+		}
+
+		fmt.Printf("Sending audio buffer to OpenAI (truncated):\n%s...\n\n", string(audioBufferBytes)[:100])
+
+		if err := conn.WriteJSON(audioBuffer); err != nil {
+			return fmt.Errorf("error sending input_audio_buffer.append: %v", err)
+		}
+
+		return nil
 	}
 
+	// Handle text messages
 	conversationItem := ConversationItemCreate{
 		Type: "conversation.item.create",
 		Item: Item{
 			Type:    "message",
 			Role:    "user",
-			Content: content,
+			Content: []Content{
+				{
+					Type: "input_text",
+					Text: msg.Content,
+				},
+			},
 		},
 	}
 
@@ -425,40 +483,28 @@ func sendMessageToOpenAI(conn *websocket.Conn, msg Message) error {
 	if err != nil {
 		return fmt.Errorf("error marshaling conversation.item.create: %v", err)
 	}
-	if msg.Type == "audio" {
-		var truncatedMsg ConversationItemCreate
-		json.Unmarshal(conversationItemBytes, &truncatedMsg)
-		if len(truncatedMsg.Item.Content[0].Audio) > 10 {
-			truncatedMsg.Item.Content[0].Audio = truncatedMsg.Item.Content[0].Audio[:10] + "..."
-		}
-		truncatedBytes, _ := json.Marshal(truncatedMsg)
-		fmt.Printf("Sending message to OpenAI:\n%s\n\n", string(truncatedBytes))
-	} else {
-		fmt.Printf("Sending message to OpenAI:\n%s\n\n", string(conversationItemBytes))
-	}
+
+	fmt.Printf("Sending message to OpenAI:\n%s\n\n", string(conversationItemBytes))
 
 	if err := conn.WriteJSON(conversationItem); err != nil {
 		return fmt.Errorf("error sending conversation.item.create: %v", err)
 	}
 
-	// Only send response.create for text messages
-	if msg.Type != "audio" {
-		responseCreate := ResponseCreate{
-			Type: "response.create",
-			Response: Response{
-				Modalities: []string{"text"},
-			},
-		}
+	responseCreate := ResponseCreate{
+		Type: "response.create",
+		Response: Response{
+			Modalities: []string{"text"},
+		},
+	}
 
-		responseCreateBytes, err := json.Marshal(responseCreate)
-		if err != nil {
-			return fmt.Errorf("error marshaling response.create: %v", err)
-		}
-		fmt.Printf("Sending response create to OpenAI:\n%s\n\n", string(responseCreateBytes))
+	responseCreateBytes, err := json.Marshal(responseCreate)
+	if err != nil {
+		return fmt.Errorf("error marshaling response.create: %v", err)
+	}
+	fmt.Printf("Sending response create to OpenAI:\n%s\n\n", string(responseCreateBytes))
 
-		if err := conn.WriteJSON(responseCreate); err != nil {
-			return fmt.Errorf("error sending response.create: %v", err)
-		}
+	if err := conn.WriteJSON(responseCreate); err != nil {
+		return fmt.Errorf("error sending response.create: %v", err)
 	}
 
 	return nil
