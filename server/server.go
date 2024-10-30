@@ -16,17 +16,18 @@ import (
 func main() {
 	r := mux.NewRouter()
 
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("../client/build/static"))))
-	r.HandleFunc("/", serveReactApp)
-
 	api := r.PathPrefix("/api").Subrouter()
+	chat.SetupRoutes(api)
 	api.HandleFunc("/profile", auth.AuthMiddleware(handleProfile)).Methods("GET")
 
-	// Use the new, more specific function name
-	chat.SetupRoutes(api)
+	// Serve static files from the build/static directory
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("../client/build/static"))))	
+	// Serve files from the public directory
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../client/build")))
+	
+	// This should come after the static file handlers
+	r.HandleFunc("/", serveReactApp)
 
-	// If you have other route setups, you can add them here with different names
-	// For example: SetupUserRoutes(api, auth.AuthMiddleware)
 
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
+import Mic from './Mic';
 
 interface Message {
   sender: string;
   content: string;
+  type?: 'text' | 'audio';
 }
 
 interface ChatProps {
@@ -30,7 +32,9 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   useEffect(() => {
     if (lastMessage !== null) {
       const newMessage = JSON.parse(lastMessage.data);
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
+      if (newMessage.type !== 'audio') {
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
+      }
     }
   }, [lastMessage]);
 
@@ -50,7 +54,8 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
         throw new Error('Failed to fetch chat history');
       }
       const history = await response.json();
-      setMessages(history);
+      // Filter out audio messages from history
+      setMessages(history.filter((msg: Message) => msg.type !== 'audio'));
     } catch (error) {
       console.error('Error fetching chat history:', error);
     }
@@ -60,7 +65,6 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
     if (selectedChatId) {
       setMessages([]);
       fetchChatHistory();
-      // Focus on the input when a chat is selected
       inputRef.current?.focus();
     }
   }, [selectedChatId, fetchChatHistory]);
@@ -72,11 +76,34 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   const handleSendMessage = () => {
     if (inputMessage.trim() && readyState === ReadyState.OPEN) {
       const message = {
-        sender: 'user', // Replace with actual user identifier
-        content: inputMessage.trim()
+        sender: 'user',
+        content: inputMessage.trim(),
+        type: 'text' as const
       };
       sendMessage(JSON.stringify(message));
       setInputMessage('');
+    }
+  };
+
+  const handleAudioChunk = (chunk: Blob) => {
+    if (readyState === ReadyState.OPEN) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        // Convert ArrayBuffer to base64
+        const arrayBuffer = reader.result as ArrayBuffer;
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        bytes.forEach(byte => binary += String.fromCharCode(byte));
+        const base64Audio = btoa(binary);
+        
+        const message = {
+          sender: 'user',
+          content: base64Audio,
+          type: 'audio' as const
+        };
+        sendMessage(JSON.stringify(message));
+      };
+      reader.readAsArrayBuffer(chunk);
     }
   };
 
@@ -116,11 +143,11 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
         display: 'flex',
         flexDirection: 'column'
       }}>
-        {messages.map((message, index) => (
+        {messages.filter(message => message.type !== 'audio').map((message, index) => (
           <div
             key={index}
             style={{
-              alignSelf: message.sender === 'user' ? 'flex-end' : 'flex-start',
+              alignSelf: message.sender === 'user' ? 'flex-start' : 'flex-end',
               marginBottom: '10px',
               maxWidth: '70%'
             }}
@@ -142,44 +169,55 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
       </div>
       <div className="input-area" style={{ 
         display: 'flex', 
+        flexDirection: 'column',
         padding: '20px',
         backgroundColor: '#21252b'
       }}>
-        <textarea
-          ref={inputRef}
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          onKeyPress={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSendMessage();
-            }
-          }}
-          style={{ 
-            flex: 1, 
-            marginRight: '10px', 
-            padding: '10px',
-            backgroundColor: '#3a3f4b',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            resize: 'none'
-          }}
-          placeholder="Type a message..."
-        />
-        <button 
-          onClick={handleSendMessage} 
-          style={{ 
-            padding: '10px 20px',
-            backgroundColor: '#61dafb',
-            color: 'black',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Send
-        </button>
+        <div style={{
+          display: 'flex'
+        }}>
+          <textarea
+            ref={inputRef}
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
+            style={{ 
+              flex: 1, 
+              marginRight: '10px', 
+              padding: '10px',
+              backgroundColor: '#3a3f4b',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              resize: 'none'
+            }}
+            placeholder="Type a message or hold Shift+V to record audio..."
+          />
+          <div style={{
+            display: 'flex',
+            gap: '10px'
+          }}>
+            <Mic onAudioChunk={handleAudioChunk} />
+            <button 
+              onClick={handleSendMessage} 
+              style={{ 
+                padding: '10px 20px',
+                backgroundColor: '#61dafb',
+                color: 'black',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Send
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
