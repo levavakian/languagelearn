@@ -68,6 +68,11 @@ type OpenAIResponseTextDelta struct {
 	Delta string `json:"delta"`
 }
 
+type OpenAIResponseAudioDelta struct {
+	Type  string `json:"type"`
+	Audio string `json:"audio"`
+}
+
 type OpenAIResponseTextDone struct {
 	Type string `json:"type"`
 }
@@ -390,6 +395,21 @@ func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
 
 			currentMessage = "" // Reset for the next message
 
+		case "response.audio.delta":
+			var audioMsg OpenAIResponseAudioDelta
+			if err := json.Unmarshal(message, &audioMsg); err != nil {
+				fmt.Printf("Error parsing audio delta message from OpenAI: %v\n", err)
+				continue
+			}
+
+			assistantMsg := Message{
+				Sender:  "Assistant @OpenAI Realtime",
+				Content: audioMsg.Audio,
+				Type:    "audio",
+			}
+
+			broadcastMessage(chat, assistantMsg)
+
 		default:
 			var errorMsg OpenAIError
 			if err := json.Unmarshal(message, &errorMsg); err != nil {
@@ -455,7 +475,7 @@ func sendMessageToOpenAI(conn *websocket.Conn, msg Message) error {
 			return fmt.Errorf("error marshaling input_audio.buffer.append: %v", err)
 		}
 
-		fmt.Printf("Sending audio buffer to OpenAI (truncated):\n%s...\n\n", string(audioBufferBytes)[:100])
+		fmt.Printf("Sending audio buffer to OpenAI (truncated):\n%s\n\n", string(audioBufferBytes))
 
 		if err := conn.WriteJSON(audioBuffer); err != nil {
 			return fmt.Errorf("error sending input_audio_buffer.append: %v", err)
