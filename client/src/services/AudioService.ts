@@ -67,8 +67,6 @@ class AudioService {
 
         const pcmBlob = new Blob([pcm16.buffer], { type: 'audio/pcm' });
         
-        // Play chunk locally and send to callback
-        audioPlayer.playChunk(pcmBlob);
         if (this.onChunkCallback) {
           this.onChunkCallback(pcmBlob);
         }

@@ -70,7 +70,7 @@ type OpenAIResponseTextDelta struct {
 
 type OpenAIResponseAudioDelta struct {
 	Type  string `json:"type"`
-	Audio string `json:"audio"`
+	Delta string `json:"delta"`
 }
 
 type OpenAIResponseTextDone struct {
@@ -428,7 +428,7 @@ func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
 
 			assistantMsg := Message{
 				Sender:  "Assistant @OpenAI Realtime",
-				Content: audioMsg.Audio,
+				Content: audioMsg.Delta,
 				Type:    "audio",
 			}
 
