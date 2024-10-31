@@ -91,4 +91,4 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
   );
 };
 
-export default React.memo(Mic);
+export default Mic;

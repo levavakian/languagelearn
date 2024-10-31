@@ -84,7 +84,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
       setInputMessage('');
     }
   };
-  const handleAudioChunk = (chunk: Blob, isRecordingFinished: boolean) => {
+  const handleAudioChunk = useCallback((chunk: Blob, isRecordingFinished: boolean) => {
     if (readyState === ReadyState.OPEN) {
       if (isRecordingFinished) {
         const message = {
@@ -113,7 +113,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
         reader.readAsArrayBuffer(chunk);
       }
     }
-  };
+  }, [readyState, sendMessage]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

@@ -19,17 +19,6 @@ class AudioPlayer {
     }
 
     try {
-      // Wait for the current chunk to finish if it's playing
-      if (this.currentSource) {
-        return new Promise<void>((resolve) => {
-          this.currentSource!.onended = () => {
-            this.currentSource = null;
-            resolve();
-            this.playChunk(pcm16Blob); // Play the new chunk after current one ends
-          };
-        });
-      }
-
       // Convert Blob to ArrayBuffer
       const arrayBuffer = await pcm16Blob.arrayBuffer();
       const int16Array = new Int16Array(arrayBuffer);
@@ -53,10 +42,17 @@ class AudioPlayer {
       const source = this.audioContext!.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(this.audioContext!.destination);
+      
+      // Clean up previous source if it exists
+      if (this.currentSource) {
+        this.currentSource.stop();
+      }
       this.currentSource = source;
       
       source.onended = () => {
-        this.currentSource = null;
+        if (this.currentSource === source) {
+          this.currentSource = null;
+        }
       };
       
       source.start();
