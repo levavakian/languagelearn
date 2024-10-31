@@ -1,3 +1,5 @@
+import { audioPlayer } from "./AudioPlayer";
+
 type AudioCallback = (chunk: Blob) => void;
 
 class AudioService {
@@ -32,6 +34,7 @@ class AudioService {
     if (this.isRecording) return;
     
     try {
+      console.log('Starting audio recording...');
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -53,6 +56,7 @@ class AudioService {
       this.mediaRecorder.ondataavailable = this.handleDataAvailable.bind(this);
       this.mediaRecorder.start(100); // Collect data every 100ms
       this.isRecording = true;
+      console.log('Audio recording started successfully');
 
     } catch (err) {
       console.error('Error starting recording:', err);
@@ -63,10 +67,12 @@ class AudioService {
   stopRecording() {
     if (!this.isRecording || !this.mediaRecorder) return;
     
+    console.log('Stopping audio recording...');
     this.mediaRecorder.stop();
     this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
     this.isRecording = false;
     this.onChunkCallback = null;
+    console.log('Audio recording stopped successfully');
   }
 
   private async handleDataAvailable(event: BlobEvent) {
@@ -105,6 +111,11 @@ class AudioService {
       }
       
       const pcmBlob = new Blob([pcm16.buffer], { type: 'audio/pcm' });
+      
+      // Play the chunk locally
+      await audioPlayer.playChunk(pcmBlob);
+      
+      // Send to callback
       this.onChunkCallback(pcmBlob);
     } catch (err) {
       console.error('Error processing audio chunk:', err);
