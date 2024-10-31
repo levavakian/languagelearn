@@ -366,7 +366,31 @@ func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
 			return
 		}
 
-		fmt.Printf("Raw message from OpenAI:\n%s\n\n", string(message))
+		// Check if message contains audio data and prepare log message
+		logMessage := func() string {
+			var msgData map[string]interface{}
+			if err := json.Unmarshal(message, &msgData); err != nil {
+				return string(message)
+			}
+
+			if msgData["type"] != "response.audio.delta" {
+				return string(message)
+			}
+
+			deltaMsg, ok := msgData["delta"].(string)
+			if !ok || len(deltaMsg) == 0 {
+				return string(message)
+			}
+
+			// Truncate audio data to first 10 chars for logging
+			if len(deltaMsg) > 10 {
+				msgData["delta"] = deltaMsg[:10]
+			}
+			truncatedMsg, _ := json.Marshal(msgData)
+			return string(truncatedMsg) + " (audio truncated)"
+		}()
+
+		fmt.Printf("Raw message from OpenAI:\n%s\n\n", logMessage)
 
 		var msgType OpenAIMessageType
 		if err := json.Unmarshal(message, &msgType); err != nil {
@@ -470,12 +494,18 @@ func sendMessageToOpenAI(conn *websocket.Conn, msg Message) error {
 			Audio: msg.Content,
 		}
 
-		audioBufferBytes, err := json.Marshal(audioBuffer)
+		_, err := json.Marshal(audioBuffer)
 		if err != nil {
 			return fmt.Errorf("error marshaling input_audio.buffer.append: %v", err)
 		}
 
-		fmt.Printf("Sending audio buffer to OpenAI (truncated):\n%s\n\n", string(audioBufferBytes))
+		// Create a copy of audioBuffer with truncated Audio field for logging
+		logAudioBuffer := InputAudioBufferAppend{
+			Type:   audioBuffer.Type,
+			Audio:  msg.Content[:min(10, len(msg.Content))],
+		}
+		logAudioBufferBytes, _ := json.Marshal(logAudioBuffer)
+		fmt.Printf("Sending audio buffer to OpenAI:\n%s\n\n", string(logAudioBufferBytes))
 
 		if err := conn.WriteJSON(audioBuffer); err != nil {
 			return fmt.Errorf("error sending input_audio_buffer.append: %v", err)
