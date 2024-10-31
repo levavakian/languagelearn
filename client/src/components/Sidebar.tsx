@@ -25,11 +25,11 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized, 
   const [isCreatingChat, setIsCreatingChat] = useState<boolean>(false);
   const newChatInputRef = useRef<HTMLInputElement>(null);
 
-  const handleUnauthorizedResponse = (response: Response) => {
+  const handleUnauthorizedResponse = useCallback((response: Response) => {
     if (response.status === 401 || response.status === 403) {
       onUnauthorized();
     }
-  };
+  }, [onUnauthorized]);
 
   const fetchChats = useCallback(async () => {
     try {
@@ -55,7 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized, 
       console.error('Error fetching chats:', error);
       return null;
     }
-  }, [token, onUnauthorized]);
+  }, [token, handleUnauthorizedResponse]);
 
   useEffect(() => {
     fetchChats().then(fetchedChats => {

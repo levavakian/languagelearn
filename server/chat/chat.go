@@ -73,8 +73,17 @@ type OpenAIResponseAudioDelta struct {
 	Delta string `json:"delta"`
 }
 
-type OpenAIResponseTextDone struct {
-	Type string `json:"type"`
+type OpenAIResponseDone struct {
+	Type     string `json:"type"`
+	Response struct {
+		Output []struct {
+			Content []struct {
+				Type      string `json:"type"`
+				Text      string `json:"text,omitempty"`
+				Transcript string `json:"transcript,omitempty"`
+			} `json:"content"`
+		} `json:"output"`
+	} `json:"response"`
 }
 
 type OpenAIError struct {
@@ -121,6 +130,14 @@ type InputAudioBufferAppend struct {
 
 type InputAudioBufferCommit struct {
 	Type string `json:"type"`
+}
+
+type AudioTranscriptionCompleted struct {
+	EventID       string `json:"event_id"`
+	Type          string `json:"type"`
+	ItemID        string `json:"item_id"`
+	ContentIndex  int    `json:"content_index"`
+	Transcript    string `json:"transcript"`
 }
 
 var (
@@ -357,7 +374,6 @@ func connectToOpenAI() (*websocket.Conn, error) {
 }
 
 func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
-	var currentMessage string
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
@@ -399,25 +415,21 @@ func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
 		}
 
 		switch msgType.Type {
-		case "response.text.delta":
-			var deltaMsg OpenAIResponseTextDelta
-			if err := json.Unmarshal(message, &deltaMsg); err != nil {
-				fmt.Printf("Error parsing delta message from OpenAI: %v\n", err)
+		case "conversation.item.input_audio_transcription.completed":
+			var transcriptionMsg AudioTranscriptionCompleted
+			if err := json.Unmarshal(message, &transcriptionMsg); err != nil {
+				fmt.Printf("Error parsing transcription message from OpenAI: %v\n", err)
 				continue
 			}
-			currentMessage += deltaMsg.Delta
 
-		case "response.text.done":
-			assistantMsg := Message{
-				Sender:  "Assistant @OpenAI Realtime",
-				Content: currentMessage,
+			userMsg := Message{
+				Sender:  "user",
+				Content: transcriptionMsg.Transcript,
 				Type:    "text",
 			}
 
-			addMessageToChat(chat, assistantMsg)
-			broadcastMessage(chat, assistantMsg)
-
-			currentMessage = "" // Reset for the next message
+			addMessageToChat(chat, userMsg)
+			broadcastMessage(chat, userMsg)
 
 		case "response.audio.delta":
 			var audioMsg OpenAIResponseAudioDelta
@@ -433,6 +445,33 @@ func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
 			}
 
 			broadcastMessage(chat, assistantMsg)
+
+		case "response.done":
+			var doneMsg OpenAIResponseDone
+			if err := json.Unmarshal(message, &doneMsg); err != nil {
+				fmt.Printf("Error parsing done message from OpenAI: %v\n", err)
+				continue
+			}
+
+			if len(doneMsg.Response.Output) > 0 && len(doneMsg.Response.Output[0].Content) > 0 {
+				content := doneMsg.Response.Output[0].Content[0]
+				
+				var assistantMsg Message
+				assistantMsg.Sender = "Assistant @OpenAI Realtime"
+
+				if content.Type == "text" {
+					assistantMsg.Type = "text"
+					assistantMsg.Content = content.Text
+				} else if content.Type == "audio" {
+					assistantMsg.Type = "text"
+					assistantMsg.Content = content.Transcript
+				}
+
+				if assistantMsg.Content != "" {
+					addMessageToChat(chat, assistantMsg)
+					broadcastMessage(chat, assistantMsg)
+				}
+			}
 
 		default:
 			var errorMsg OpenAIError

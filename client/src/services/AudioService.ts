@@ -1,5 +1,3 @@
-import { audioPlayer } from "./AudioPlayer";
-
 type AudioCallback = (chunk: Blob) => void;
 
 class AudioService {

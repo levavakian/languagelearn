@@ -8,8 +8,10 @@ interface MicProps {
 const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
   const [hasPermission, setHasPermission] = useState(false);
   const [lastChunkTime, setLastChunkTime] = useState<number | null>(null);
-  const isShiftPressed = useRef(false);
   const chunkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isCtrlPressed = useRef(false);
+  const isAltPressed = useRef(false);
+  const isRecording = useRef(false);
 
   useEffect(() => {
     audioService.requestPermissions().then(setHasPermission);
@@ -17,11 +19,14 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
-      if (e.key === 'Shift') {
-        isShiftPressed.current = true;
+      if (e.key === 'Control') {
+        isCtrlPressed.current = true;
+      }
+      if (e.key === 'Alt') {
+        isAltPressed.current = true;
       }
       
-      if (e.key === 'V' && isShiftPressed.current) {
+      if (isCtrlPressed.current && isAltPressed.current && !isRecording.current) {
         e.preventDefault();
         try {
           await audioService.startRecording((chunk: Blob) => {
@@ -36,6 +41,7 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
               setLastChunkTime(null);
             }, 500);
           });
+          isRecording.current = true;
         } catch (err) {
           setHasPermission(false);
         }
@@ -43,10 +49,21 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Shift') {
-        isShiftPressed.current = false;
-        audioService.stopRecording();
-        onAudioChunk(new Blob(), true); // Signal recording finished
+      if (e.key === 'Control') {
+        isCtrlPressed.current = false;
+        if (isRecording.current) {
+          audioService.stopRecording();
+          onAudioChunk(new Blob(), true); // Signal recording finished
+          isRecording.current = false;
+        }
+      }
+      if (e.key === 'Alt') {
+        isAltPressed.current = false;
+        if (isRecording.current) {
+          audioService.stopRecording();
+          onAudioChunk(new Blob(), true); // Signal recording finished
+          isRecording.current = false;
+        }
       }
     };
 
