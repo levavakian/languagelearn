@@ -1,7 +1,12 @@
 .message-content:hover {
+    box-shadow: none;
+}
+
+.message-content:hover:not(:has(.message-word:hover)) {
     box-shadow: 0 0 10px rgba(97, 218, 251, 0.5);
 }
 
 .message-word:hover {
+    background-color: rgba(97, 218, 251, 0.1);
     box-shadow: 0 0 5px rgba(97, 218, 251, 0.8);
 }

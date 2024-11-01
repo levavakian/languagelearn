@@ -134,11 +134,12 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   };
 
   const handleNoteSelect = (noteContent: string) => {
-    let prefix = selectedMessage ? `in the sentence '${selectedMessage}' ` : '';
     if (selectedWord) {
-      prefix = `for the word '${selectedWord}' ` + prefix;
+      const prefix = `for the word '${selectedWord}' in the sentence '${selectedMessage}' `;
+      setInputMessage(prefix + noteContent);
+    } else if (selectedMessage) {
+      setInputMessage(`in the sentence '${selectedMessage}' ${noteContent}`);
     }
-    setInputMessage(prefix + noteContent);
     setDropdownPosition(null);
     inputRef.current?.focus();
   };
