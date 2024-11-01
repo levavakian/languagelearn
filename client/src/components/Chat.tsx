@@ -3,6 +3,8 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import Mic from './Mic';
 import { audioPlayer } from '../services/AudioPlayer';
 import ChatSettings, { ConversationSettings } from './ChatSettings';
+import Dropdown from './Dropdown';
+import './Chat.css';
 
 interface Message {
   sender: string;
@@ -23,6 +25,9 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   const [settings, setSettings] = useState<ConversationSettings>({
     notes: []
   });
+  const [dropdownPosition, setDropdownPosition] = useState<{x: number, y: number} | null>(null);
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -36,10 +41,21 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   );
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.dropdown') && !target.closest('.message-content')) {
+        setDropdownPosition(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
     if (lastMessage !== null) {
       const newMessage = JSON.parse(lastMessage.data);
       if (newMessage.type === 'audio' && newMessage.sender !== 'user') {
-        // Convert base64 to Blob
         const binaryStr = atob(newMessage.content);
         const bytes = new Uint8Array(binaryStr.length);
         for (let i = 0; i < binaryStr.length; i++) {
@@ -69,7 +85,6 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
         throw new Error('Failed to fetch chat history');
       }
       const history = await response.json();
-      // Filter out audio messages from history
       setMessages(history.filter((msg: Message) => msg.type !== 'audio'));
     } catch (error) {
       console.error('Error fetching chat history:', error);
@@ -99,6 +114,35 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
       setInputMessage('');
     }
   };
+
+  const handleWordClick = (e: React.MouseEvent, message: string) => {
+    e.stopPropagation();
+    const word = (e.target as HTMLElement).textContent || '';
+    setSelectedWord(word);
+    setSelectedMessage(message);
+    setDropdownPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMessageClick = (e: React.MouseEvent, message: string) => {
+    e.stopPropagation();
+    // Only set message and position if no word is currently selected
+    if (!selectedWord) {
+      setSelectedWord(null);
+      setSelectedMessage(message);
+      setDropdownPosition({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleNoteSelect = (noteContent: string) => {
+    let prefix = selectedMessage ? `in the sentence '${selectedMessage}' ` : '';
+    if (selectedWord) {
+      prefix = `for the word '${selectedWord}' ` + prefix;
+    }
+    setInputMessage(prefix + noteContent);
+    setDropdownPosition(null);
+    inputRef.current?.focus();
+  };
+
   const handleAudioChunk = useCallback((chunk: Blob, isRecordingFinished: boolean) => {
     if (readyState === ReadyState.OPEN) {
       if (isRecordingFinished) {
@@ -111,7 +155,6 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
       } else {
         const reader = new FileReader();
         reader.onload = () => {
-          // Convert ArrayBuffer to base64
           const arrayBuffer = reader.result as ArrayBuffer;
           const bytes = new Uint8Array(arrayBuffer);
           let binary = '';
@@ -205,20 +248,52 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
             }}
           >
             <div
+              className="message-content"
+              onClick={(e) => handleMessageClick(e, message.content)}
               style={{
-                backgroundColor: message.sender === 'user' ? '#61dafb' : '#3a3f4b',
-                color: message.sender === 'user' ? 'black' : 'white',
+                backgroundColor: message.sender === 'user' ? '#4a5d4c' : '#3a3f4b',
+                color: message.sender === 'user' ? 'white' : 'white',
                 borderRadius: '10px',
                 padding: '10px',
-                wordWrap: 'break-word'
+                wordWrap: 'break-word',
+                cursor: 'pointer',
+                transition: 'box-shadow 0.2s ease'
               }}
             >
-              {message.content}
+              {message.content.split(' ').map((word, i) => (
+                <span
+                  key={i}
+                  onClick={(e) => handleWordClick(e, message.content)}
+                  style={{ 
+                    cursor: 'pointer', 
+                    margin: '0 2px',
+                    padding: '2px',
+                    borderRadius: '3px',
+                    transition: 'box-shadow 0.2s ease'
+                  }}
+                  className="message-word"
+                >
+                  {word}
+                </span>
+              ))}
             </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
+      {dropdownPosition && (
+        <div 
+          className="dropdown"
+          style={{
+            position: 'fixed',
+            left: dropdownPosition.x,
+            top: dropdownPosition.y,
+            zIndex: 1000
+          }}
+        >
+          <Dropdown settings={settings} onSelectNote={handleNoteSelect} />
+        </div>
+      )}
       <div className="input-area" style={{ 
         display: 'flex', 
         flexDirection: 'column',
