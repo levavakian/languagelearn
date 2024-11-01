@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sync"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -117,7 +118,7 @@ type Session struct {
 	InputAudioFormat       string                   `json:"input_audio_format,omitempty"`
 	OutputAudioFormat      string                   `json:"output_audio_format,omitempty"`
 	InputAudioTranscription InputAudioTranscription `json:"input_audio_transcription,omitempty"`
-	TurnDetection          TurnDetection           `json:"turn_detection,omitempty"`
+	TurnDetection          *TurnDetection          `json:"turn_detection"`
 	ToolChoice              string                  `json:"tool_choice,omitempty"`
 	Temperature             float64                 `json:"temperature,omitempty"`
 	MaxResponseOutputTokens int                     `json:"max_response_output_tokens,omitempty"`
@@ -326,12 +327,13 @@ func handleOpenAIConnection(chat *Chat, newMessage <-chan Message) {
 					InputAudioTranscription: InputAudioTranscription{
 						Model: "whisper-1",
 					},
-					TurnDetection: TurnDetection{
-						Type:              "server_vad",
-						Threshold:         0.5,
-						PrefixPaddingMs:  300,
-						SilenceDurationMs: 500,
-					},
+					// TurnDetection: &TurnDetection{
+					// 	Type:              "server_vad",
+					// 	Threshold:         0.5,
+					// 	PrefixPaddingMs:  300,
+					// 	SilenceDurationMs: 500,
+					// },
+					TurnDetection: nil,
 					ToolChoice:              "auto",
 					Temperature:             0.8,
 					MaxResponseOutputTokens: 4096,
@@ -462,14 +464,20 @@ func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
 				if content.Type == "text" {
 					assistantMsg.Type = "text"
 					assistantMsg.Content = content.Text
+					
+					// Add and broadcast text message immediately
+					addMessageToChat(chat, assistantMsg)
+					broadcastMessage(chat, assistantMsg)
 				} else if content.Type == "audio" {
 					assistantMsg.Type = "text"
 					assistantMsg.Content = content.Transcript
-				}
-
-				if assistantMsg.Content != "" {
-					addMessageToChat(chat, assistantMsg)
-					broadcastMessage(chat, assistantMsg)
+					
+					// For audio messages, delay adding and broadcasting by 200ms
+					go func(msg Message) {
+						time.Sleep(200 * time.Millisecond)
+						addMessageToChat(chat, msg)
+						broadcastMessage(chat, msg)
+					}(assistantMsg)
 				}
 			}
 
