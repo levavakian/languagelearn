@@ -40,6 +40,42 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
     }
   );
 
+  const handleSendMessage = useCallback(() => {
+    if (inputMessage.trim() && readyState === ReadyState.OPEN) {
+      const message = {
+        sender: 'user',
+        content: inputMessage.trim(),
+        type: 'text' as const
+      };
+      sendMessage(JSON.stringify(message));
+      setInputMessage('');
+    }
+  }, [inputMessage, readyState, sendMessage]);
+
+  useEffect(() => {
+    const handleGlobalKeyPress = (e: KeyboardEvent) => {
+      if (showSettings || !selectedChatId) return;
+      
+      if (
+        document.activeElement?.tagName === 'INPUT' || 
+        document.activeElement?.tagName === 'TEXTAREA'
+      ) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSendMessage();
+        }
+        return;
+      }
+
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        inputRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyPress);
+    return () => document.removeEventListener('keydown', handleGlobalKeyPress);
+  }, [showSettings, selectedChatId, handleSendMessage]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -103,18 +139,6 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (inputMessage.trim() && readyState === ReadyState.OPEN) {
-      const message = {
-        sender: 'user',
-        content: inputMessage.trim(),
-        type: 'text' as const
-      };
-      sendMessage(JSON.stringify(message));
-      setInputMessage('');
-    }
-  };
-
   const handleWordClick = (e: React.MouseEvent, message: string) => {
     e.stopPropagation();
     const word = (e.target as HTMLElement).textContent || '';
@@ -124,9 +148,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   };
 
   const handleMessageClick = (e: React.MouseEvent, message: string) => {
-    e.stopPropagation();
-    // Only set message and position if no word is currently selected
-    if (!selectedWord) {
+    if (!(e.target as HTMLElement).classList.contains('message-word')) {
       setSelectedWord(null);
       setSelectedMessage(message);
       setDropdownPosition({ x: e.clientX, y: e.clientY });
@@ -135,10 +157,9 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
 
   const handleNoteSelect = (noteContent: string) => {
     if (selectedWord) {
-      const prefix = `for the word '${selectedWord}' in the sentence '${selectedMessage}' `;
-      setInputMessage(prefix + noteContent);
+      setInputMessage(`for the word '${selectedWord?.trim()}' in the sentence '${selectedMessage?.trim()}' ${noteContent}`.trim());
     } else if (selectedMessage) {
-      setInputMessage(`in the sentence '${selectedMessage}' ${noteContent}`);
+      setInputMessage(`in the sentence '${selectedMessage?.trim()}' ${noteContent}`.trim());
     }
     setDropdownPosition(null);
     inputRef.current?.focus();
