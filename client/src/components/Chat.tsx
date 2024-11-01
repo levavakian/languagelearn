@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import Mic from './Mic';
 import { audioPlayer } from '../services/AudioPlayer';
+import ChatSettings, { ConversationSettings } from './ChatSettings';
 
 interface Message {
   sender: string;
@@ -18,6 +19,10 @@ interface ChatProps {
 const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState<ConversationSettings>({
+    notes: []
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -146,14 +151,39 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
     );
   }
 
+  if (showSettings) {
+    return <ChatSettings settings={settings} onSettingsChange={setSettings} />;
+  }
+
   return (
     <div className="chat-window" style={{ 
       display: 'flex', 
       flexDirection: 'column', 
       height: '100%',
       backgroundColor: '#282c34',
-      color: 'white'
+      color: 'white',
+      position: 'relative'
     }}>
+      <div style={{ height: '50px', position: 'relative' }}>
+        <button
+          onClick={() => setShowSettings(true)}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            background: 'none',
+            border: 'none',
+            color: '#61dafb',
+            cursor: 'pointer',
+            fontSize: '20px',
+            padding: '5px',
+            zIndex: 1
+          }}
+          title="Settings"
+        >
+          ⚙️
+        </button>
+      </div>
       <div className="messages" style={{ 
         flex: 1, 
         overflowY: 'auto', 

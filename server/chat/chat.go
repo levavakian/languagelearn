@@ -474,7 +474,7 @@ func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
 					
 					// For audio messages, delay adding and broadcasting by 200ms
 					go func(msg Message) {
-						time.Sleep(200 * time.Millisecond)
+						time.Sleep(500 * time.Millisecond) // Hacky delay to deal with misordering of input transcription
 						addMessageToChat(chat, msg)
 						broadcastMessage(chat, msg)
 					}(assistantMsg)
