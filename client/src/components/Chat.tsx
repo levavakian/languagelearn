@@ -152,7 +152,11 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   }
 
   if (showSettings) {
-    return <ChatSettings settings={settings} onSettingsChange={setSettings} />;
+    return <ChatSettings 
+      settings={settings} 
+      onSettingsChange={setSettings} 
+      onBack={() => setShowSettings(false)}
+    />;
   }
 
   return (

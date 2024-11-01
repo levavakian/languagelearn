@@ -15,9 +15,10 @@ export interface NoteNode {
 interface ChatSettingsProps {
   settings: ConversationSettings;
   onSettingsChange: (settings: ConversationSettings) => void;
+  onBack?: () => void; // Add onBack prop
 }
 
-const ChatSettings: React.FC<ChatSettingsProps> = ({ settings, onSettingsChange }) => {
+const ChatSettings: React.FC<ChatSettingsProps> = ({ settings, onSettingsChange, onBack }) => {
   const [addingNodeAt, setAddingNodeAt] = useState<{parentId: string | null, type: 'folder' | 'note'} | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState('');
@@ -248,7 +249,23 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ settings, onSettingsChange 
       height: '100%',
       overflowY: 'auto'
     }}>
-      <h2>Chat Settings</h2>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+        <button
+          onClick={onBack}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#61dafb',
+            cursor: 'pointer',
+            fontSize: '24px',
+            padding: '4px',
+            marginRight: '12px'
+          }}
+        >
+          ←
+        </button>
+        <h2 style={{ margin: 0 }}>Chat Settings</h2>
+      </div>
       <div style={{ marginBottom: '20px' }}>
         <button 
           onClick={() => setAddingNodeAt({ parentId: null, type: 'folder' })}
