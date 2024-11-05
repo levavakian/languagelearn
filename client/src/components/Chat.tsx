@@ -23,6 +23,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   const [inputMessage, setInputMessage] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<ConversationSettings>({
+    chatId: selectedChatId || undefined,
     notes: []
   });
   const [dropdownPosition, setDropdownPosition] = useState<{x: number, y: number} | null>(null);
@@ -218,9 +219,11 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
 
   if (showSettings) {
     return <ChatSettings 
-      settings={settings} 
+      token={token}
+      chatId={selectedChatId!}
       onSettingsChange={setSettings} 
       onBack={() => setShowSettings(false)}
+      onUnauthorized={onUnauthorized}
     />;
   }
 
@@ -345,7 +348,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
               borderRadius: '4px',
               resize: 'none'
             }}
-            placeholder="Type a message or hold Shift+V to record audio..."
+            placeholder="Type a message or hold Alt or Option to record audio..."
           />
           <div style={{
             display: 'flex',

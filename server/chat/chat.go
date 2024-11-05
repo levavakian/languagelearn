@@ -12,15 +12,25 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/levavakian/languagelearn/server/auth"
+	"github.com/levavakian/languagelearn/server/db"
 )
+
+// Global map to track active chat connections
+var (
+	activeChats = make(map[string]*ChatConnections)
+	chatsMutex sync.RWMutex
+)
+
+type ChatConnections struct {
+	Clients map[*websocket.Conn]bool
+	Mutex   sync.RWMutex
+}
 
 type Chat struct {
 	ID        string    `json:"id"`
 	CreatorID string    `json:"creatorId"`
 	Name      string    `json:"name"`
 	Messages  []Message `json:"messages"`
-	Clients   map[*websocket.Conn]bool `json:"-"`
-	Mutex     sync.RWMutex `json:"-"`
 }
 
 type Message struct {
@@ -142,14 +152,111 @@ type AudioTranscriptionCompleted struct {
 }
 
 var (
-	chats     = make(map[string]map[string]*Chat) // map[userEmail]map[chatID]*Chat
-	chatMutex sync.RWMutex
 	upgrader  = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
 	}
 )
+
+// Database access functions
+func insertChat(chatID string, creatorEmail string, name string) error {
+	_, err := db.DB.Exec(
+		"INSERT INTO chats (id, creator_id, name) VALUES (?, ?, ?)",
+		chatID, creatorEmail, name,
+	)
+	return err
+}
+
+func insertMessage(chatID string, msg Message) error {
+	_, err := db.DB.Exec(
+		"INSERT INTO messages (chat_id, sender, content, type) VALUES (?, ?, ?, ?)",
+		chatID, msg.Sender, msg.Content, msg.Type,
+	)
+	return err
+}
+
+func getChatFromDB(userEmail string, chatID string) (*Chat, error) {
+	var chat Chat
+	err := db.DB.QueryRow(
+		"SELECT id, creator_id, name FROM chats WHERE id = ? AND creator_id = ?",
+		chatID, userEmail,
+	).Scan(&chat.ID, &chat.CreatorID, &chat.Name)
+	
+	if err != nil {
+		return nil, err
+	}
+
+	messages, err := getMessagesForChat(chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	chat.Messages = messages
+	return &chat, nil
+}
+
+func getMessagesForChat(chatID string) ([]Message, error) {
+	var messages []Message
+	rows, err := db.DB.Query(
+		"SELECT sender, content, type FROM messages WHERE chat_id = ? ORDER BY created_at",
+		chatID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var msg Message
+		if err := rows.Scan(&msg.Sender, &msg.Content, &msg.Type); err != nil {
+			return nil, err
+		}
+		messages = append(messages, msg)
+	}
+	return messages, nil
+}
+
+func getUserChatsFromDB(userEmail string) ([]Chat, error) {
+	rows, err := db.DB.Query(
+		"SELECT id, creator_id, name FROM chats WHERE creator_id = ?",
+		userEmail,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []Chat
+	for rows.Next() {
+		var chat Chat
+		if err := rows.Scan(&chat.ID, &chat.CreatorID, &chat.Name); err != nil {
+			return nil, err
+		}
+		
+		messages, err := getMessagesForChat(chat.ID)
+		if err != nil {
+			continue
+		}
+		chat.Messages = messages
+		result = append(result, chat)
+	}
+	return result, nil
+}
+
+func getChatCreator(chatID string) (string, error) {
+	var creatorID string
+	err := db.DB.QueryRow(
+		"SELECT creator_id FROM chats WHERE id = ?",
+		chatID,
+	).Scan(&creatorID)
+	return creatorID, err
+}
+
+func deleteChatFromDB(chatID string) error {
+	_, err := db.DB.Exec("DELETE FROM chats WHERE id = ?", chatID)
+	return err
+}
 
 func SetupRoutes(api *mux.Router) {
 	api.HandleFunc("/chat", auth.AuthMiddleware(createChat)).Methods("POST")
@@ -172,29 +279,21 @@ func createChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	chatID := generateUniqueID()
-	newChat := &Chat{
+	
+	if err := insertChat(chatID, creatorEmail, chatData.Name); err != nil {
+		http.Error(w, "Failed to create chat", http.StatusInternalServerError)
+		return
+	}
+
+	newChat := Chat{
 		ID:        chatID,
 		CreatorID: creatorEmail,
 		Name:      chatData.Name,
 		Messages:  []Message{},
-		Clients:   make(map[*websocket.Conn]bool),
 	}
 
-	chatMutex.Lock()
-	if _, exists := chats[creatorEmail]; !exists {
-		chats[creatorEmail] = make(map[string]*Chat)
-	}
-	chats[creatorEmail][chatID] = newChat
-	chatMutex.Unlock()
-
-	// Return the full chat object instead of just the ID
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(Chat{
-		ID:        newChat.ID,
-		CreatorID: newChat.CreatorID,
-		Name:      newChat.Name,
-		Messages:  newChat.Messages,
-	})
+	json.NewEncoder(w).Encode(newChat)
 }
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -204,8 +303,8 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("WebSocket connection attempt for chat ID: %s, user: %s\n", chatID, userEmail)
 
-	chat := getChat(userEmail, chatID)
-	if chat == nil {
+	chat, err := getChatFromDB(userEmail, chatID)
+	if err != nil || chat == nil {
 		http.Error(w, "Chat not found", http.StatusNotFound)
 		return
 	}
@@ -217,9 +316,33 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	chat.Mutex.Lock()
-	chat.Clients[conn] = true
-	chat.Mutex.Unlock()
+	// Get or create chat connections
+	chatsMutex.Lock()
+	if activeChats[chatID] == nil {
+		activeChats[chatID] = &ChatConnections{
+			Clients: make(map[*websocket.Conn]bool),
+		}
+	}
+	chatConns := activeChats[chatID]
+	chatsMutex.Unlock()
+
+	// Add this connection
+	chatConns.Mutex.Lock()
+	chatConns.Clients[conn] = true
+	chatConns.Mutex.Unlock()
+
+	defer func() {
+		chatConns.Mutex.Lock()
+		delete(chatConns.Clients, conn)
+		chatConns.Mutex.Unlock()
+
+		// Clean up empty chat
+		chatsMutex.Lock()
+		if len(chatConns.Clients) == 0 {
+			delete(activeChats, chatID)
+		}
+		chatsMutex.Unlock()
+	}()
 
 	// Send message history to the newly connected client
 	sendMessageHistory(conn, chat)
@@ -228,27 +351,13 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	newMessage := make(chan Message)
 
 	// Start OpenAI connection handler
-	go handleOpenAIConnection(chat, newMessage)
+	go handleOpenAIConnection(chat, chatConns, newMessage)
 
 	// Handle messages from the user
-	handleUserMessages(conn, chat, newMessage)
-}
-
-func getChat(userEmail, chatID string) *Chat {
-	chatMutex.RLock()
-	defer chatMutex.RUnlock()
-
-	userChats, exists := chats[userEmail]
-	if !exists {
-		return nil
-	}
-	return userChats[chatID]
+	handleUserMessages(conn, chat, chatConns, newMessage)
 }
 
 func sendMessageHistory(conn *websocket.Conn, chat *Chat) {
-	chat.Mutex.RLock()
-	defer chat.Mutex.RUnlock()
-
 	for _, msg := range chat.Messages {
 		if err := conn.WriteJSON(msg); err != nil {
 			fmt.Printf("Error sending message history: %v\n", err)
@@ -257,52 +366,45 @@ func sendMessageHistory(conn *websocket.Conn, chat *Chat) {
 	}
 }
 
-func handleUserMessages(conn *websocket.Conn, chat *Chat, newMessage chan<- Message) {
+func handleUserMessages(conn *websocket.Conn, chat *Chat, chatConns *ChatConnections, newMessage chan<- Message) {
 	for {
 		var msg Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			removeClient(chat, conn)
 			break
 		}
 
 		// Only add text messages to chat history
 		if msg.Type != "audio" {
-			addMessageToChat(chat, msg)
+			addMessageToChat(chat.ID, msg)
 		}
-		broadcastMessage(chat, msg)
+		broadcastMessage(chatConns, msg)
 
 		// Send the new message to OpenAI
 		newMessage <- msg
 	}
 }
 
-func removeClient(chat *Chat, conn *websocket.Conn) {
-	chat.Mutex.Lock()
-	defer chat.Mutex.Unlock()
-	delete(chat.Clients, conn)
+func addMessageToChat(chatID string, msg Message) {
+	if err := insertMessage(chatID, msg); err != nil {
+		fmt.Printf("Error saving message: %v\n", err)
+	}
 }
 
-func addMessageToChat(chat *Chat, msg Message) {
-	chat.Mutex.Lock()
-	defer chat.Mutex.Unlock()
-	chat.Messages = append(chat.Messages, msg)
-}
+func broadcastMessage(chatConns *ChatConnections, msg Message) {
+	chatConns.Mutex.RLock()
+	defer chatConns.Mutex.RUnlock()
 
-func broadcastMessage(chat *Chat, msg Message) {
-	chat.Mutex.RLock()
-	defer chat.Mutex.RUnlock()
-
-	for client := range chat.Clients {
+	for client := range chatConns.Clients {
 		err := client.WriteJSON(msg)
 		if err != nil {
 			client.Close()
-			delete(chat.Clients, client)
+			delete(chatConns.Clients, client)
 		}
 	}
 }
 
-func handleOpenAIConnection(chat *Chat, newMessage <-chan Message) {
+func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <-chan Message) {
 	var openAIConn *websocket.Conn
 	var err error
 
@@ -347,7 +449,7 @@ func handleOpenAIConnection(chat *Chat, newMessage <-chan Message) {
 				continue
 			}
 
-			go handleOpenAIMessages(chat, openAIConn)
+			go handleOpenAIMessages(chat.ID, chatConns, openAIConn)
 		}
 
 		// Wait for a new message or connection error
@@ -375,7 +477,7 @@ func connectToOpenAI() (*websocket.Conn, error) {
 	return conn, err
 }
 
-func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
+func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *websocket.Conn) {
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
@@ -430,8 +532,8 @@ func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
 				Type:    "text",
 			}
 
-			addMessageToChat(chat, userMsg)
-			broadcastMessage(chat, userMsg)
+			addMessageToChat(chatID, userMsg)
+			broadcastMessage(chatConns, userMsg)
 
 		case "response.audio.delta":
 			var audioMsg OpenAIResponseAudioDelta
@@ -446,7 +548,7 @@ func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
 				Type:    "audio",
 			}
 
-			broadcastMessage(chat, assistantMsg)
+			broadcastMessage(chatConns, assistantMsg)
 
 		case "response.done":
 			var doneMsg OpenAIResponseDone
@@ -466,8 +568,8 @@ func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
 					assistantMsg.Content = content.Text
 					
 					// Add and broadcast text message immediately
-					addMessageToChat(chat, assistantMsg)
-					broadcastMessage(chat, assistantMsg)
+					addMessageToChat(chatID, assistantMsg)
+					broadcastMessage(chatConns, assistantMsg)
 				} else if content.Type == "audio" {
 					assistantMsg.Type = "text"
 					assistantMsg.Content = content.Transcript
@@ -475,8 +577,8 @@ func handleOpenAIMessages(chat *Chat, conn *websocket.Conn) {
 					// For audio messages, delay adding and broadcasting by 200ms
 					go func(msg Message) {
 						time.Sleep(500 * time.Millisecond) // Hacky delay to deal with misordering of input transcription
-						addMessageToChat(chat, msg)
-						broadcastMessage(chat, msg)
+						addMessageToChat(chatID, msg)
+						broadcastMessage(chatConns, msg)
 					}(assistantMsg)
 				}
 			}
@@ -610,32 +712,14 @@ func sendMessageToOpenAI(conn *websocket.Conn, msg Message) error {
 func getUserChats(w http.ResponseWriter, r *http.Request) {
 	userEmail := r.Header.Get("X-User-Email")
 
-	chatMutex.RLock()
-	userChats, exists := chats[userEmail]
-	chatMutex.RUnlock()
-
-	if !exists {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode([]Chat{})
+	chats, err := getUserChatsFromDB(userEmail)
+	if err != nil {
+		http.Error(w, "Failed to fetch chats", http.StatusInternalServerError)
 		return
 	}
 
-	result := make([]Chat, 0, len(userChats))
-	for _, chat := range userChats {
-		chat.Mutex.RLock()
-		result = append(result, Chat{
-			ID:        chat.ID,
-			CreatorID: chat.CreatorID,
-			Name:      chat.Name,
-			Messages:  chat.Messages,
-		})
-		chat.Mutex.RUnlock()
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(result); err != nil {
-		fmt.Printf("Error encoding JSON response: %v\n", err)
-	}
+	json.NewEncoder(w).Encode(chats)
 }
 
 func deleteChat(w http.ResponseWriter, r *http.Request) {
@@ -643,35 +727,22 @@ func deleteChat(w http.ResponseWriter, r *http.Request) {
 	chatID := vars["id"]
 	userEmail := r.Header.Get("X-User-Email")
 
-	chatMutex.Lock()
-	defer chatMutex.Unlock()
-
-	userChats, exists := chats[userEmail]
-	if !exists {
+	// Verify ownership
+	creatorID, err := getChatCreator(chatID)
+	if err != nil {
 		http.Error(w, "Chat not found", http.StatusNotFound)
 		return
 	}
 
-	chat, exists := userChats[chatID]
-	if !exists {
-		http.Error(w, "Chat not found", http.StatusNotFound)
-		return
-	}
-
-	if chat.CreatorID != userEmail {
+	if creatorID != userEmail {
 		http.Error(w, "Unauthorized to delete this chat", http.StatusForbidden)
 		return
 	}
 
-	chat.Mutex.Lock()
-	// Close all WebSocket connections
-	for client := range chat.Clients {
-		client.Close()
+	if err := deleteChatFromDB(chatID); err != nil {
+		http.Error(w, "Failed to delete chat", http.StatusInternalServerError)
+		return
 	}
-	chat.Mutex.Unlock()
-
-	// Remove the chat
-	delete(userChats, chatID)
 
 	w.WriteHeader(http.StatusNoContent)
 }

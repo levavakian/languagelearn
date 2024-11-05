@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export interface ConversationSettings {
+  chatId?: string;
   notes: NoteNode[];
 }
 
@@ -13,15 +14,75 @@ export interface NoteNode {
 }
 
 interface ChatSettingsProps {
-  settings: ConversationSettings;
+  token: string;
+  chatId: string;
   onSettingsChange: (settings: ConversationSettings) => void;
-  onBack?: () => void; // Add onBack prop
+  onBack?: () => void;
+  onUnauthorized: () => void;
 }
 
-const ChatSettings: React.FC<ChatSettingsProps> = ({ settings, onSettingsChange, onBack }) => {
+const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsChange, onBack, onUnauthorized }) => {
+  const [settings, setSettings] = useState<ConversationSettings>({ notes: [] });
   const [addingNodeAt, setAddingNodeAt] = useState<{parentId: string | null, type: 'folder' | 'note'} | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState('');
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch(`/api/chat/${chatId}/settings`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          onUnauthorized();
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch settings');
+        }
+
+        const data = await response.json();
+        setSettings(data);
+        onSettingsChange(data);
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      }
+    };
+
+    fetchSettings();
+  }, [chatId, token, onUnauthorized, onSettingsChange]);
+
+  const saveSettings = async (newSettings: ConversationSettings) => {
+    try {
+      const response = await fetch(`/api/chat/${chatId}/settings`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newSettings)
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        onUnauthorized();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to save settings');
+      }
+
+      setSettings(newSettings);
+      onSettingsChange(newSettings);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    }
+  };
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -34,11 +95,9 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ settings, onSettingsChange,
       isExpanded: true
     };
 
+    const newSettings = { ...settings };
     if (!parentId) {
-      onSettingsChange({
-        ...settings,
-        notes: [...settings.notes, newNode]
-      });
+      newSettings.notes = [...settings.notes, newNode];
     } else {
       const updateNodes = (nodes: NoteNode[]): NoteNode[] => {
         return nodes.map(node => {
@@ -57,12 +116,10 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ settings, onSettingsChange,
           return node;
         });
       };
-
-      onSettingsChange({
-        ...settings,
-        notes: updateNodes(settings.notes)
-      });
+      newSettings.notes = updateNodes(settings.notes);
     }
+
+    saveSettings(newSettings);
     setAddingNodeAt(null);
     setNewItemName('');
   };
@@ -80,10 +137,11 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ settings, onSettingsChange,
       });
     };
 
-    onSettingsChange({
+    const newSettings = {
       ...settings,
       notes: updateNodes(settings.notes)
-    });
+    };
+    saveSettings(newSettings);
   };
 
   const deleteNode = (nodeId: string) => {
@@ -97,10 +155,11 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ settings, onSettingsChange,
       });
     };
 
-    onSettingsChange({
+    const newSettings = {
       ...settings,
       notes: deleteFromNodes(settings.notes)
-    });
+    };
+    saveSettings(newSettings);
   };
 
   const updateNodeName = (nodeId: string, name: string) => {
@@ -116,10 +175,11 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ settings, onSettingsChange,
       });
     };
 
-    onSettingsChange({
+    const newSettings = {
       ...settings,
       notes: updateNodes(settings.notes)
-    });
+    };
+    saveSettings(newSettings);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, parentId: string | null, type: 'folder' | 'note') => {

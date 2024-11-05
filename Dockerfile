@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     git \
     golang \
-    sudo
+    sudo \
+    sqlite3
 
 # Install Node.js and npm using NodeSource
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \

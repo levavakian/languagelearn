@@ -9,7 +9,6 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
   const [hasPermission, setHasPermission] = useState(false);
   const [lastChunkTime, setLastChunkTime] = useState<number | null>(null);
   const chunkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isCtrlPressed = useRef(false);
   const isAltPressed = useRef(false);
   const isRecording = useRef(false);
 
@@ -19,14 +18,7 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
-      if (e.key === 'Control') {
-        isCtrlPressed.current = true;
-      }
-      if (e.key === 'Alt') {
-        isAltPressed.current = true;
-      }
-      
-      if (isCtrlPressed.current && isAltPressed.current && !isRecording.current) {
+      if (e.key === 'Alt' && !isRecording.current) {
         e.preventDefault();
         try {
           await audioService.startRecording((chunk: Blob) => {
@@ -49,14 +41,6 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Control') {
-        isCtrlPressed.current = false;
-        if (isRecording.current) {
-          audioService.stopRecording();
-          onAudioChunk(new Blob(), true); // Signal recording finished
-          isRecording.current = false;
-        }
-      }
       if (e.key === 'Alt') {
         isAltPressed.current = false;
         if (isRecording.current) {

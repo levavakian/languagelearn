@@ -1,0 +1,60 @@
+# Use an official Ubuntu base image
+FROM ubuntu:24.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update and install necessary packages
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    golang \
+    sqlite3
+
+# Install Node.js and npm using NodeSource
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    apt-get install -y nodejs
+
+# Install the latest version of npm
+RUN npm install -g npm@latest
+
+# Clean up
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the application code
+COPY . .
+
+# Build the UI
+WORKDIR /app/client
+RUN npm install
+RUN npm run build
+
+# Build the server
+WORKDIR /app/server
+RUN go mod download
+RUN go build -o server
+
+# Create database directory
+RUN mkdir -p /var/dbdata
+
+# Set environment variable for database path
+ENV DB_PATH=/var/dbdata/app.db
+
+# Expose the default port
+EXPOSE 8080
+
+# Start the server
+CMD ["./server"]
+
+# Docker run command to use:
+# docker run -d \
+#   --name languagelearn \
+#   -p 8080:8080 \
+#   -v /path/to/local/dbdata:/var/dbdata \
+#   -e OPENAI_SECRET_KEY="your_openai_key" \
+#   -e GOOGLE_API_SECRET="your_google_api_key" \
+#   languagelearn-deploy
+

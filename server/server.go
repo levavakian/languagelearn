@@ -11,13 +11,26 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/levavakian/languagelearn/server/auth"
 	"github.com/levavakian/languagelearn/server/chat"
+	"github.com/levavakian/languagelearn/server/db"
 )
 
 func main() {
+	// Get database path from env or use default
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "../dbdata/app.db"
+	}
+
+	// Initialize database
+	if err := db.InitDB(dbPath); err != nil {
+		log.Fatal("Failed to initialize database:", err)
+	}
+
 	r := mux.NewRouter()
 
 	api := r.PathPrefix("/api").Subrouter()
 	chat.SetupRoutes(api)
+	chat.SetupSettingsRoutes(api)
 	api.HandleFunc("/profile", auth.AuthMiddleware(handleProfile)).Methods("GET")
 
 	// Serve static files from the build/static directory
