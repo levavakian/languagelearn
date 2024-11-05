@@ -52,9 +52,9 @@ CMD ["./server"]
 # Docker run command to use:
 # docker run -d \
 #   --name languagelearn \
-#   -p 8080:8080 \
+#   --network host \
 #   -v /path/to/local/dbdata:/var/dbdata \
-#   -e OPENAI_SECRET_KEY="your_openai_key" \
-#   -e GOOGLE_API_SECRET="your_google_api_key" \
+#   -e OPENAI_SECRET_KEY \
+#   -e GOOGLE_API_SECRET \
 #   languagelearn-deploy
 
