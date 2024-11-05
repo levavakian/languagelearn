@@ -33,7 +33,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(
-    selectedChatId ? `ws://localhost:8080/api/chat/${selectedChatId}/ws?token=${encodeURIComponent(token)}` : null,
+    selectedChatId ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/chat/${selectedChatId}/ws?token=${encodeURIComponent(token)}` : null,
     {
       shouldReconnect: () => true,
       reconnectAttempts: 10,

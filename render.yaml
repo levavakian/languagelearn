@@ -14,3 +14,5 @@ services:
         sync: false
       - key: GOOGLE_API_SECRET
         sync: false
+      - key: ENVIRONMENT
+        value: production
