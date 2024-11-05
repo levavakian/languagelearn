@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: languagelearn
+    env: docker
+    dockerfilePath: ./Dockerfile.deploy
+    disk:
+      name: dbdata
+      mountPath: /var/dbdata
+      sizeGB: 1
+    envVars:
+      - key: DB_PATH
+        value: /var/dbdata/app.db
+      - key: OPENAI_SECRET_KEY
+        sync: false
+      - key: GOOGLE_API_SECRET
+        sync: false
+    ports:
+      - port: 8080
+        protocol: TCP
