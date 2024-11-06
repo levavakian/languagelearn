@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import Mic from './Mic';
 import { audioPlayer } from '../services/AudioPlayer';
@@ -16,9 +16,10 @@ interface ChatProps {
   token: string;
   selectedChatId: string | null;
   onUnauthorized: () => void;
+  isSidebarExpanded: boolean;
 }
 
-const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) => {
+const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSidebarExpanded }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [showSettings, setShowSettings] = useState(false);
@@ -134,7 +135,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
       fetchChatHistory();
       inputRef.current?.focus();
     }
-  }, [selectedChatId, fetchChatHistory]);
+  }, [selectedChatId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -200,6 +201,18 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const chatStyles = useMemo(() => ({
+    chatWindow: { 
+      display: 'flex', 
+      flexDirection: 'column' as const, 
+      height: '100%',
+      backgroundColor: '#282c34',
+      color: 'white',
+      position: 'relative' as const,
+      transition: 'all 0.3s ease',
+    }
+  }), []);
+
   if (!selectedChatId) {
     return (
       <div className="chat-window" style={{ 
@@ -228,14 +241,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   }
 
   return (
-    <div className="chat-window" style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      height: '100%',
-      backgroundColor: '#282c34',
-      color: 'white',
-      position: 'relative'
-    }}>
+    <div className="chat-window" style={chatStyles.chatWindow}>
       <div style={{ height: '50px', position: 'relative' }}>
         <button
           onClick={() => setShowSettings(true)}

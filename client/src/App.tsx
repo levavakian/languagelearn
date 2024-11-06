@@ -69,17 +69,26 @@ const styles = {
     flexDirection: 'column' as const,
     overflow: 'hidden',
   },
+  sidebarContainer: {
+    position: 'relative' as const,
+    display: 'flex',
+  },
   toggleButton: {
-    position: 'fixed' as const,
-    left: '10px',
-    top: '15px',
+    position: 'absolute' as const,
+    right: '-15px',
+    top: '20px',
     zIndex: 1000,
-    backgroundColor: darkModeColors.primary,
-    color: darkModeColors.text,
+    backgroundColor: '#3f51b5',
+    color: 'white',
     border: 'none',
     borderRadius: '4px',
     padding: '8px',
     cursor: 'pointer',
+    width: '30px',
+    height: '30px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   }
 };
 
@@ -98,9 +107,18 @@ function App() {
       setIsSidebarExpanded(window.innerWidth >= 768);
     };
 
+    const handleToggleSidebar = () => {
+      setIsSidebarExpanded(!isSidebarExpanded);
+    };
+
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    window.addEventListener('toggleSidebar', handleToggleSidebar);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('toggleSidebar', handleToggleSidebar);
+    };
+  }, [isSidebarExpanded]);
 
   const handleLoginSuccess = (response: any) => {
     console.log('Login Success:', response);
@@ -135,10 +153,6 @@ function App() {
     }
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarExpanded(!isSidebarExpanded);
-  };
-
   const renderAuthButton = () => {
     if (jwt) {
       return (
@@ -160,35 +174,45 @@ function App() {
     <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
       <div style={styles.app}>
         <header style={styles.header}>
-          {jwt && (
-            <button onClick={toggleSidebar} style={styles.toggleButton}>
-              {isSidebarExpanded ? '←' : '→'}
-            </button>
-          )}
           {renderAuthButton()}
         </header>
         <div style={styles.content} className="hide-scrollbar">
           {jwt && (
-            <div 
-              className="hide-scrollbar"
-              style={{
-                ...styles.sidebar,
-                ...(isSidebarExpanded ? {} : styles.sidebarCollapsed)
-              }}
-            >
-              <Sidebar 
-                token={jwt} 
-                onSelectChat={handleSelectChat} 
-                onUnauthorized={handleUnauthorized}
-                selectedChatId={selectedChatId}
-              />
-            </div>
+            <>
+              <div style={styles.sidebarContainer}>
+                <button
+                  className="sidebar-toggle"
+                  onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+                  style={styles.toggleButton}
+                >
+                  {isSidebarExpanded ? '←' : '→'}
+                </button>
+                <div 
+                  className="hide-scrollbar"
+                  style={{
+                    ...styles.sidebar,
+                    ...(isSidebarExpanded ? {} : styles.sidebarCollapsed)
+                  }}
+                >
+                  <Sidebar 
+                    token={jwt} 
+                    onSelectChat={handleSelectChat} 
+                    onUnauthorized={handleUnauthorized}
+                    selectedChatId={selectedChatId}
+                  />
+                </div>
+              </div>
+              <div style={styles.chatContainer}>
+                <Chat 
+                  key={selectedChatId || 'empty'} 
+                  token={jwt} 
+                  selectedChatId={selectedChatId} 
+                  onUnauthorized={handleUnauthorized}
+                  isSidebarExpanded={isSidebarExpanded}
+                />
+              </div>
+            </>
           )}
-          <div style={styles.chatContainer}>
-            {jwt && (
-              <Chat token={jwt} selectedChatId={selectedChatId} onUnauthorized={handleUnauthorized} />
-            )}
-          </div>
         </div>
       </div>
     </GoogleOAuthProvider>

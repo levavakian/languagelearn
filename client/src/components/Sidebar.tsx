@@ -152,9 +152,17 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized, 
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
-      width: '100%'
+      width: '100%',
+      position: 'relative'
     }}>
-      <h2 style={{ marginBottom: '20px' }}>Chats</h2>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '20px'
+      }}>
+        <h2 style={{ margin: 0 }}>Chats</h2>
+      </div>
       {isCreatingChat ? (
         <div style={{ marginBottom: '20px' }}>
           <input
