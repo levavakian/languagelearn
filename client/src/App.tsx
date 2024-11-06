@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import Sidebar from './components/Sidebar';
@@ -10,6 +10,7 @@ const darkModeColors = {
   primary: '#3f51b5',
   secondary: '#303030',
   accent: '#7986cb',
+  sidebarBackground: '#282c34',
 };
 
 const styles = {
@@ -41,11 +42,26 @@ const styles = {
     display: 'flex',
     flex: 1,
     overflow: 'hidden',
+    msOverflowStyle: 'none' as const,
+    scrollbarWidth: 'none' as 'none',
   },
   sidebar: {
     width: '250px',
     borderRight: `1px solid ${darkModeColors.accent}`,
     height: 'calc(100vh - 60px)',
+    transition: 'all 0.3s ease',
+    overflow: 'hidden',
+    backgroundColor: darkModeColors.sidebarBackground,
+    msOverflowStyle: 'none' as const,
+    scrollbarWidth: 'none' as 'none',
+    '&::-webkit-scrollbar': {
+      display: 'none'
+    }
+  },
+  sidebarCollapsed: {
+    width: '0px',
+    padding: '0',
+    opacity: '0',
   },
   chatContainer: {
     flex: 1,
@@ -53,17 +69,37 @@ const styles = {
     flexDirection: 'column' as const,
     overflow: 'hidden',
   },
+  toggleButton: {
+    position: 'fixed' as const,
+    left: '10px',
+    top: '15px',
+    zIndex: 1000,
+    backgroundColor: darkModeColors.primary,
+    color: darkModeColors.text,
+    border: 'none',
+    borderRadius: '4px',
+    padding: '8px',
+    cursor: 'pointer',
+  }
 };
 
 function App() {
   const [jwt, setJwt] = useState<string | null>(null);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(window.innerWidth >= 768);
 
   useEffect(() => {
     const storedJwt = localStorage.getItem('jwt');
     if (storedJwt) {
       setJwt(storedJwt);
     }
+
+    const handleResize = () => {
+      setIsSidebarExpanded(window.innerWidth >= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const handleLoginSuccess = (response: any) => {
@@ -94,6 +130,13 @@ function App() {
   const handleSelectChat = (chatId: string) => {
     console.log('Selected chat:', chatId);
     setSelectedChatId(chatId);
+    if (window.innerWidth < 768) {
+      setIsSidebarExpanded(false);
+    }
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarExpanded(!isSidebarExpanded);
   };
 
   const renderAuthButton = () => {
@@ -117,11 +160,22 @@ function App() {
     <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
       <div style={styles.app}>
         <header style={styles.header}>
+          {jwt && (
+            <button onClick={toggleSidebar} style={styles.toggleButton}>
+              {isSidebarExpanded ? '←' : '→'}
+            </button>
+          )}
           {renderAuthButton()}
         </header>
-        <div style={styles.content}>
+        <div style={styles.content} className="hide-scrollbar">
           {jwt && (
-            <div style={styles.sidebar}>
+            <div 
+              className="hide-scrollbar"
+              style={{
+                ...styles.sidebar,
+                ...(isSidebarExpanded ? {} : styles.sidebarCollapsed)
+              }}
+            >
               <Sidebar 
                 token={jwt} 
                 onSelectChat={handleSelectChat} 

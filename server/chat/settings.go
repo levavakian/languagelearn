@@ -175,7 +175,8 @@ func updateChatSettings(w http.ResponseWriter, r *http.Request) {
 
 	settings.ChatID = chatID // Ensure chatID matches URL param
 	if err := saveChatSettingsToDB(settings); err != nil {
-		http.Error(w, "Failed to save settings", http.StatusInternalServerError)
+		fmt.Printf("Error saving chat settings: %v\n", err)
+		http.Error(w, fmt.Sprintf("Failed to save settings: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -207,11 +208,22 @@ func saveChatSettingsToDB(settings ChatSettings) error {
 		return fmt.Errorf("error marshaling settings: %v", err)
 	}
 
-	_, err = db.DB.Exec(
-		`INSERT INTO chat_settings (chat_id, settings) 
-		 VALUES (?, ?) 
-		 ON DUPLICATE KEY UPDATE settings = ?`,
-		settings.ChatID, string(settingsJSON), string(settingsJSON),
+	result, err := db.DB.Exec(
+		`REPLACE INTO chat_settings (chat_id, settings) VALUES (?, ?)`,
+		settings.ChatID, string(settingsJSON),
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("database error while saving settings: %v", err)
+	}
+
+	// Verify the operation affected a row
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("error checking affected rows: %v", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("no rows were affected when saving settings")
+	}
+
+	return nil
 }

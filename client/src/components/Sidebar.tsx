@@ -144,13 +144,15 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized, 
 
   return (
     <div className="sidebar" style={{
-      backgroundColor: '#282c34',
+      backgroundColor: 'inherit',
       color: 'white',
       padding: '20px',
       height: '100%',
       boxSizing: 'border-box',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      overflow: 'hidden',
+      width: '100%'
     }}>
       <h2 style={{ marginBottom: '20px' }}>Chats</h2>
       {isCreatingChat ? (

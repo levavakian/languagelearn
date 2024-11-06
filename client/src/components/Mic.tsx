@@ -16,38 +16,48 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
     audioService.requestPermissions().then(setHasPermission);
   }, []);
 
+  const startRecording = async () => {
+    if (!isRecording.current) {
+      try {
+        await audioService.startRecording((chunk: Blob) => {
+          onAudioChunk(chunk, false);
+          setLastChunkTime(Date.now());
+          
+          if (chunkTimeoutRef.current) {
+            clearTimeout(chunkTimeoutRef.current);
+          }
+          
+          chunkTimeoutRef.current = setTimeout(() => {
+            setLastChunkTime(null);
+          }, 500);
+        });
+        isRecording.current = true;
+      } catch (err) {
+        setHasPermission(false);
+      }
+    }
+  };
+
+  const stopRecording = () => {
+    if (isRecording.current) {
+      audioService.stopRecording();
+      onAudioChunk(new Blob(), true); // Signal recording finished
+      isRecording.current = false;
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
       if (e.key === 'Alt' && !isRecording.current) {
         e.preventDefault();
-        try {
-          await audioService.startRecording((chunk: Blob) => {
-            onAudioChunk(chunk, false);
-            setLastChunkTime(Date.now());
-            
-            if (chunkTimeoutRef.current) {
-              clearTimeout(chunkTimeoutRef.current);
-            }
-            
-            chunkTimeoutRef.current = setTimeout(() => {
-              setLastChunkTime(null);
-            }, 500);
-          });
-          isRecording.current = true;
-        } catch (err) {
-          setHasPermission(false);
-        }
+        await startRecording();
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === 'Alt') {
         isAltPressed.current = false;
-        if (isRecording.current) {
-          audioService.stopRecording();
-          onAudioChunk(new Blob(), true); // Signal recording finished
-          isRecording.current = false;
-        }
+        stopRecording();
       }
     };
 
@@ -62,17 +72,25 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
   }, [onAudioChunk]);
 
   return (
-    <div style={{
-      width: '40px',
-      height: '40px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#3a3f4b',
-      borderRadius: '4px',
-      boxShadow: lastChunkTime ? '0 0 10px #4CAF50' : 'none',
-      transition: 'box-shadow 0.3s ease'
-    }}>
+    <div 
+      style={{
+        width: '40px',
+        height: '40px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#3a3f4b',
+        borderRadius: '4px',
+        boxShadow: lastChunkTime ? '0 0 10px #4CAF50' : 'none',
+        transition: 'box-shadow 0.3s ease',
+        cursor: 'pointer'
+      }}
+      onMouseDown={startRecording}
+      onMouseUp={stopRecording}
+      onMouseLeave={stopRecording}
+      onTouchStart={startRecording}
+      onTouchEnd={stopRecording}
+    >
       <svg 
         width="24" 
         height="24" 

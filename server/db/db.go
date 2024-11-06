@@ -58,5 +58,16 @@ func createTables() error {
 			FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
 		)
 	`)
+	if err != nil {
+		return err
+	}
+
+	// Create chat_settings table
+	_, err = DB.Exec(`
+		CREATE TABLE IF NOT EXISTS chat_settings (
+			chat_id TEXT PRIMARY KEY REFERENCES chats(id) ON DELETE CASCADE,
+			settings TEXT NOT NULL
+		)
+	`)
 	return err
 }
