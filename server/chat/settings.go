@@ -169,17 +169,41 @@ func updateChatSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var settings ChatSettings
-	if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
+	var newSettings ChatSettings
+	if err := json.NewDecoder(r.Body).Decode(&newSettings); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	settings.ChatID = chatID // Ensure chatID matches URL param
-	if err := saveChatSettingsToDB(settings); err != nil {
+	newSettings.ChatID = chatID // Ensure chatID matches URL param
+
+	// Get current settings to compare
+	currentSettings, err := getChatSettingsFromDB(chatID)
+	if err != nil {
+		currentSettings = getDefaultSettings(chatID)
+	}
+
+	// Check if custom instructions have changed
+	instructionsChanged := currentSettings.CustomInstructions != newSettings.CustomInstructions
+
+	if err := saveChatSettingsToDB(newSettings); err != nil {
 		fmt.Printf("Error saving chat settings: %v\n", err)
 		http.Error(w, fmt.Sprintf("Failed to save settings: %v", err), http.StatusInternalServerError)
 		return
+	}
+
+	// Only notify active connections if custom instructions changed
+	if instructionsChanged {
+		chatsMutex.RLock()
+		if chatConns := activeChats[chatID]; chatConns != nil {
+			select {
+			case chatConns.SettingsUpdate <- SettingsUpdate{ChatID: chatID, Settings: newSettings}:
+				fmt.Printf("Sent custom instructions update for chat %s\n", chatID)
+			default:
+				fmt.Printf("Skipped settings update for chat %s: channel full\n", chatID)
+			}
+		}
+		chatsMutex.RUnlock()
 	}
 
 	w.WriteHeader(http.StatusOK)

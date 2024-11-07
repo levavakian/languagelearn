@@ -4,6 +4,7 @@ export interface ConversationSettings {
   chatId?: string;
   notes: NoteNode[];
   preferAudioResponse?: boolean;
+  customInstructions?: string;
 }
 
 export interface NoteNode {
@@ -53,12 +54,15 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
   const [addingNodeAt, setAddingNodeAt] = useState<{parentId: string | null, type: 'folder' | 'note'} | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState('');
+  const [editingInstructions, setEditingInstructions] = useState(false);
+  const [customInstructions, setCustomInstructions] = useState('');
 
   useEffect(() => {
     const loadSettings = async () => {
       const data = await fetchChatSettings(chatId, token, onUnauthorized);
       if (data) {
         setSettings(data);
+        setCustomInstructions(data.customInstructions || '');
         onSettingsChange(data);
       }
     };
@@ -309,6 +313,16 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
     );
   };
 
+  const handleInstructionsUpdate = async () => {
+    const newSettings = {
+      ...settings,
+      customInstructions
+    };
+    
+    await saveSettings(newSettings);
+    setEditingInstructions(false);
+  };
+
   return (
     <div style={{ 
       padding: '20px',
@@ -339,6 +353,87 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
           ✕
         </button>
       </div>
+
+      <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#3a3f4b', borderRadius: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <h3 style={{ margin: 0 }}>Custom Instructions</h3>
+          <button
+            onClick={() => setEditingInstructions(!editingInstructions)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#61dafb',
+              cursor: 'pointer',
+              padding: '5px'
+            }}
+          >
+            {editingInstructions ? '💾' : '✏️'}
+          </button>
+        </div>
+        
+        {editingInstructions ? (
+          <div>
+            <textarea
+              value={customInstructions}
+              onChange={(e) => setCustomInstructions(e.target.value)}
+              style={{
+                width: '100%',
+                minHeight: '100px',
+                backgroundColor: '#282c34',
+                color: 'white',
+                border: '1px solid #61dafb',
+                borderRadius: '4px',
+                padding: '8px',
+                marginBottom: '10px',
+                resize: 'vertical'
+              }}
+              placeholder="Enter custom instructions for the AI..."
+            />
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setCustomInstructions(settings.customInstructions || '');
+                  setEditingInstructions(false);
+                }}
+                style={{
+                  background: '#4a4f5a',
+                  border: 'none',
+                  color: 'white',
+                  padding: '5px 10px',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleInstructionsUpdate}
+                style={{
+                  background: '#61dafb',
+                  border: 'none',
+                  color: '#282c34',
+                  padding: '5px 10px',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ 
+            whiteSpace: 'pre-wrap',
+            backgroundColor: '#282c34',
+            padding: '10px',
+            borderRadius: '4px',
+            minHeight: '50px'
+          }}>
+            {settings.customInstructions || 'No custom instructions set'}
+          </div>
+        )}
+      </div>
+
       <div style={{ marginBottom: '20px' }}>
         <button 
           onClick={() => setAddingNodeAt({ parentId: null, type: 'folder' })}
