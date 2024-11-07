@@ -169,6 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized, 
         <div style={{ marginBottom: '20px' }}>
           <input
             ref={newChatInputRef}
+            className="sidebar-chat-input"
             type="text"
             value={newChatName}
             onChange={(e) => setNewChatName(e.target.value)}

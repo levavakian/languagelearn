@@ -39,6 +39,9 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
       shouldReconnect: () => true,
       reconnectAttempts: 10,
       reconnectInterval: 3000,
+      onOpen: () => {
+          setMessages([]);
+      },
     }
   );
 
@@ -57,6 +60,9 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
   useEffect(() => {
     const handleGlobalKeyPress = (e: KeyboardEvent) => {
       if (showSettings || !selectedChatId) return;
+      
+      const isSidebarInputFocused = document.activeElement?.classList.contains('sidebar-chat-input');
+      if (isSidebarInputFocused) return;
       
       if (
         document.activeElement?.tagName === 'INPUT' || 
@@ -300,6 +306,9 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
                 borderRadius: '10px',
                 padding: '10px',
                 wordWrap: 'break-word',
+                wordBreak: 'keep-all',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap',
                 cursor: 'pointer',
                 transition: 'box-shadow 0.2s ease'
               }}

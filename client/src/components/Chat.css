@@ -1,9 +1,20 @@
+.message-content {
+    word-break: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
+
 .message-content:hover {
     box-shadow: none;
 }
 
 .message-content:hover:not(:has(.message-word:hover)) {
     box-shadow: 0 0 10px rgba(97, 218, 251, 0.5);
+}
+
+.message-word {
+    display: inline-block;
 }
 
 .message-word:hover {

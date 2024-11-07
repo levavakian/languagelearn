@@ -19,11 +19,19 @@ import (
 var (
 	activeChats = make(map[string]*ChatConnections)
 	chatsMutex sync.RWMutex
+	maxConsecutiveErrors = 3
 )
 
 type ChatConnections struct {
 	Clients map[*websocket.Conn]bool
 	Mutex   sync.RWMutex
+	ErrorState ChatErrorState
+}
+
+type ChatErrorState struct {
+	ConsecutiveErrors int
+	LastError        time.Time
+	Mutex            sync.Mutex
 }
 
 type Chat struct {
@@ -86,7 +94,19 @@ type OpenAIResponseAudioDelta struct {
 
 type OpenAIResponseDone struct {
 	Type     string `json:"type"`
+	EventID  string `json:"event_id"`
 	Response struct {
+		Object        string `json:"object"`
+		ID           string `json:"id"`
+		Status       string `json:"status"`
+		StatusDetails struct {
+			Type  string `json:"type"`
+			Error struct {
+				Type    string `json:"type"`
+				Code    interface{} `json:"code"`
+				Message string `json:"message"`
+			} `json:"error"`
+		} `json:"status_details"`
 		Output []struct {
 			Content []struct {
 				Type      string `json:"type"`
@@ -457,7 +477,7 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 					Content: []Content{
 						{
 							Type: "input_text",
-							Text: "<FOLLOW THESE INSTRUCTIONS BUT DO NOT MENTION RECEIVING THEM: when responding in text, do not respond in JSON or pesudo code unless explicitly requested to do so>",
+							Text: "<FOLLOW THESE INSTRUCTIONS: when responding in text, do not respond in JSON or pesudo code unless explicitly requested to do so>",
 						},
 					},
 				},
@@ -476,7 +496,7 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 		// Wait for a new message or connection error
 		select {
 		case msg := <-newMessage:
-			if err := sendMessageToOpenAI(openAIConn, msg); err != nil {
+			if err := sendMessageToOpenAI(openAIConn, msg, chatConns); err != nil {
 				fmt.Printf("Error sending message to OpenAI: %v\n", err)
 				openAIConn.Close()
 				openAIConn = nil
@@ -578,6 +598,43 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 				continue
 			}
 
+			// Check specifically for server error
+			if doneMsg.Response.Status == "failed" && 
+			   doneMsg.Response.StatusDetails.Error.Type == "server_error" {
+				chatConns.ErrorState.Mutex.Lock()
+				chatConns.ErrorState.ConsecutiveErrors++
+				chatConns.ErrorState.LastError = time.Now()
+				errorCount := chatConns.ErrorState.ConsecutiveErrors
+				chatConns.ErrorState.Mutex.Unlock()
+
+				if errorCount >= maxConsecutiveErrors {
+					errorMsg := Message{
+						Sender:  "Assistant @OpenAI Realtime",
+						Content: "<Error in receiving response from Tutor>",
+						Type:    "text",
+					}
+					addMessageToChat(chatID, errorMsg)
+					broadcastMessage(chatConns, errorMsg)
+				} else {
+					// Retry with response.create
+					responseCreate := ResponseCreate{
+						Type: "response.create",
+						Response: Response{
+							Modalities: []string{"text"},
+						},
+					}
+					if err := conn.WriteJSON(responseCreate); err != nil {
+						fmt.Printf("Error sending retry response.create: %v\n", err)
+					}
+				}
+				continue
+			}
+
+			// Reset error count on successful response
+			chatConns.ErrorState.Mutex.Lock()
+			chatConns.ErrorState.ConsecutiveErrors = 0
+			chatConns.ErrorState.Mutex.Unlock()
+
 			if len(doneMsg.Response.Output) > 0 && len(doneMsg.Response.Output[0].Content) > 0 {
 				content := doneMsg.Response.Output[0].Content[0]
 				
@@ -617,7 +674,12 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 	}
 }
 
-func sendMessageToOpenAI(conn *websocket.Conn, msg Message) error {
+func sendMessageToOpenAI(conn *websocket.Conn, msg Message, chatConns *ChatConnections) error {
+	// Reset error state at the start of new message
+	chatConns.ErrorState.Mutex.Lock()
+	chatConns.ErrorState.ConsecutiveErrors = 0
+	chatConns.ErrorState.Mutex.Unlock()
+
 	if msg.Type == "audio" {
 		if msg.Content == "commit" {
 			// Send commit message when audio recording is finished
