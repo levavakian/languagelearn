@@ -147,7 +147,7 @@ function App() {
 
   const handleSelectChat = (chatId: string) => {
     console.log('Selected chat:', chatId);
-    setSelectedChatId(chatId);
+    setSelectedChatId(chatId || null);
     if (window.innerWidth < 768) {
       setIsSidebarExpanded(false);
     }

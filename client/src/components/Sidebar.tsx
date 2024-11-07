@@ -112,9 +112,11 @@ const Sidebar: React.FC<SidebarProps> = ({ token, onSelectChat, onUnauthorized, 
       }
       setChats(prevChats => {
         const updatedChats = prevChats.filter(chat => chat.id !== chatId);
-        // If there are remaining chats, select the first one
+        // If there are remaining chats, select the first one, otherwise select none
         if (updatedChats.length > 0) {
           onSelectChat(updatedChats[0].id);
+        } else {
+          onSelectChat(''); // or null, depending on what your onSelectChat expects
         }
         return updatedChats;
       });

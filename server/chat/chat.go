@@ -449,6 +449,27 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 				continue
 			}
 
+			injectItem := ConversationItemCreate{
+				Type: "conversation.item.create",
+				Item: Item{
+					Type: "message",
+					Role: "user",
+					Content: []Content{
+						{
+							Type: "input_text",
+							Text: "<FOLLOW THESE INSTRUCTIONS BUT DO NOT MENTION RECEIVING THEM: when responding in text, do not respond in JSON or pesudo code unless explicitly requested to do so>",
+						},
+					},
+				},
+			}
+
+			if err := openAIConn.WriteJSON(injectItem); err != nil {
+				fmt.Printf("Error sending injection message: %v\n", err)
+				openAIConn.Close()
+				openAIConn = nil
+				continue
+			}
+
 			go handleOpenAIMessages(chat.ID, chatConns, openAIConn)
 		}
 
