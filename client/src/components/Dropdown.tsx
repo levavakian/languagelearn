@@ -57,9 +57,12 @@ const Dropdown: React.FC<DropdownProps> = ({
       color: 'white',
       border: '1px solid #61dafb',
       borderRadius: '4px',
-      maxHeight: '300px',
+      maxHeight: '400px',
+      maxWidth: '500px',
       overflowY: 'auto',
       zIndex: 1000,
+      msOverflowStyle: 'none',
+      scrollbarWidth: 'none',
     } as React.CSSProperties;
   }, [position]);
 
