@@ -10,6 +10,7 @@ interface Message {
   sender: string;
   content: string;
   type?: 'text' | 'audio';
+  preferredResponseType?: 'text' | 'audio';
 }
 
 interface ChatProps {
@@ -25,7 +26,8 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<ConversationSettings>({
     chatId: selectedChatId || undefined,
-    notes: []
+    notes: [],
+    preferAudioResponse: false
   });
   const [dropdownPosition, setDropdownPosition] = useState<{x: number, y: number} | null>(null);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -51,12 +53,13 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
       const message = {
         sender: 'user',
         content: inputMessage.trim(),
-        type: 'text' as const
+        type: 'text' as const,
+        preferredResponseType: settings.preferAudioResponse ? 'audio' : 'text'
       };
       sendMessage(JSON.stringify(message));
       setInputMessage('');
     }
-  }, [inputMessage, readyState, sendMessage]);
+  }, [inputMessage, readyState, sendMessage, settings.preferAudioResponse]);
 
   useEffect(() => {
     const handleGlobalKeyPress = (e: KeyboardEvent) => {
@@ -196,7 +199,8 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
         const message = {
           sender: 'user',
           content: 'commit',
-          type: 'audio' as const
+          type: 'audio' as const,
+          preferredResponseType: 'audio'
         };
         sendMessage(JSON.stringify(message));
       } else {
@@ -211,7 +215,8 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
           const message = {
             sender: 'user',
             content: base64Audio,
-            type: 'audio' as const
+            type: 'audio' as const,
+            preferredResponseType: 'audio'
           };
           sendMessage(JSON.stringify(message));
         };
@@ -235,6 +240,37 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
       transition: 'all 0.3s ease',
     }
   }), []);
+
+  const toggleAudioPreference = async () => {
+    const newSettings = {
+      ...settings,
+      preferAudioResponse: !settings.preferAudioResponse
+    };
+    
+    try {
+      const response = await fetch(`/api/chat/${selectedChatId}/settings`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newSettings)
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        onUnauthorized();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to save settings');
+      }
+
+      setSettings(newSettings);
+    } catch (error) {
+      console.error('Error saving audio preference:', error);
+    }
+  };
 
   if (!selectedChatId) {
     return (
@@ -392,7 +428,11 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
             display: 'flex',
             gap: '10px'
           }}>
-            <Mic onAudioChunk={handleAudioChunk} />
+            <Mic 
+              onAudioChunk={handleAudioChunk} 
+              preferAudioResponse={settings.preferAudioResponse || false}
+              onToggleAudioPreference={toggleAudioPreference}
+            />
             <button 
               onClick={handleSendMessage} 
               style={{ 

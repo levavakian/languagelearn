@@ -42,9 +42,10 @@ type Chat struct {
 }
 
 type Message struct {
-	Sender  string `json:"sender"`
-	Content string `json:"content"`
-	Type    string `json:"type,omitempty"` // "text" or "audio"
+	Sender              string `json:"sender"`
+	Content             string `json:"content"`
+	Type                string `json:"type,omitempty"` // "text" or "audio"
+	PreferredResponseType string `json:"preferredResponseType,omitempty"` // "text" or "audio"
 }
 
 type ChatData struct {
@@ -698,7 +699,7 @@ func sendMessageToOpenAI(conn *websocket.Conn, msg Message, chatConns *ChatConne
 				return fmt.Errorf("error sending input_audio.buffer.commit: %v", err)
 			}
 
-			// Send response.create for audio
+			// For audio messages, always request both audio and text
 			responseCreate := ResponseCreate{
 				Type: "response.create",
 				Response: Response{
@@ -772,10 +773,16 @@ func sendMessageToOpenAI(conn *websocket.Conn, msg Message, chatConns *ChatConne
 		return fmt.Errorf("error sending conversation.item.create: %v", err)
 	}
 
+	// Determine response modalities based on preferredResponseType
+	modalities := []string{"text"}
+	if msg.PreferredResponseType == "audio" {
+		modalities = []string{"audio", "text"}
+	}
+
 	responseCreate := ResponseCreate{
 		Type: "response.create",
 		Response: Response{
-			Modalities: []string{"text"},
+			Modalities: modalities,
 		},
 	}
 

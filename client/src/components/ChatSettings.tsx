@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 export interface ConversationSettings {
   chatId?: string;
   notes: NoteNode[];
+  preferAudioResponse?: boolean;
 }
 
 export interface NoteNode {
