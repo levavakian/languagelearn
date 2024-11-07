@@ -1,14 +1,102 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ConversationSettings, NoteNode } from './ChatSettings';
 import './Dropdown.css';
 
 interface DropdownProps {
   settings: ConversationSettings;
   onSelectNote: (noteContent: string) => void;
+  position: { x: number; y: number };
+  expandedFolders: Set<string>;
+  setExpandedFolders: (folders: Set<string>) => void;
 }
 
-const Dropdown: React.FC<DropdownProps> = ({ settings, onSelectNote }) => {
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+const Dropdown: React.FC<DropdownProps> = ({ 
+  settings, 
+  onSelectNote, 
+  position,
+  expandedFolders,
+  setExpandedFolders
+}) => {
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Calculate initial position
+  const calculatePosition = useCallback(() => {
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // Use a reasonable default size for initial positioning
+    const estimatedWidth = 200;
+    const estimatedHeight = 300;
+    
+    // Calculate available space in each direction
+    const spaceRight = windowWidth - position.x;
+    const spaceBottom = windowHeight - position.y;
+    
+    let left = position.x;
+    let top = position.y;
+
+    // Adjust horizontal position if needed
+    if (spaceRight < estimatedWidth && position.x > estimatedWidth) {
+      left = position.x - estimatedWidth;
+    }
+
+    // Adjust vertical position if needed
+    if (spaceBottom < estimatedHeight && position.y > estimatedHeight) {
+      top = position.y - estimatedHeight;
+    }
+
+    // Ensure the dropdown stays within viewport bounds
+    left = Math.max(10, Math.min(left, windowWidth - estimatedWidth - 10));
+    top = Math.max(10, Math.min(top, windowHeight - estimatedHeight - 10));
+
+    return {
+      position: 'fixed',
+      left: `${left}px`,
+      top: `${top}px`,
+      backgroundColor: '#282c34',
+      color: 'white',
+      border: '1px solid #61dafb',
+      borderRadius: '4px',
+      maxHeight: '300px',
+      overflowY: 'auto',
+      zIndex: 1000,
+    } as React.CSSProperties;
+  }, [position]);
+
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>(calculatePosition());
+
+  // Fine-tune position after mount if needed
+  useEffect(() => {
+    if (dropdownRef.current) {
+      const dropdown = dropdownRef.current;
+      const rect = dropdown.getBoundingClientRect();
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      
+      let left = position.x;
+      let top = position.y;
+
+      if (windowWidth - position.x < rect.width) {
+        left = position.x - rect.width;
+      }
+
+      if (windowHeight - position.y < rect.height) {
+        top = position.y - rect.height;
+      }
+
+      left = Math.max(10, Math.min(left, windowWidth - rect.width - 10));
+      top = Math.max(10, Math.min(top, windowHeight - rect.height - 10));
+
+      if (left !== parseInt(dropdownStyle.left as string) || 
+          top !== parseInt(dropdownStyle.top as string)) {
+        setDropdownStyle(prev => ({
+          ...prev,
+          left: `${left}px`,
+          top: `${top}px`,
+        }));
+      }
+    }
+  }, [position, dropdownRef.current]);
 
   const toggleFolder = (folderId: string) => {
     const newExpanded = new Set(expandedFolders);
@@ -62,16 +150,7 @@ const Dropdown: React.FC<DropdownProps> = ({ settings, onSelectNote }) => {
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: '#282c34',
-        color: 'white',
-        border: '1px solid #61dafb',
-        borderRadius: '4px',
-        maxHeight: '300px',
-        overflowY: 'auto'
-      }}
-    >
+    <div ref={dropdownRef} style={dropdownStyle}>
       {settings.notes.map(node => renderNode(node))}
     </div>
   );

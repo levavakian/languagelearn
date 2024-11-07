@@ -32,6 +32,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(
     selectedChatId ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/chat/${selectedChatId}/ws?token=${encodeURIComponent(token)}` : null,
@@ -344,7 +345,13 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
             zIndex: 1000
           }}
         >
-          <Dropdown settings={settings} onSelectNote={handleNoteSelect} />
+          <Dropdown 
+            settings={settings} 
+            onSelectNote={handleNoteSelect} 
+            position={dropdownPosition}
+            expandedFolders={expandedFolders}
+            setExpandedFolders={setExpandedFolders}
+          />
         </div>
       )}
       <div className="input-area" style={{ 
