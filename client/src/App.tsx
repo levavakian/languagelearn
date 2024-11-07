@@ -95,7 +95,9 @@ const styles = {
 
 function App() {
   const [jwt, setJwt] = useState<string | null>(null);
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(() => 
+    localStorage.getItem('selectedChatId')
+  );
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(window.innerWidth >= 768);
 
   useEffect(() => {
@@ -135,20 +137,28 @@ function App() {
   const handleLogout = () => {
     console.log('Logout');
     setJwt(null);
-    localStorage.removeItem('jwt');
     setSelectedChatId(null);
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('selectedChatId');
   };
 
   const handleUnauthorized = () => {
     console.log('Unauthorized: Logging out');
     setJwt(null);
-    localStorage.removeItem('jwt');
     setSelectedChatId(null);
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('selectedChatId');
   };
 
   const handleSelectChat = (chatId: string) => {
     console.log('Selected chat:', chatId);
-    setSelectedChatId(chatId || null);
+    const newSelectedChatId = chatId || null;
+    setSelectedChatId(newSelectedChatId);
+    if (newSelectedChatId) {
+      localStorage.setItem('selectedChatId', newSelectedChatId);
+    } else {
+      localStorage.removeItem('selectedChatId');
+    }
     if (window.innerWidth < 768) {
       setIsSidebarExpanded(false);
     }

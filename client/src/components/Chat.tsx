@@ -27,7 +27,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
   const [settings, setSettings] = useState<ConversationSettings>({
     chatId: selectedChatId || undefined,
     notes: [],
-    preferAudioResponse: false
+    preferAudioResponse: localStorage.getItem('preferAudioResponse') === 'true'
   });
   const [dropdownPosition, setDropdownPosition] = useState<{x: number, y: number} | null>(null);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -118,32 +118,9 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
     }
   }, [lastMessage]);
 
-  const fetchChatHistory = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/chat/${selectedChatId}/history`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (response.status === 401 || response.status === 403) {
-        onUnauthorized();
-        return;
-      }
-      if (!response.ok) {
-        throw new Error('Failed to fetch chat history');
-      }
-      const history = await response.json();
-      setMessages(history.filter((msg: Message) => msg.type !== 'audio'));
-    } catch (error) {
-      console.error('Error fetching chat history:', error);
-    }
-  }, [selectedChatId, token, onUnauthorized]);
-
   useEffect(() => {
     if (selectedChatId) {
       setMessages([]);
-      fetchChatHistory();
       inputRef.current?.focus();
     }
   }, [selectedChatId]);
@@ -158,12 +135,29 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
       
       const data = await fetchChatSettings(selectedChatId, token, onUnauthorized);
       if (data) {
-        setSettings(data);
+        setSettings(prevSettings => ({
+          ...data,
+          preferAudioResponse: prevSettings.preferAudioResponse
+        }));
       }
     };
 
     loadSettings();
   }, [selectedChatId, token, onUnauthorized]);
+
+  useEffect(() => {
+    const storedPreference = localStorage.getItem('preferAudioResponse');
+    if (storedPreference !== null) {
+      setSettings(prev => ({
+        ...prev,
+        preferAudioResponse: storedPreference === 'true'
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('preferAudioResponse', String(settings.preferAudioResponse));
+  }, [settings.preferAudioResponse]);
 
   const handleWordClick = (e: React.MouseEvent, message: string) => {
     e.stopPropagation();
