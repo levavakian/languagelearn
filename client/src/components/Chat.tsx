@@ -35,6 +35,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [messagesBlurred, setMessagesBlurred] = useState(false);
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(
     selectedChatId ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/chat/${selectedChatId}/ws?token=${encodeURIComponent(token)}` : null,
@@ -303,14 +304,36 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
     <div className="chat-window" style={chatStyles.chatWindow}>
       <div style={{ height: '50px', position: 'relative' }}>
         <button
+          onClick={() => setMessagesBlurred(!messagesBlurred)}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '60px',
+            background: 'none',
+            border: 'none',
+            color: '#919191',
+            cursor: 'pointer',
+            fontSize: '20px',
+            padding: '5px',
+            zIndex: 1
+          }}
+          title="Toggle message visibility to practice listening comprehension"
+        >
+          {messagesBlurred ? (
+            <span className="rotated-strikethrough">
+              👁
+            </span>
+          ) : '👁'}
+        </button>
+        <button
           onClick={() => setShowSettings(true)}
           style={{
             position: 'absolute',
-            top: '20px',
+            top: '10px',
             right: '20px',
             background: 'none',
             border: 'none',
-            color: '#61dafb',
+            color: '#919191',
             cursor: 'pointer',
             fontSize: '20px',
             padding: '5px',
@@ -350,7 +373,8 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
                 overflowWrap: 'break-word',
                 whiteSpace: 'pre-wrap',
                 cursor: 'pointer',
-                transition: 'box-shadow 0.2s ease'
+                transition: 'all 0.2s ease',
+                filter: messagesBlurred ? 'blur(5px)' : 'none'
               }}
             >
               {message.content.split(' ').map((word, i) => (

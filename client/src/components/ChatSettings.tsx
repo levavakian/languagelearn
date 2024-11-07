@@ -324,7 +324,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
           onClick={onBack}
           style={{
             position: 'absolute',
-            top: '20px',
+            top: '10px',
             right: '20px',
             background: 'none',
             border: 'none',
