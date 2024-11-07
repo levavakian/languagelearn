@@ -47,6 +47,7 @@ type Message struct {
 	Content             string `json:"content"`
 	Type                string `json:"type,omitempty"` // "text" or "audio"
 	PreferredResponseType string `json:"preferredResponseType,omitempty"` // "text" or "audio"
+	ResponseID          string `json:"responseId,omitempty"`
 }
 
 type ChatData struct {
@@ -90,8 +91,9 @@ type OpenAIResponseTextDelta struct {
 }
 
 type OpenAIResponseAudioDelta struct {
-	Type  string `json:"type"`
-	Delta string `json:"delta"`
+	Type      string `json:"type"`
+	Delta     string `json:"delta"`
+	ResponseID string `json:"response_id"`
 }
 
 type OpenAIResponseDone struct {
@@ -192,8 +194,8 @@ func insertChat(chatID string, creatorEmail string, name string) error {
 
 func insertMessage(chatID string, msg Message) error {
 	_, err := db.DB.Exec(
-		"INSERT INTO messages (chat_id, sender, content, type) VALUES (?, ?, ?, ?)",
-		chatID, msg.Sender, msg.Content, msg.Type,
+		"INSERT INTO messages (chat_id, sender, content, type, response_id) VALUES (?, ?, ?, ?, ?)",
+		chatID, msg.Sender, msg.Content, msg.Type, msg.ResponseID,
 	)
 	return err
 }
@@ -221,7 +223,7 @@ func getChatFromDB(userEmail string, chatID string) (*Chat, error) {
 func getMessagesForChat(chatID string) ([]Message, error) {
 	var messages []Message
 	rows, err := db.DB.Query(
-		"SELECT sender, content, type FROM messages WHERE chat_id = ? ORDER BY created_at",
+		"SELECT sender, content, type, response_id FROM messages WHERE chat_id = ? ORDER BY created_at",
 		chatID,
 	)
 	if err != nil {
@@ -231,7 +233,7 @@ func getMessagesForChat(chatID string) ([]Message, error) {
 
 	for rows.Next() {
 		var msg Message
-		if err := rows.Scan(&msg.Sender, &msg.Content, &msg.Type); err != nil {
+		if err := rows.Scan(&msg.Sender, &msg.Content, &msg.Type, &msg.ResponseID); err != nil {
 			return nil, err
 		}
 		messages = append(messages, msg)
@@ -574,9 +576,10 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 			}
 
 			assistantMsg := Message{
-				Sender:  "Assistant @OpenAI Realtime",
-				Content: audioMsg.Delta,
-				Type:    "audio",
+				Sender:     "Assistant @OpenAI Realtime",
+				Content:    audioMsg.Delta,
+				Type:       "audio",
+				ResponseID: audioMsg.ResponseID,
 			}
 
 			broadcastMessage(chatConns, assistantMsg)
@@ -630,21 +633,20 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 				
 				var assistantMsg Message
 				assistantMsg.Sender = "Assistant @OpenAI Realtime"
+				assistantMsg.ResponseID = doneMsg.Response.ID
 
 				if content.Type == "text" {
 					assistantMsg.Type = "text"
 					assistantMsg.Content = content.Text
 					
-					// Add and broadcast text message immediately
 					addMessageToChat(chatID, assistantMsg)
 					broadcastMessage(chatConns, assistantMsg)
 				} else if content.Type == "audio" {
 					assistantMsg.Type = "text"
 					assistantMsg.Content = content.Transcript
 					
-					// For audio messages, delay adding and broadcasting by 200ms
 					go func(msg Message) {
-						time.Sleep(500 * time.Millisecond) // Hacky delay to deal with misordering of input transcription
+						time.Sleep(500 * time.Millisecond)
 						addMessageToChat(chatID, msg)
 						broadcastMessage(chatConns, msg)
 					}(assistantMsg)
@@ -672,6 +674,24 @@ func sendMessageToOpenAI(conn *websocket.Conn, msg Message, chatConns *ChatConne
 
 	if msg.Type == "audio" {
 		if msg.Content == "commit" {
+			// Cancel any pending responses first
+			cancelResponse := struct {
+				Type string `json:"type"`
+			}{
+				Type: "response.cancel",
+			}
+
+			cancelResponseBytes, err := json.Marshal(cancelResponse)
+			if err != nil {
+				return fmt.Errorf("error marshaling response.cancel: %v", err)
+			}
+
+			fmt.Printf("Sending cancel to OpenAI:\n%s\n\n", string(cancelResponseBytes))
+
+			if err := conn.WriteJSON(cancelResponse); err != nil {
+				return fmt.Errorf("error sending response.cancel: %v", err)
+			}
+
 			// Send commit message when audio recording is finished
 			audioCommit := InputAudioBufferCommit{
 				Type: "input_audio_buffer.commit",

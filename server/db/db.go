@@ -54,6 +54,7 @@ func createTables() error {
 			sender TEXT NOT NULL,
 			content TEXT NOT NULL,
 			type TEXT NOT NULL,
+			response_id TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
 		)

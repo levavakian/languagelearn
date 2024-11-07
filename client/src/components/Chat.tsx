@@ -11,6 +11,7 @@ interface Message {
   content: string;
   type?: 'text' | 'audio';
   preferredResponseType?: 'text' | 'audio';
+  responseId?: string;
 }
 
 interface ChatProps {
@@ -36,6 +37,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [messagesBlurred, setMessagesBlurred] = useState(false);
+  const [latchedResponseId, setLatchedResponseId] = useState<string | null>(null);
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(
     selectedChatId ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/chat/${selectedChatId}/ws?token=${encodeURIComponent(token)}` : null,
@@ -111,7 +113,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
           bytes[i] = binaryStr.charCodeAt(i);
         }
         const audioBlob = new Blob([bytes.buffer], { type: 'audio/pcm' });
-        audioPlayer.playChunk(audioBlob);
+        audioPlayer.playChunk(audioBlob, newMessage.responseId);
       } else if (newMessage.type !== 'audio') {
         setMessages((prevMessages) => [...prevMessages, newMessage]);
       }
@@ -119,9 +121,20 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
   }, [lastMessage]);
 
   useEffect(() => {
+    if (lastMessage !== null) {
+      const newMessage = JSON.parse(lastMessage.data);
+      if (newMessage.responseId && newMessage.responseId !== latchedResponseId) {
+        console.log('Updating latched response ID:', newMessage.responseId);
+        setLatchedResponseId(newMessage.responseId);
+      }
+    }
+  }, [lastMessage]);
+
+  useEffect(() => {
     if (selectedChatId) {
       setMessages([]);
-      inputRef.current?.focus();
+      setLatchedResponseId(null);
+      console.log('Reset latched response ID');
     }
   }, [selectedChatId]);
 
@@ -199,6 +212,14 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
         };
         sendMessage(JSON.stringify(message));
       } else {
+        if (latchedResponseId) {
+          console.log('Stopping and ignoring response ID:', latchedResponseId);
+          audioPlayer.stopAndIgnoreResponse(latchedResponseId);
+        } else {
+          console.log('No response ID to stop, calling regular stop');
+          audioPlayer.stop();
+        }
+        
         const reader = new FileReader();
         reader.onload = () => {
           const arrayBuffer = reader.result as ArrayBuffer;
@@ -218,7 +239,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
         reader.readAsArrayBuffer(chunk);
       }
     }
-  }, [readyState, sendMessage]);
+  }, [readyState, sendMessage, latchedResponseId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

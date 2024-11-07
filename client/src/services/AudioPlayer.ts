@@ -3,19 +3,66 @@ class AudioPlayer {
   private currentSource: AudioBufferSourceNode | null = null;
   private readonly SAMPLE_RATE = 24000;
   private isPlaying = false;
-  private audioQueue: AudioBuffer[] = [];
+  private audioQueue: Array<{ buffer: AudioBuffer, responseId: string }> = [];
+  private currentResponseId: string | null = null;
+  private ignoredResponseId: string | null = null;
+  private hasPlayedAudio = false;
 
   async init() {
     if (!this.audioContext || this.audioContext.state === 'closed') {
-      this.audioContext = new AudioContext({ sampleRate: this.SAMPLE_RATE });
+      try {
+        this.audioContext = new AudioContext({ sampleRate: this.SAMPLE_RATE });
+      } catch (e) {
+        await this.requestUserInteraction();
+        this.audioContext = new AudioContext({ sampleRate: this.SAMPLE_RATE });
+      }
     }
     
     if (this.audioContext.state === 'suspended') {
+      await this.requestUserInteraction();
       await this.audioContext.resume();
     }
   }
 
-  async playChunk(pcm16Blob: Blob) {
+  private async requestUserInteraction(): Promise<void> {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      `;
+
+      const button = document.createElement('button');
+      button.textContent = 'Click to Enable Audio';
+      button.style.cssText = `
+        padding: 16px 32px;
+        font-size: 18px;
+        cursor: pointer;
+      `;
+
+      button.onclick = () => {
+        document.body.removeChild(overlay);
+        resolve();
+      };
+
+      overlay.appendChild(button);
+      document.body.appendChild(overlay);
+    });
+  }
+
+  async playChunk(pcm16Blob: Blob, responseId: string) {
+    if (responseId === this.ignoredResponseId) {
+      return;
+    }
+
     if (!this.audioContext) {
       await this.init();
     }
@@ -45,8 +92,12 @@ class AudioPlayer {
       );
       audioBuffer.getChannelData(0).set(float32Array);
 
-      // Add to queue and play if not already playing
-      this.audioQueue.push(audioBuffer);
+      // Add to queue with responseId
+      this.audioQueue.push({ 
+        buffer: audioBuffer, 
+        responseId 
+      });
+      
       if (!this.isPlaying) {
         this.playNextChunk();
       }
@@ -62,9 +113,12 @@ class AudioPlayer {
     }
 
     this.isPlaying = true;
-    const audioBuffer = this.audioQueue.shift()!;
+    const { buffer, responseId } = this.audioQueue.shift()!;
+    this.currentResponseId = responseId;
+    this.hasPlayedAudio = true;
+    
     const source = this.audioContext!.createBufferSource();
-    source.buffer = audioBuffer;
+    source.buffer = buffer;
     source.connect(this.audioContext!.destination);
     
     this.currentSource = source;
@@ -72,23 +126,30 @@ class AudioPlayer {
     source.onended = () => {
       if (this.currentSource === source) {
         this.currentSource = null;
-        this.playNextChunk(); // Play next chunk when current one ends
+        this.playNextChunk();
       }
     };
     
     source.start();
   }
 
+  stopAndIgnoreResponse(responseId: string) {
+    this.ignoredResponseId = responseId;
+    this.stop();
+  }
+
   stop() {
-    this.audioQueue = []; // Clear the queue
-    this.isPlaying = false;
-    if (this.currentSource) {
-      this.currentSource.stop();
-      this.currentSource = null;
-    }
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
+    if (this.audioQueue.length > 0 || this.hasPlayedAudio) {
+      this.audioQueue = []; // Clear the queue
+      this.isPlaying = false;
+      if (this.currentSource) {
+        this.currentSource.stop();
+        this.currentSource = null;
+      }
+      if (this.audioContext) {
+        this.audioContext.close();
+        this.audioContext = null;
+      }
     }
   }
 }
