@@ -35,7 +35,7 @@ func getDefaultSettings(chatID string) *ChatSettings {
 				Children: []NoteNode{
 					{
 						ID:   "welcome-note",
-						Name: "Welcome! Create notes and folders to organize your language learning materials. Click the edit button (🔤) to modify content, or use the folder (📁) and plus (➕) buttons to add new items.",
+						Name: "Welcome! Create notes and folders to organize your language learning materials. Click the edit button (🔤) to modify content, or use the folder (📁) and plus (➕) buttons to add new items. Use @word to insert a clicked word and @sentence to insert a clicked message.",
 						Type: "note",
 					},
 				},
@@ -48,17 +48,17 @@ func getDefaultSettings(chatID string) *ChatSettings {
 				Children: []NoteNode{
 					{
 						ID:   "translate",
-						Name: "Could you translate this to English?",
+						Name: "Could you translate '@sentence' to English?",
 						Type: "note",
 					},
 					{
 						ID:   "explain",
-						Name: "Could you explain what this means?",
+						Name: "Could you explain what '@sentence' means?",
 						Type: "note",
 					},
 					{
 						ID:   "correction",
-						Name: "Is this grammatically correct?",
+						Name: "Is '@sentence' grammatically correct?",
 						Type: "note",
 					},
 				},
@@ -71,22 +71,22 @@ func getDefaultSettings(chatID string) *ChatSettings {
 				Children: []NoteNode{
 					{
 						ID:   "past-tense",
-						Name: "Could you say this in the past tense?",
+						Name: "Could you say '@sentence' in the past tense?",
 						Type: "note",
 					},
 					{
 						ID:   "future-tense",
-						Name: "How would I say this in the future tense?",
+						Name: "How would I say '@sentence' in the future tense?",
 						Type: "note",
 					},
 					{
 						ID:   "formal",
-						Name: "How would I say this more formally?",
+						Name: "How would I say '@sentence' more formally?",
 						Type: "note",
 					},
 					{
 						ID:   "informal",
-						Name: "How would I say this casually/informally?",
+						Name: "How would I say '@sentence' casually/informally?",
 						Type: "note",
 					},
 				},
@@ -99,17 +99,17 @@ func getDefaultSettings(chatID string) *ChatSettings {
 				Children: []NoteNode{
 					{
 						ID:   "synonyms",
-						Name: "What are some synonyms for this word?",
+						Name: "What are some synonyms for the word '@word'?",
 						Type: "note",
 					},
 					{
 						ID:   "examples",
-						Name: "Can you give me some example sentences using this word?",
+						Name: "Can you give me some example sentences using the word '@word'?",
 						Type: "note",
 					},
 					{
 						ID:   "difference",
-						Name: "What's the difference between these similar words?",
+						Name: "What's the difference between '@word' and similar words?",
 						Type: "note",
 					},
 				},

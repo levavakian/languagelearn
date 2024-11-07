@@ -178,11 +178,14 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
   };
 
   const handleNoteSelect = (noteContent: string) => {
+    let newMessage = noteContent;
     if (selectedWord) {
-      setInputMessage(`for the word '${selectedWord?.trim()}' in the sentence '${selectedMessage?.trim()}' ${noteContent}`.trim());
-    } else if (selectedMessage) {
-      setInputMessage(`in the sentence '${selectedMessage?.trim()}' ${noteContent}`.trim());
+      newMessage = newMessage.replace(/@word/g, selectedWord.trim());
     }
+    if (selectedMessage) {
+      newMessage = newMessage.replace(/@sentence/g, selectedMessage.trim());
+    }
+    setInputMessage(newMessage);
     setDropdownPosition(null);
     inputRef.current?.focus();
   };
