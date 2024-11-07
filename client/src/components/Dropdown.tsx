@@ -90,8 +90,10 @@ const Dropdown: React.FC<DropdownProps> = ({
       left = Math.max(10, Math.min(left, windowWidth - rect.width - 10));
       top = Math.max(10, Math.min(top, windowHeight - rect.height - 10));
 
-      if (left !== parseInt(dropdownStyle.left as string) || 
-          top !== parseInt(dropdownStyle.top as string)) {
+      const currentLeft = parseInt(dropdownStyle.left as string);
+      const currentTop = parseInt(dropdownStyle.top as string);
+
+      if (left !== currentLeft || top !== currentTop) {
         setDropdownStyle(prev => ({
           ...prev,
           left: `${left}px`,
@@ -99,7 +101,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         }));
       }
     }
-  }, [position, dropdownRef.current]);
+  }, [position, dropdownStyle.left, dropdownStyle.top]);
 
   const toggleFolder = (folderId: string) => {
     const newExpanded = new Set(expandedFolders);

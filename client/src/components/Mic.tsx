@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { audioService } from '../services/AudioService';
 
 interface MicProps {
@@ -18,7 +18,7 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk, preferAudioResponse, onToggleAu
     audioService.requestPermissions().then(setHasPermission);
   }, []);
 
-  const startRecording = async () => {
+  const startRecording = useCallback(async () => {
     if (!isRecording.current) {
       try {
         await audioService.startRecording((chunk: Blob) => {
@@ -38,15 +38,15 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk, preferAudioResponse, onToggleAu
         setHasPermission(false);
       }
     }
-  };
+  }, [onAudioChunk]);
 
-  const stopRecording = () => {
+  const stopRecording = useCallback(() => {
     if (isRecording.current) {
       audioService.stopRecording();
       onAudioChunk(new Blob(), true); // Signal recording finished
       isRecording.current = false;
     }
-  };
+  }, [onAudioChunk]);
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
@@ -71,7 +71,7 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk, preferAudioResponse, onToggleAu
       window.removeEventListener('keyup', handleKeyUp);
       audioService.stopRecording();
     };
-  }, [onAudioChunk]);
+  }, [onAudioChunk, startRecording, stopRecording]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>

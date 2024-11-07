@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import Sidebar from './components/Sidebar';
@@ -77,7 +77,7 @@ const styles = {
   toggleButton: {
     position: 'absolute' as const,
     right: '-15px',
-    top: '20px',
+    top: '0px',
     zIndex: 1000,
     backgroundColor: '#3f51b5',
     color: 'white',
