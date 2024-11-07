@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import Mic from './Mic';
 import { audioPlayer } from '../services/AudioPlayer';
-import ChatSettings, { ConversationSettings } from './ChatSettings';
+import ChatSettings, { ConversationSettings, fetchChatSettings } from './ChatSettings';
 import Dropdown from './Dropdown';
 import './Chat.css';
 
@@ -140,6 +140,19 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (!selectedChatId) return;
+      
+      const data = await fetchChatSettings(selectedChatId, token, onUnauthorized);
+      if (data) {
+        setSettings(data);
+      }
+    };
+
+    loadSettings();
+  }, [selectedChatId, token, onUnauthorized]);
 
   const handleWordClick = (e: React.MouseEvent, message: string) => {
     e.stopPropagation();

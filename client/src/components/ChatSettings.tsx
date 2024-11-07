@@ -21,6 +21,32 @@ interface ChatSettingsProps {
   onUnauthorized: () => void;
 }
 
+export const fetchChatSettings = async (chatId: string, token: string, onUnauthorized: () => void) => {
+  try {
+    const response = await fetch(`/api/chat/${chatId}/settings`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      onUnauthorized();
+      return null;
+    }
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch settings');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    return null;
+  }
+};
+
 const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsChange, onBack, onUnauthorized }) => {
   const [settings, setSettings] = useState<ConversationSettings>({ notes: [] });
   const [addingNodeAt, setAddingNodeAt] = useState<{parentId: string | null, type: 'folder' | 'note'} | null>(null);
@@ -28,33 +54,14 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
   const [newItemName, setNewItemName] = useState('');
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await fetch(`/api/chat/${chatId}/settings`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.status === 401 || response.status === 403) {
-          onUnauthorized();
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch settings');
-        }
-
-        const data = await response.json();
+    const loadSettings = async () => {
+      const data = await fetchChatSettings(chatId, token, onUnauthorized);
+      if (data) {
         setSettings(data);
         onSettingsChange(data);
-      } catch (error) {
-        console.error('Error fetching settings:', error);
       }
     };
-
-    fetchSettings();
+    loadSettings();
   }, [chatId, token, onUnauthorized, onSettingsChange]);
 
   const saveSettings = async (newSettings: ConversationSettings) => {
@@ -307,24 +314,29 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
       backgroundColor: '#282c34',
       color: 'white',
       height: '100%',
-      overflowY: 'auto'
+      overflowY: 'auto',
+      position: 'relative'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+        <h2 style={{ margin: 0 }}>Chat Settings</h2>
         <button
           onClick={onBack}
           style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
             background: 'none',
             border: 'none',
             color: '#61dafb',
             cursor: 'pointer',
-            fontSize: '24px',
-            padding: '4px',
-            marginRight: '12px'
+            fontSize: '20px',
+            padding: '5px',
+            zIndex: 1
           }}
+          title="Close Settings"
         >
-          ←
+          ✕
         </button>
-        <h2 style={{ margin: 0 }}>Chat Settings</h2>
       </div>
       <div style={{ marginBottom: '20px' }}>
         <button 
