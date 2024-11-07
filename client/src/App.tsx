@@ -79,10 +79,9 @@ const styles = {
     right: '-15px',
     top: '0px',
     zIndex: 1000,
-    backgroundColor: '#3f51b5',
-    color: 'white',
+    backgroundColor: darkModeColors.primary,
+    color: darkModeColors.text,
     border: 'none',
-    borderRadius: '4px',
     padding: '8px',
     cursor: 'pointer',
     width: '30px',
@@ -90,6 +89,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    transition: 'right 0.3s ease',
   }
 };
 
@@ -192,9 +192,12 @@ function App() {
             <>
               <div style={styles.sidebarContainer}>
                 <button
-                  className="sidebar-toggle"
+                  className={`sidebar-toggle ${isSidebarExpanded ? 'expanded' : 'collapsed'}`}
                   onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-                  style={styles.toggleButton}
+                  style={{
+                    ...styles.toggleButton,
+                    right: isSidebarExpanded ? '0px' : '-15px',
+                  }}
                 >
                   {isSidebarExpanded ? '←' : '→'}
                 </button>
