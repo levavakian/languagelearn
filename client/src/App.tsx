@@ -20,6 +20,7 @@ const styles = {
     height: '100vh',
     backgroundColor: darkModeColors.background,
     color: darkModeColors.text,
+    overflow: 'hidden',
   },
   header: {
     padding: '10px',
@@ -48,7 +49,7 @@ const styles = {
   sidebar: {
     width: '250px',
     borderRight: `1px solid ${darkModeColors.accent}`,
-    height: 'calc(100vh - 60px)',
+    height: '100%',
     transition: 'all 0.3s ease',
     overflow: 'hidden',
     backgroundColor: darkModeColors.sidebarBackground,

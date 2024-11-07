@@ -54,3 +54,11 @@
 .sidebar-toggle:hover {
   background-color: #4a5fc1 !important;
 }
+
+/* Add this rule */
+body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+}
