@@ -3,6 +3,10 @@ import './App.css';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import Sidebar from './components/Sidebar';
 import Chat from './components/Chat';
+import Courses from './components/Courses/Courses';
+
+// Add tab type and colors
+type Tab = 'chats' | 'courses';
 
 const darkModeColors = {
   background: '#1e1e1e',
@@ -11,6 +15,8 @@ const darkModeColors = {
   secondary: '#303030',
   accent: '#7986cb',
   sidebarBackground: '#282c34',
+  tabActive: '#3f51b5',
+  tabInactive: '#282c34',
 };
 
 const styles = {
@@ -26,7 +32,7 @@ const styles = {
     padding: '10px',
     backgroundColor: darkModeColors.secondary,
     display: 'flex',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     height: '60px',
   },
@@ -90,7 +96,19 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'right 0.3s ease',
-  }
+  },
+  // Add new tab styles
+  tabs: {
+    display: 'flex',
+    gap: '10px',
+  },
+  tab: {
+    padding: '8px 16px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    border: 'none',
+    color: darkModeColors.text,
+  },
 };
 
 function App() {
@@ -99,6 +117,9 @@ function App() {
     localStorage.getItem('selectedChatId')
   );
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(window.innerWidth >= 768);
+  const [activeTab, setActiveTab] = useState<Tab>(() => 
+    (localStorage.getItem('activeTab') as Tab) || 'chats'
+  );
 
   useEffect(() => {
     const storedJwt = localStorage.getItem('jwt');
@@ -181,14 +202,42 @@ function App() {
     }
   };
 
+  // Add tab handling function
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    localStorage.setItem('activeTab', tab);
+  };
+
   return (
     <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
       <div style={styles.app}>
         <header style={styles.header}>
+          {jwt && (
+            <div style={styles.tabs}>
+              <button
+                style={{
+                  ...styles.tab,
+                  backgroundColor: activeTab === 'chats' ? darkModeColors.tabActive : darkModeColors.tabInactive,
+                }}
+                onClick={() => handleTabChange('chats')}
+              >
+                Chats
+              </button>
+              <button
+                style={{
+                  ...styles.tab,
+                  backgroundColor: activeTab === 'courses' ? darkModeColors.tabActive : darkModeColors.tabInactive,
+                }}
+                onClick={() => handleTabChange('courses')}
+              >
+                Courses
+              </button>
+            </div>
+          )}
           {renderAuthButton()}
         </header>
         <div style={styles.content} className="hide-scrollbar">
-          {jwt && (
+          {jwt && activeTab === 'chats' && (
             <>
               <div style={styles.sidebarContainer}>
                 <button
@@ -226,6 +275,9 @@ function App() {
                 />
               </div>
             </>
+          )}
+          {jwt && activeTab === 'courses' && (
+            <Courses token={jwt} onUnauthorized={handleUnauthorized} />
           )}
         </div>
       </div>
