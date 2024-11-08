@@ -9,10 +9,16 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/google/uuid"
+
 	"github.com/levavakian/languagelearn/server/auth"
 	"github.com/levavakian/languagelearn/server/chat"
 	"github.com/levavakian/languagelearn/server/db"
 )
+
+type CreateLessonRequest struct {
+	Title             string `json:"title"`
+	LessonPlanContent string `json:"lesson_plan_content"`
+}
 
 func SetupRoutes(api *mux.Router) {
 	// Course routes
@@ -279,25 +285,44 @@ func createLesson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var lesson Lesson
-	if err := json.NewDecoder(r.Body).Decode(&lesson); err != nil {
+	var request CreateLessonRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	lesson.ID = uuid.New().String()
-	lesson.CourseID = courseID
-	lesson.CreatedAt = time.Now()
-
 	// Get the next order index
-	nextIndex, err := getNextLessonOrderIndex(courseID)
+	orderIndex, err := getNextLessonOrderIndex(courseID)
 	if err != nil {
-		http.Error(w, "Failed to determine lesson order", http.StatusInternalServerError)
+		http.Error(w, "Failed to get order index", http.StatusInternalServerError)
 		return
 	}
-	lesson.OrderIndex = nextIndex
+
+	// Create chat with meaningful name
+	chatID := uuid.New().String()
+	chatName := request.Title
+	if chatName == "" {
+		chatName = fmt.Sprintf("Lesson %d", orderIndex+1)
+	}
+	
+	if err := chat.InsertChat(chatID, userEmail, chatName); err != nil {
+		http.Error(w, "Failed to create chat", http.StatusInternalServerError)
+		return
+	}
+
+	// Create the lesson
+	lesson := Lesson{
+		ID:         uuid.New().String(),
+		CourseID:   courseID,
+		ChatID:     chatID,
+		LessonPlan: request.LessonPlanContent,
+		OrderIndex: orderIndex,
+		CreatedAt:  time.Now(),
+	}
 
 	if err := insertLesson(lesson); err != nil {
+		// Clean up the created chat if we fail
+		chat.DeleteChat(chatID)
 		http.Error(w, "Failed to create lesson", http.StatusInternalServerError)
 		return
 	}
@@ -366,9 +391,23 @@ func deleteLesson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get the lesson to find its chat ID
+	lesson, err := getLessonFromDB(lessonID, courseID)
+	if err != nil {
+		http.Error(w, "Lesson not found", http.StatusNotFound)
+		return
+	}
+
+	// Delete the lesson
 	if err := deleteLessonFromDB(lessonID); err != nil {
 		http.Error(w, "Failed to delete lesson", http.StatusInternalServerError)
 		return
+	}
+
+	// Delete the associated chat
+	if err := chat.DeleteChat(lesson.ChatID); err != nil {
+		// Note: We don't rollback the lesson deletion here since the chat might have already been deleted
+		fmt.Printf("Warning: Failed to delete chat %s: %v\n", lesson.ChatID, err)
 	}
 
 	w.WriteHeader(http.StatusNoContent)
@@ -472,7 +511,7 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 
 	// Create chat for the lesson
 	chatID := uuid.New().String()
-	if err := chat.InsertChat(chatID, creatorEmail, fmt.Sprintf("Initial %s Assessment", req.TargetLanguage)); err != nil {
+	if err := chat.CreateChat(chatID, creatorEmail); err != nil {
 		http.Error(w, "Failed to create chat", http.StatusInternalServerError)
 		return
 	}

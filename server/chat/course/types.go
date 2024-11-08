@@ -63,4 +63,3 @@ type CourseSettings struct {
 	Notes             []CourseNoteNode  `json:"notes"`
 	CustomInstructions string           `json:"customInstructions,omitempty"`
 }
-

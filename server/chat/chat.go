@@ -287,6 +287,7 @@ func SetupRoutes(api *mux.Router) {
 	api.HandleFunc("/chat/{id}/ws", auth.AuthMiddleware(handleWebSocket))
 	api.HandleFunc("/chats", auth.AuthMiddleware(getUserChats)).Methods("GET")
 	api.HandleFunc("/chat/{id}", auth.AuthMiddleware(deleteChat)).Methods("DELETE")
+	api.HandleFunc("/chats/names", auth.AuthMiddleware(getChatNames)).Methods("POST")
 }
 
 func generateUniqueID() string {
@@ -874,4 +875,85 @@ func updateOpenAISession(conn *websocket.Conn, instructions string) error {
 type SettingsUpdate struct {
 	ChatID string
 	Settings ChatSettings
+}
+
+func CreateChat(chatID string, userEmail string) error {
+	_, err := db.DB.Exec(
+		"INSERT INTO chats (id, user_id) VALUES (?, ?)",
+		chatID, userEmail,
+	)
+	return err
+}
+
+func DeleteChat(chatID string) error {
+	tx, err := db.DB.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	// Delete all messages in the chat
+	_, err = tx.Exec("DELETE FROM chat_messages WHERE chat_id = ?", chatID)
+	if err != nil {
+		return fmt.Errorf("failed to delete chat messages: %v", err)
+	}
+
+	// Delete any chat settings
+	_, err = tx.Exec("DELETE FROM chat_settings WHERE chat_id = ?", chatID)
+	if err != nil {
+		return fmt.Errorf("failed to delete chat settings: %v", err)
+	}
+
+	// Delete the chat itself
+	_, err = tx.Exec("DELETE FROM chats WHERE id = ?", chatID)
+	if err != nil {
+		return fmt.Errorf("failed to delete chat: %v", err)
+	}
+
+	return tx.Commit()
+}
+
+func getChatNames(w http.ResponseWriter, r *http.Request) {
+	userEmail := r.Header.Get("X-User-Email")
+	var request struct {
+		ChatIDs []string `json:"chat_ids"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	chatNames := make(map[string]string)
+	for _, chatID := range request.ChatIDs {
+		// First check if this chat belongs to a lesson in a course owned by the user
+		var creatorID string
+		err := db.DB.QueryRow(`
+			SELECT c.creator_id 
+			FROM courses c 
+			JOIN lessons l ON l.course_id = c.id 
+			WHERE l.chat_id = ?`, 
+			chatID,
+		).Scan(&creatorID)
+
+		if err != nil || creatorID != userEmail {
+			continue // Skip this chat if not found or not authorized
+		}
+
+		// Now get the chat name
+		var name string
+		err = db.DB.QueryRow(
+			"SELECT name FROM chats WHERE id = ?",
+			chatID,
+		).Scan(&name)
+		
+		if err != nil {
+			chatNames[chatID] = "Untitled Lesson"
+			continue
+		}
+		chatNames[chatID] = name
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(chatNames)
 }

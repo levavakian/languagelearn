@@ -3,6 +3,8 @@ import Sidepanel from '../Sidepanel/Sidepanel';
 import './Courses.css';
 import CreateLessonPlanModal from '../LessonPlanModals/CreateLessonPlanModal';
 import EditLessonPlanModal from '../LessonPlanModals/EditLessonPlanModal';
+import CreateLessonModal from '../LessonModals/CreateLessonModal';
+import EditLessonModal from '../LessonModals/EditLessonModal';
 
 interface CourseModalProps {
   isOpen: boolean;
@@ -22,6 +24,15 @@ interface LessonPlan {
   course_id: string;
   title: string;
   content: string;
+  created_at: string;
+}
+
+interface Lesson {
+  id: string;
+  course_id: string;
+  lesson_plan_id: string;
+  summary: string;
+  chat_id: string;
   created_at: string;
 }
 
@@ -87,6 +98,11 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
   const [isCreateLessonPlanModalOpen, setIsCreateLessonPlanModalOpen] = useState(false);
   const [isEditLessonPlanModalOpen, setIsEditLessonPlanModalOpen] = useState(false);
   const [selectedLessonPlan, setSelectedLessonPlan] = useState<LessonPlan | null>(null);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [isCreateLessonModalOpen, setIsCreateLessonModalOpen] = useState(false);
+  const [isEditLessonModalOpen, setIsEditLessonModalOpen] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [chatNames, setChatNames] = useState<{[key: string]: string}>({});
 
   const fetchCourses = useCallback(async () => {
     try {
@@ -187,11 +203,30 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
     }
   }, [token, onUnauthorized]);
 
+  const fetchLessons = useCallback(async (courseId: string) => {
+    try {
+      const response = await fetch(`/api/course/${courseId}/lessons`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.status === 401) {
+        onUnauthorized();
+        return;
+      }
+      const data = await response.json();
+      setLessons(data || []);
+    } catch (error) {
+      console.error('Error fetching lessons:', error);
+    }
+  }, [token, onUnauthorized]);
+
   useEffect(() => {
     if (selectedCourseId) {
       fetchLessonPlans(selectedCourseId);
+      fetchLessons(selectedCourseId);
     }
-  }, [selectedCourseId, fetchLessonPlans]);
+  }, [selectedCourseId, fetchLessonPlans, fetchLessons]);
 
   const handleCreateLessonPlan = async (title: string, content: string) => {
     try {
@@ -292,6 +327,93 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
 
   const selectedCourse = courses?.find(course => course.id === selectedCourseId) || null;
 
+  const handleCreateLesson = async (title: string, content: string) => {
+    try {
+      const response = await fetch(`/api/course/${selectedCourseId}/lesson`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: title,
+          lesson_plan_content: content
+        })
+      });
+
+      if (response.status === 401) {
+        onUnauthorized();
+        return;
+      }
+
+      const newLesson = await response.json();
+      setLessons(prev => [...prev, newLesson]);
+      setIsCreateLessonModalOpen(false);
+      console.log(`Would navigate to chat ${newLesson.chat_id}`);
+    } catch (error) {
+      console.error('Error creating lesson:', error);
+    }
+  };
+
+  const handleUpdateLesson = async (summary: string) => {
+    if (!selectedLesson) return;
+
+    try {
+      const response = await fetch(`/api/course/${selectedCourseId}/lesson/${selectedLesson.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ summary })
+      });
+
+      if (response.status === 401) {
+        onUnauthorized();
+        return;
+      }
+
+      const updatedLesson = await response.json();
+      setLessons(prev => prev.map(lesson => 
+        lesson.id === updatedLesson.id ? updatedLesson : lesson
+      ));
+      setIsEditLessonModalOpen(false);
+      setSelectedLesson(null);
+    } catch (error) {
+      console.error('Error updating lesson:', error);
+    }
+  };
+
+  const fetchChatNames = useCallback(async (chatIds: string[]) => {
+    try {
+      const response = await fetch(`/api/chats/names`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ chat_ids: chatIds })
+      });
+
+      if (response.status === 401) {
+        onUnauthorized();
+        return;
+      }
+
+      const names = await response.json();
+      setChatNames(names);
+    } catch (error) {
+      console.error('Error fetching chat names:', error);
+    }
+  }, [token, onUnauthorized]);
+
+  useEffect(() => {
+    if (lessons.length > 0) {
+      const chatIds = lessons.map(lesson => lesson.chat_id);
+      fetchChatNames(chatIds);
+    }
+  }, [lessons, fetchChatNames]);
+
   return (
     <div className="courses-container">
       <Sidepanel
@@ -345,6 +467,37 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
                 + Add Lesson Plan
               </button>
             </div>
+            <h3 className="section-header">Lessons</h3>
+            <div className="lessons-list">
+              {lessons.map(lesson => (
+                <div key={lesson.id} className="lesson-item">
+                  <div 
+                    className="lesson-content"
+                    onClick={() => console.log(`Would navigate to chat ${lesson.chat_id}`)}
+                  >
+                    <span className="lesson-title">
+                      {chatNames[lesson.chat_id] || 'Loading...'}
+                    </span>
+                    <button
+                      className="edit-lesson-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedLesson(lesson);
+                        setIsEditLessonModalOpen(true);
+                      }}
+                    >
+                      ⚙️
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <button
+                className="add-lesson-button"
+                onClick={() => setIsCreateLessonModalOpen(true)}
+              >
+                + Add Lesson
+              </button>
+            </div>
           </div>
         ) : (
           <div className="no-course-selected">
@@ -372,6 +525,21 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
         onDelete={handleDeleteLessonPlan}
         initialTitle={selectedLessonPlan?.title || ''}
         initialContent={selectedLessonPlan?.content || ''}
+      />
+      <CreateLessonModal
+        isOpen={isCreateLessonModalOpen}
+        onClose={() => setIsCreateLessonModalOpen(false)}
+        onSubmit={handleCreateLesson}
+        lessonPlans={lessonPlans}
+      />
+      <EditLessonModal
+        isOpen={isEditLessonModalOpen}
+        onClose={() => {
+          setIsEditLessonModalOpen(false);
+          setSelectedLesson(null);
+        }}
+        onSave={handleUpdateLesson}
+        initialSummary={selectedLesson?.summary || ''}
       />
     </div>
   );
