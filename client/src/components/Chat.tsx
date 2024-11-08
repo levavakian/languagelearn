@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import Mic from './Mic';
 import { audioPlayer } from '../services/AudioPlayer';
-import ChatSettings, { ConversationSettings, fetchChatSettings } from './ChatSettings';
+import Settings, { Settings as SettingsType } from './Settings/Settings';
 import Dropdown from './Dropdown';
 import './Chat.css';
 
@@ -25,10 +25,13 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [showSettings, setShowSettings] = useState(false);
-  const [settings, setSettings] = useState<ConversationSettings>({
-    chatId: selectedChatId || undefined,
+  const [preferAudioResponse, setPreferAudioResponse] = useState(
+    localStorage.getItem('preferAudioResponse') === 'true'
+  );
+  const [settings, setSettings] = useState<SettingsType>({
+    id: selectedChatId || '',
     notes: [],
-    preferAudioResponse: localStorage.getItem('preferAudioResponse') === 'true'
+    vocabItems: {}
   });
   const [dropdownPosition, setDropdownPosition] = useState<{x: number, y: number} | null>(null);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -57,12 +60,12 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
         sender: 'user',
         content: inputMessage.trim(),
         type: 'text' as const,
-        preferredResponseType: settings.preferAudioResponse ? 'audio' : 'text'
+        preferredResponseType: preferAudioResponse ? 'audio' : 'text'
       };
       sendMessage(JSON.stringify(message));
       setInputMessage('');
     }
-  }, [inputMessage, readyState, sendMessage, settings.preferAudioResponse]);
+  }, [inputMessage, readyState, sendMessage, preferAudioResponse]);
 
   useEffect(() => {
     const handleGlobalKeyPress = (e: KeyboardEvent) => {
@@ -146,12 +149,27 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
     const loadSettings = async () => {
       if (!selectedChatId) return;
       
-      const data = await fetchChatSettings(selectedChatId, token, onUnauthorized);
-      if (data) {
-        setSettings(prevSettings => ({
-          ...data,
-          preferAudioResponse: prevSettings.preferAudioResponse
-        }));
+      try {
+        const response = await fetch(`/api/chat/${selectedChatId}/settings`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          if (response.status === 401 && onUnauthorized) {
+            onUnauthorized();
+            return;
+          }
+          throw new Error(`Failed to load settings: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setSettings(data);
+      } catch (error) {
+        console.error('Error loading settings:', error);
       }
     };
 
@@ -159,18 +177,8 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
   }, [selectedChatId, token, onUnauthorized]);
 
   useEffect(() => {
-    const storedPreference = localStorage.getItem('preferAudioResponse');
-    if (storedPreference !== null) {
-      setSettings(prev => ({
-        ...prev,
-        preferAudioResponse: storedPreference === 'true'
-      }));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('preferAudioResponse', String(settings.preferAudioResponse));
-  }, [settings.preferAudioResponse]);
+    localStorage.setItem('preferAudioResponse', String(preferAudioResponse));
+  }, [preferAudioResponse]);
 
   const handleWordClick = (e: React.MouseEvent, message: string) => {
     e.stopPropagation();
@@ -258,35 +266,23 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
   }), []);
 
   const toggleAudioPreference = async () => {
-    const newSettings = {
-      ...settings,
-      preferAudioResponse: !settings.preferAudioResponse
-    };
-    
-    try {
-      const response = await fetch(`/api/chat/${selectedChatId}/settings`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newSettings)
-      });
-
-      if (response.status === 401 || response.status === 403) {
-        onUnauthorized();
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error('Failed to save settings');
-      }
-
-      setSettings(newSettings);
-    } catch (error) {
-      console.error('Error saving audio preference:', error);
-    }
+    setPreferAudioResponse(!preferAudioResponse);
   };
+
+  const settingsEndpoint = selectedChatId ? `/api/chat/${selectedChatId}/settings` : null;
+
+  if (showSettings && selectedChatId && settingsEndpoint) {
+    return (
+      <Settings
+        token={token}
+        id={selectedChatId}
+        endpoint={settingsEndpoint}
+        onSettingsChange={setSettings}
+        onBack={() => setShowSettings(false)}
+        onUnauthorized={onUnauthorized}
+      />
+    );
+  }
 
   if (!selectedChatId) {
     return (
@@ -303,16 +299,6 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
         Select a chat to start messaging
       </div>
     );
-  }
-
-  if (showSettings) {
-    return <ChatSettings 
-      token={token}
-      chatId={selectedChatId!}
-      onSettingsChange={setSettings} 
-      onBack={() => setShowSettings(false)}
-      onUnauthorized={onUnauthorized}
-    />;
   }
 
   return (
@@ -469,7 +455,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
           }}>
             <Mic 
               onAudioChunk={handleAudioChunk} 
-              preferAudioResponse={settings.preferAudioResponse || false}
+              preferAudioResponse={preferAudioResponse}
               onToggleAudioPreference={toggleAudioPreference}
             />
             <button 

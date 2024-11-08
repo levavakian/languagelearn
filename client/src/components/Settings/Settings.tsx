@@ -278,7 +278,7 @@ const Settings: React.FC<SettingsProps> = ({
               {node.isExpanded ? '▼' : '▶'}
             </button>
           )}
-          {node.type === 'folder' ? '📁' : '📝'}
+          {node.type === 'folder' ? '📁' : '����'}
           {editingNodeId === node.id ? (
             <textarea
               value={newItemName}
@@ -423,14 +423,28 @@ const Settings: React.FC<SettingsProps> = ({
 
   return (
     <div className={containerStyle}>
-      {!embedded && onBack && (
-        <button
-          onClick={onBack}
-          className="back-button"
-        >
-          ←
-        </button>
-      )}
+      <div style={{ height: '50px', position: 'relative' }}>
+        {!embedded && onBack && (
+          <button
+            onClick={onBack}
+            style={{
+              position: 'absolute',
+              top: '-5px',
+              right: '10px',
+              background: 'none',
+              border: 'none',
+              color: '#919191',
+              cursor: 'pointer',
+              fontSize: '20px',
+              padding: '0px',
+              zIndex: 1
+            }}
+            title="Close Settings"
+          >
+            ✕
+          </button>
+        )}
+      </div>
       
       <div className="section">
         <h2>Notes</h2>
