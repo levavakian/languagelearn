@@ -539,6 +539,28 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
           setSelectedLesson(null);
         }}
         onSave={handleUpdateLesson}
+        onDelete={async () => {
+          if (!selectedLesson || !selectedCourseId) return;
+          try {
+            const response = await fetch(`/api/course/${selectedCourseId}/lesson/${selectedLesson.id}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+
+            if (response.status === 401) {
+              onUnauthorized();
+              return;
+            }
+
+            setLessons(prev => prev.filter(lesson => lesson.id !== selectedLesson.id));
+            setIsEditLessonModalOpen(false);
+            setSelectedLesson(null);
+          } catch (error) {
+            console.error('Error deleting lesson:', error);
+          }
+        }}
         initialSummary={selectedLesson?.summary || ''}
       />
     </div>

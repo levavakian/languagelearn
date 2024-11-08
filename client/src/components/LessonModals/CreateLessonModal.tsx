@@ -62,12 +62,8 @@ const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
             </button>
           </div>
           <div className="modal-buttons">
-            <button type="submit" disabled={!selectedPlanId}>
-              Create Lesson
-            </button>
-            <button type="button" onClick={onClose}>
-              Cancel
-            </button>
+            <button type="submit" disabled={!selectedPlanId}>Create Lesson</button>
+            <button type="button" onClick={onClose}>Cancel</button>
           </div>
         </form>
       </div>

@@ -5,6 +5,7 @@ interface EditLessonModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (summary: string) => void;
+  onDelete: () => void;
   initialSummary: string;
 }
 
@@ -12,6 +13,7 @@ const EditLessonModal: React.FC<EditLessonModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   initialSummary,
 }) => {
   const [summary, setSummary] = useState(initialSummary);
@@ -42,10 +44,15 @@ const EditLessonModal: React.FC<EditLessonModalProps> = ({
             />
           </div>
           <div className="modal-buttons">
-            <button type="submit">Save</button>
-            <button type="button" onClick={onClose}>
-              Cancel
+            <button 
+              type="button" 
+              onClick={onDelete}
+              className="delete-button"
+            >
+              Delete
             </button>
+            <button type="submit">Save</button>
+            <button type="button" onClick={onClose}>Cancel</button>
           </div>
         </form>
       </div>

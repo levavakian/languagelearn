@@ -63,7 +63,7 @@
   color: white;
 }
 
-.modal-buttons button[type="button"] {
+.modal-buttons button[type="button"]:not(.delete-button) {
   background-color: #666;
   color: white;
 }
@@ -72,4 +72,8 @@
   background-color: #ff4444;
   color: white;
   margin-right: auto;
+}
+
+.modal-buttons .delete-button:hover {
+  background-color: #c82333;
 } 

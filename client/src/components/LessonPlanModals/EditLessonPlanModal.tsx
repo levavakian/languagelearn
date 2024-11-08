@@ -57,13 +57,11 @@ const EditLessonPlanModal: React.FC<EditLessonPlanModalProps> = ({
             />
           </div>
           <div className="modal-buttons">
-            <button type="submit">Save</button>
             <button type="button" onClick={onDelete} className="delete-button">
               Delete
             </button>
-            <button type="button" onClick={onClose}>
-              Cancel
-            </button>
+            <button type="submit">Save</button>
+            <button type="button" onClick={onClose}>Cancel</button>
           </div>
         </form>
       </div>
