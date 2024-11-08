@@ -431,6 +431,13 @@ const Settings: React.FC<SettingsProps> = ({
     setEditingVocabWord(null);
   };
 
+  const sectionStyle = {
+    backgroundColor: '#2f333d', // Lighter shade than #282c34
+    borderRadius: '12px',
+    padding: '20px',
+    marginBottom: '20px'
+  };
+
   return (
     <div style={containerStyle}>
       {!embedded && onBack && (
@@ -449,7 +456,7 @@ const Settings: React.FC<SettingsProps> = ({
         </button>
       )}
       
-      <div style={{ marginBottom: '30px' }}>
+      <div style={sectionStyle}>
         <h2>Notes</h2>
         <div>
           {addingNodeAt === null ? (
@@ -537,7 +544,7 @@ const Settings: React.FC<SettingsProps> = ({
         </div>
       </div>
 
-      <div style={{ marginBottom: '30px' }}>
+      <div style={sectionStyle}>
         <h2>Custom Instructions</h2>
         {editingInstructions ? (
           <div>
@@ -609,7 +616,7 @@ const Settings: React.FC<SettingsProps> = ({
         )}
       </div>
 
-      <div>
+      <div style={sectionStyle}>
         <h2>Vocabulary</h2>
         <div style={{ marginBottom: '20px' }}>
           <div style={{ 
