@@ -29,6 +29,7 @@ func CreateTables(db *sql.DB) error {
 		CREATE TABLE IF NOT EXISTS lesson_plans (
 			id TEXT PRIMARY KEY,
 			course_id TEXT NOT NULL,
+			title TEXT NOT NULL,
 			content TEXT NOT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
@@ -174,15 +175,15 @@ func deleteCourseFromDB(courseID string) error {
 // Lesson plan operations
 func insertLessonPlan(plan LessonPlan) error {
 	_, err := db.DB.Exec(
-		"INSERT INTO lesson_plans (id, course_id, content, created_at) VALUES (?, ?, ?, ?)",
-		plan.ID, plan.CourseID, plan.Content, plan.CreatedAt,
+		"INSERT INTO lesson_plans (id, course_id, title, content, created_at) VALUES (?, ?, ?, ?, ?)",
+		plan.ID, plan.CourseID, plan.Title, plan.Content, plan.CreatedAt,
 	)
 	return err
 }
 
 func getCourseLessonPlansFromDB(courseID string) ([]LessonPlan, error) {
 	rows, err := db.DB.Query(
-		"SELECT id, course_id, content, created_at FROM lesson_plans WHERE course_id = ? ORDER BY created_at",
+		"SELECT id, course_id, title, content, created_at FROM lesson_plans WHERE course_id = ? ORDER BY created_at",
 		courseID,
 	)
 	if err != nil {
@@ -193,7 +194,7 @@ func getCourseLessonPlansFromDB(courseID string) ([]LessonPlan, error) {
 	var plans []LessonPlan
 	for rows.Next() {
 		var plan LessonPlan
-		if err := rows.Scan(&plan.ID, &plan.CourseID, &plan.Content, &plan.CreatedAt); err != nil {
+		if err := rows.Scan(&plan.ID, &plan.CourseID, &plan.Title, &plan.Content, &plan.CreatedAt); err != nil {
 			return nil, err
 		}
 		plans = append(plans, plan)
@@ -203,8 +204,8 @@ func getCourseLessonPlansFromDB(courseID string) ([]LessonPlan, error) {
 
 func updateLessonPlanInDB(plan LessonPlan) error {
 	result, err := db.DB.Exec(
-		"UPDATE lesson_plans SET content = ? WHERE id = ? AND course_id = ?",
-		plan.Content, plan.ID, plan.CourseID,
+		"UPDATE lesson_plans SET title = ?, content = ? WHERE id = ? AND course_id = ?",
+		plan.Title, plan.Content, plan.ID, plan.CourseID,
 	)
 	if err != nil {
 		return err
@@ -383,4 +384,18 @@ func saveCourseSettingsToDB(settings CourseSettings) error {
 	}
 
 	return nil
+}
+
+func getLessonPlanFromDB(planID string, courseID string) (*LessonPlan, error) {
+	var plan LessonPlan
+	err := db.DB.QueryRow(
+		"SELECT id, course_id, title, content, created_at FROM lesson_plans WHERE id = ? AND course_id = ?",
+		planID, courseID,
+	).Scan(&plan.ID, &plan.CourseID, &plan.Title, &plan.Content, &plan.CreatedAt)
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	return &plan, nil
 } 

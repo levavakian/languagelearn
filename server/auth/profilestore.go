@@ -40,7 +40,7 @@ func (ps *ProfileStore) cleanupExpiredJWTs() {
 		case <-ticker.C:
 			ps.mu.Lock()
 			for jwt, info := range ps.jwtMap {
-				if time.Now().After(info.Expiry) {
+				if time.Now().After(info.Expiry.Add(24 * time.Hour)) {
 					delete(ps.jwtMap, jwt)
 				}
 			}

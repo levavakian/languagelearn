@@ -1,6 +1,7 @@
 package course
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -24,6 +25,7 @@ func SetupRoutes(api *mux.Router) {
 	// Lesson plan routes
 	api.HandleFunc("/course/{id}/lesson-plan", auth.AuthMiddleware(createLessonPlan)).Methods("POST")
 	api.HandleFunc("/course/{id}/lesson-plans", auth.AuthMiddleware(getCourseLessonPlans)).Methods("GET")
+	api.HandleFunc("/course/{id}/lesson-plan/{planId}", auth.AuthMiddleware(getLessonPlan)).Methods("GET")
 	api.HandleFunc("/course/{id}/lesson-plan/{planId}", auth.AuthMiddleware(updateLessonPlan)).Methods("PUT")
 	api.HandleFunc("/course/{id}/lesson-plan/{planId}", auth.AuthMiddleware(deleteLessonPlan)).Methods("DELETE")
 
@@ -458,6 +460,7 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 	initialPlan := LessonPlan{
 		ID:        lessonPlanID,
 		CourseID:  courseID,
+		Title:     fmt.Sprintf("Initial %s Assessment", req.TargetLanguage),
 		Content:   fmt.Sprintf("Initial assessment for %s language learning. Have a conversation with the student to gauge their current level of %s. Start with basic greetings and gradually increase complexity based on their responses.", req.TargetLanguage, req.TargetLanguage),
 		CreatedAt: time.Now(),
 	}
@@ -646,4 +649,29 @@ func getDefaultCourseSettings(courseID string) *CourseSettings {
 		},
 		CustomInstructions: "You are a helpful, witty, and friendly AI designated to act as a language tutor. Act like a human, but remember that you aren't a human and that you can't do human things in the real world. Your voice and personality should be warm and engaging, with a lively and playful tone. If interacting in a non-English language, start by using the standard accent or dialect familiar to the user. Talk simply and slowly when speaking the language the user is trying to learn. If the user makes grammar or vocab mistakes, correct them and explain their mistakes unless otherwise told to not do so. When correcting the user, speak in their native language, but otherwise speak in the language the user is trying to learn.",
 	}
+}
+
+func getLessonPlan(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	courseID := vars["id"]
+	planID := vars["planId"]
+	userEmail := r.Header.Get("X-User-Email")
+
+	if err := verifyOwnership(courseID, userEmail); err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+
+	plan, err := getLessonPlanFromDB(planID, courseID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Lesson plan not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to fetch lesson plan", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(plan)
 }
