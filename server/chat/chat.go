@@ -184,7 +184,7 @@ var (
 )
 
 // Database access functions
-func insertChat(chatID string, creatorEmail string, name string) error {
+func InsertChat(chatID string, creatorEmail string, name string) error {
 	_, err := db.DB.Exec(
 		"INSERT INTO chats (id, creator_id, name) VALUES (?, ?, ?)",
 		chatID, creatorEmail, name,
@@ -304,7 +304,7 @@ func createChat(w http.ResponseWriter, r *http.Request) {
 
 	chatID := generateUniqueID()
 	
-	if err := insertChat(chatID, creatorEmail, chatData.Name); err != nil {
+	if err := InsertChat(chatID, creatorEmail, chatData.Name); err != nil {
 		http.Error(w, "Failed to create chat", http.StatusInternalServerError)
 		return
 	}
