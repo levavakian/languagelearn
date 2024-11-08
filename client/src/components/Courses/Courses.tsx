@@ -5,6 +5,7 @@ import CreateLessonPlanModal from '../LessonPlanModals/CreateLessonPlanModal';
 import EditLessonPlanModal from '../LessonPlanModals/EditLessonPlanModal';
 import CreateLessonModal from '../LessonModals/CreateLessonModal';
 import EditLessonModal from '../LessonModals/EditLessonModal';
+import Settings from '../Settings/Settings';
 
 interface CourseModalProps {
   isOpen: boolean;
@@ -498,6 +499,15 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
                 + Add Lesson
               </button>
             </div>
+            <h3 className="section-header">Settings</h3>
+            <Settings
+              token={token}
+              id={selectedCourse.id}
+              endpoint={`/api/course/${selectedCourse.id}/settings`}
+              onSettingsChange={() => {}} // Add handler if needed
+              onUnauthorized={onUnauthorized}
+              embedded={true}
+            />
           </div>
         ) : (
           <div className="no-course-selected">
