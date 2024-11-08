@@ -85,3 +85,23 @@
   height: 100%;
   color: #666;
 }
+
+.course-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.delete-course-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 1.2em;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.delete-course-button:hover {
+  color: #ff4444;
+}

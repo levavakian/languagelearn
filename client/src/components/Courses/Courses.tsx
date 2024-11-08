@@ -96,6 +96,12 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
     fetchCourses();
   }, [fetchCourses]);
 
+  useEffect(() => {
+    if (courses.length > 0 && !selectedCourseId) {
+      setSelectedCourseId(courses[0].id);
+    }
+  }, [courses, selectedCourseId]);
+
   const handleCreateCourse = async (name: string, language: string) => {
     try {
       const response = await fetch('/api/course/default', {
@@ -117,6 +123,7 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
 
       const newCourse = await response.json();
       setCourses(prevCourses => [newCourse.course, ...prevCourses]);
+      setSelectedCourseId(newCourse.course.id);
       setIsModalOpen(false);
     } catch (error) {
       console.error('Error creating course:', error);
@@ -160,7 +167,6 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
         }))}
         selectedId={selectedCourseId}
         onSelect={setSelectedCourseId}
-        onDelete={handleDeleteCourse}
         onCreate={() => setIsModalOpen(true)}
         expanded={isSidebarExpanded}
         onExpandedChange={setIsSidebarExpanded}
@@ -168,7 +174,16 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
       <div className="course-content">
         {selectedCourse ? (
           <div className="selected-course">
-            <h2>{selectedCourse.name}</h2>
+            <div className="course-header">
+              <h2>{selectedCourse.name}</h2>
+              <button 
+                className="delete-course-button"
+                onClick={() => handleDeleteCourse(selectedCourse.id)}
+                aria-label="Delete course"
+              >
+                🗑️
+              </button>
+            </div>
             <p>Course ID: {selectedCourse.id}</p>
           </div>
         ) : (

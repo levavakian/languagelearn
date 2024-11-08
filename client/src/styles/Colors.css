@@ -1,0 +1,27 @@
+:root {
+  /* Base colors */
+  --color-background-primary: #2a2d37;
+  --color-background-secondary: #282c34;
+  --color-background-tertiary: #3a3f4b;
+  --color-background-dark: #1e1e1e;
+
+  /* Text colors */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #e0e0e0;
+  --color-text-muted: #666666;
+
+  /* Accent colors */
+  --color-accent-primary: #3f51b5;
+  --color-accent-secondary: #61dafb;
+
+  /* Button colors */
+  --color-button-primary: #3f51b5;
+  --color-button-secondary: #808080;
+  --color-button-danger: #ff4d4d;
+
+  /* Overlay colors */
+  --color-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Border colors */
+  --color-border: #3f51b5;
+}
