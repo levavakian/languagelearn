@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react';
 
+export interface VocabItem {
+  type: string;
+  word: string;
+  definition: string;
+  notes?: string;
+  lastUsed: Date;
+  usageCount: number;
+}
+
 export interface ConversationSettings {
   chatId?: string;
   notes: NoteNode[];
   preferAudioResponse?: boolean;
   customInstructions?: string;
+  vocabItems?: { [key: string]: VocabItem };
 }
 
 export interface NoteNode {
@@ -50,12 +60,27 @@ export const fetchChatSettings = async (chatId: string, token: string, onUnautho
 };
 
 const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsChange, onBack, onUnauthorized }) => {
-  const [settings, setSettings] = useState<ConversationSettings>({ notes: [] });
+  const [settings, setSettings] = useState<ConversationSettings>({
+    chatId: chatId,
+    notes: [],
+    preferAudioResponse: localStorage.getItem('preferAudioResponse') === 'true',
+    vocabItems: {}
+  });
   const [addingNodeAt, setAddingNodeAt] = useState<{parentId: string | null, type: 'folder' | 'note'} | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState('');
   const [editingInstructions, setEditingInstructions] = useState(false);
   const [customInstructions, setCustomInstructions] = useState('');
+  const [editingVocabWord, setEditingVocabWord] = useState<string | null>(null);
+  const [newVocabItem, setNewVocabItem] = useState<VocabItem>({
+    type: 'word',
+    word: '',
+    definition: '',
+    notes: '',
+    lastUsed: new Date(),
+    usageCount: 0
+  });
+  const [editingVocabItem, setEditingVocabItem] = useState<VocabItem | null>(null);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -323,6 +348,60 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
     setEditingInstructions(false);
   };
 
+  const addVocabItem = async () => {
+    if (!newVocabItem.word.trim() || !newVocabItem.definition.trim()) return;
+
+    const newSettings = {
+      ...settings,
+      vocabItems: {
+        ...settings.vocabItems,
+        [newVocabItem.word]: newVocabItem
+      }
+    };
+
+    await saveSettings(newSettings);
+    setNewVocabItem({
+      type: 'word',
+      word: '',
+      definition: '',
+      notes: '',
+      lastUsed: new Date(),
+      usageCount: 0
+    });
+  };
+
+  const deleteVocabItem = async (word: string) => {
+    const newVocabItems = { ...settings.vocabItems };
+    delete newVocabItems[word];
+    
+    const newSettings = {
+      ...settings,
+      vocabItems: newVocabItems
+    };
+
+    await saveSettings(newSettings);
+  };
+
+  const updateVocabItem = async (word: string, updatedItem: VocabItem) => {
+    const newSettings = {
+      ...settings,
+      vocabItems: {
+        ...settings.vocabItems,
+        [word]: updatedItem
+      }
+    };
+
+    await saveSettings(newSettings);
+    setEditingVocabWord(null);
+  };
+
+  // Helper function to format the date display
+  const formatLastUsed = (date: Date | string | undefined) => {
+    if (!date) return "Never";
+    const dateObj = new Date(date);
+    return isNaN(dateObj.getTime()) ? "Never" : dateObj.toLocaleDateString();
+  };
+
   return (
     <div style={{ 
       padding: '20px',
@@ -476,6 +555,226 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
         
         <div className="notes-tree">
           {settings.notes.map(node => renderNode(node))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#3a3f4b', borderRadius: '8px' }}>
+        <h3 style={{ margin: '0 0 15px 0' }}>Vocabulary List</h3>
+        
+        <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+          <input
+            value={newVocabItem.word}
+            onChange={(e) => setNewVocabItem({ ...newVocabItem, word: e.target.value })}
+            placeholder="Word"
+            style={{
+              backgroundColor: '#282c34',
+              color: 'white',
+              border: '1px solid #61dafb',
+              borderRadius: '4px',
+              padding: '8px',
+              flex: '1'
+            }}
+          />
+          <input
+            value={newVocabItem.definition}
+            onChange={(e) => setNewVocabItem({ ...newVocabItem, definition: e.target.value })}
+            placeholder="Definition"
+            style={{
+              backgroundColor: '#282c34',
+              color: 'white',
+              border: '1px solid #61dafb',
+              borderRadius: '4px',
+              padding: '8px',
+              flex: '2'
+            }}
+          />
+          <button
+            onClick={addVocabItem}
+            style={{
+              background: '#61dafb',
+              border: 'none',
+              color: '#282c34',
+              padding: '5px 15px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Add
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {Object.entries(settings.vocabItems || {}).map(([word, item]) => (
+            <div key={word} style={{ 
+              display: 'flex', 
+              flexDirection: 'column',
+              gap: '8px',
+              backgroundColor: '#282c34',
+              padding: '10px',
+              borderRadius: '4px',
+              minWidth: 0
+            }}>
+              {editingVocabWord === word ? (
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '10px', 
+                  alignItems: 'center',
+                  flexWrap: 'nowrap',
+                  minWidth: 0
+                }}>
+                  <input
+                    value={editingVocabItem?.word || item.word}
+                    onChange={(e) => {
+                      setEditingVocabItem({
+                        ...(editingVocabItem || item),
+                        word: e.target.value
+                      });
+                    }}
+                    style={{
+                      backgroundColor: '#3a3f4b',
+                      color: 'white',
+                      border: '1px solid #61dafb',
+                      borderRadius: '4px',
+                      padding: '4px',
+                      flex: '1',
+                      minWidth: '100px',
+                      maxWidth: '200px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  />
+                  <input
+                    value={editingVocabItem?.definition || item.definition}
+                    onChange={(e) => {
+                      setEditingVocabItem({
+                        ...(editingVocabItem || item),
+                        definition: e.target.value
+                      });
+                    }}
+                    style={{
+                      backgroundColor: '#3a3f4b',
+                      color: 'white',
+                      border: '1px solid #61dafb',
+                      borderRadius: '4px',
+                      padding: '4px',
+                      flex: '2',
+                      minWidth: '150px',
+                      maxWidth: '400px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  />
+                  <input
+                    value={editingVocabItem?.notes || item.notes || ''}
+                    onChange={(e) => {
+                      setEditingVocabItem({
+                        ...(editingVocabItem || item),
+                        notes: e.target.value
+                      });
+                    }}
+                    placeholder="Notes"
+                    style={{
+                      backgroundColor: '#3a3f4b',
+                      color: 'white',
+                      border: '1px solid #61dafb',
+                      borderRadius: '4px',
+                      padding: '4px',
+                      flex: '2',
+                      minWidth: '150px',
+                      maxWidth: '400px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  />
+                  <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                    <button onClick={() => {
+                      if (editingVocabItem) {
+                        updateVocabItem(word, editingVocabItem);
+                      }
+                      setEditingVocabWord(null);
+                      setEditingVocabItem(null);
+                    }}>💾</button>
+                    <button onClick={() => {
+                      setEditingVocabWord(null);
+                      setEditingVocabItem(null);
+                    }}>❌</button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '10px', 
+                  alignItems: 'center',
+                  flexWrap: 'nowrap',
+                  minWidth: 0
+                }}>
+                  <div style={{ 
+                    flex: '1',
+                    minWidth: '100px',
+                    maxWidth: '200px',
+                    backgroundColor: '#3a3f4b',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    <strong>{item.word}</strong>
+                  </div>
+                  <div style={{ 
+                    flex: '2',
+                    minWidth: '150px',
+                    maxWidth: '400px',
+                    backgroundColor: '#3a3f4b',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {item.definition}
+                  </div>
+                  <div style={{ 
+                    flex: '2',
+                    minWidth: '150px',
+                    maxWidth: '400px',
+                    backgroundColor: '#3a3f4b',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    color: item.notes ? 'white' : '#666'
+                  }}>
+                    {item.notes || 'No notes'}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                    <button 
+                      onClick={() => {
+                        setEditingVocabWord(word);
+                        setEditingVocabItem(item);
+                      }}
+                      style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      onClick={() => deleteVocabItem(word)}
+                      style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div style={{ fontSize: '0.8em', color: '#888' }}>
+                Usage count: {item.usageCount || 0} | Last used: {formatLastUsed(item.lastUsed)}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
