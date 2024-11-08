@@ -8,7 +8,6 @@ type Course struct {
 	ID          string    `json:"id"`
 	CreatorID   string    `json:"creator_id"`
 	Name        string    `json:"name"`
-	Settings    *CourseSettings `json:"settings"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
@@ -58,8 +57,41 @@ type CourseNoteNode struct {
 	IsExpanded bool            `json:"isExpanded,omitempty"`
 }
 
-type CourseSettings struct {
-	CourseID           string           `json:"courseId"`
-	Notes             []CourseNoteNode  `json:"notes"`
-	CustomInstructions string           `json:"customInstructions,omitempty"`
+type Chat struct {
+	ID        string    `json:"id"`
+	CreatorID string    `json:"creator_id"`
+	Name      string    `json:"name"`
+	LessonID  string    `json:"lesson_id,omitempty"`
+	Messages  []Message `json:"messages"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type Message struct {
+	ID                  string    `json:"id"`
+	ChatID              string    `json:"chat_id"`
+	Sender              string    `json:"sender"`
+	Content             string    `json:"content"`
+	Type                string    `json:"type,omitempty"` // "text" or "audio"
+	PreferredResponseType string    `json:"preferredResponseType,omitempty"`
+	ResponseID          string    `json:"responseId,omitempty"`
+	CreatedAt           time.Time `json:"created_at"`
+}
+
+type Settings struct {
+	ID                 string     `json:"id"`
+	Notes              []NoteNode `json:"notes"`
+	CustomInstructions string     `json:"customInstructions,omitempty"`
+}
+
+type NoteNode struct {
+	ID         string     `json:"id"`
+	Name       string     `json:"name"`
+	Type       string     `json:"type"`
+	Children   []NoteNode `json:"children,omitempty"`
+	IsExpanded bool       `json:"isExpanded,omitempty"`
+}
+
+type SettingsUpdate struct {
+	ChatID       string   `json:"id"`
+	Settings Settings `json:"settings"`
 }

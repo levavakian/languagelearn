@@ -446,19 +446,24 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 
 	// Create course
 	courseID := uuid.New().String()
-	settings := getDefaultCourseSettings(courseID)
-	settings.CustomInstructions += fmt.Sprintf(" The user is trying to learn %s", req.TargetLanguage)
-	
 	course := Course{
 		ID:        courseID,
 		CreatorID: creatorEmail,
 		Name:      fmt.Sprintf("%s Learning Course", req.TargetLanguage),
-		Settings:  settings,
 		CreatedAt: time.Now(),
 	}
 
 	if err := insertCourse(course); err != nil {
 		http.Error(w, "Failed to create course", http.StatusInternalServerError)
+		return
+	}
+
+	// Create and save default settings
+	settings := getDefaultSettings(courseID)
+	settings.CustomInstructions += fmt.Sprintf(" The user is trying to learn %s", req.TargetLanguage)
+	
+	if err := saveCourseSettingsToDB(*settings); err != nil {
+		http.Error(w, "Failed to save course settings", http.StatusInternalServerError)
 		return
 	}
 
@@ -528,7 +533,7 @@ func getCourseSettings(w http.ResponseWriter, r *http.Request) {
 	settings, err := getCourseSettingsFromDB(courseID)
 	if err != nil {
 		// Return default settings if none exist
-		settings = getDefaultCourseSettings(courseID)
+		settings = getDefaultSettings(courseID)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -545,13 +550,13 @@ func updateCourseSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var newSettings CourseSettings
+	var newSettings Settings
 	if err := json.NewDecoder(r.Body).Decode(&newSettings); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	newSettings.CourseID = courseID // Ensure courseID matches URL param
+	newSettings.ID = courseID // Ensure courseID matches URL param
 
 	if err := saveCourseSettingsToDB(newSettings); err != nil {
 		fmt.Printf("Error saving course settings: %v\n", err)
@@ -562,16 +567,16 @@ func updateCourseSettings(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func getDefaultCourseSettings(courseID string) *CourseSettings {
-	return &CourseSettings{
-		CourseID: courseID,
-		Notes: []CourseNoteNode{
+func getDefaultSettings(ID string) *Settings {
+	return &Settings{
+		ID: ID,
+		Notes: []NoteNode{
 			{
 				ID:         "welcome-folder",
 				Name:       "Getting Started",
 				Type:       "folder",
 				IsExpanded: true,
-				Children: []CourseNoteNode{
+				Children: []NoteNode{
 					{
 						ID:   "welcome-note",
 						Name: "Welcome! Create notes and folders to organize your language learning materials. Click the edit button (🔤) to modify content, or use the folder (📁) and plus (➕) buttons to add new items. Use @word to insert a clicked word and @sentence to insert a clicked message.",
@@ -584,7 +589,7 @@ func getDefaultCourseSettings(courseID string) *CourseSettings {
 				Name:       "Common Phrases",
 				Type:       "folder",
 				IsExpanded: true,
-				Children: []CourseNoteNode{
+				Children: []NoteNode{
 					{
 						ID:   "translate",
 						Name: "Could you translate '@sentence' to English?",
@@ -607,7 +612,7 @@ func getDefaultCourseSettings(courseID string) *CourseSettings {
 				Name:       "Grammar Practice",
 				Type:       "folder",
 				IsExpanded: true,
-				Children: []CourseNoteNode{
+				Children: []NoteNode{
 					{
 						ID:   "past-tense",
 						Name: "Could you say '@sentence' in the past tense?",
@@ -635,7 +640,7 @@ func getDefaultCourseSettings(courseID string) *CourseSettings {
 				Name:       "Vocabulary Help",
 				Type:       "folder",
 				IsExpanded: true,
-				Children: []CourseNoteNode{
+				Children: []NoteNode{
 					{
 						ID:   "synonyms",
 						Name: "What are some synonyms for the word '@word'?",
@@ -681,4 +686,149 @@ func getLessonPlan(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(plan)
+}
+
+// Chat handlers
+func createChat(w http.ResponseWriter, r *http.Request) {
+	creatorEmail := r.Header.Get("X-User-Email")
+
+	var chat Chat
+	if err := json.NewDecoder(r.Body).Decode(&chat); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	chat.ID = uuid.New().String()
+	chat.CreatorID = creatorEmail
+	chat.CreatedAt = time.Now()
+
+	if err := InsertChat(&chat); err != nil {
+		http.Error(w, "Failed to create chat", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(chat)
+}
+
+func getUserChats(w http.ResponseWriter, r *http.Request) {
+	userEmail := r.Header.Get("X-User-Email")
+
+	chats, err := GetUserChats(userEmail)
+	if err != nil {
+		http.Error(w, "Failed to fetch chats", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(chats)
+}
+
+func deleteChat(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	chatID := vars["id"]
+	userEmail := r.Header.Get("X-User-Email")
+
+	// Verify ownership
+	chat, err := GetChat(chatID, userEmail)
+	if err != nil {
+		http.Error(w, "Chat not found", http.StatusNotFound)
+		return
+	}
+
+	if chat.CreatorID != userEmail {
+		http.Error(w, "Unauthorized", http.StatusForbidden)
+		return
+	}
+
+	if err := DeleteChat(chatID); err != nil {
+		http.Error(w, "Failed to delete chat", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func getChatNames(w http.ResponseWriter, r *http.Request) {
+	userEmail := r.Header.Get("X-User-Email")
+	var request struct {
+		ChatIDs []string `json:"chat_ids"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	chatNames := make(map[string]string)
+	for _, chatID := range request.ChatIDs {
+		chat, err := GetChat(chatID, userEmail)
+		if err != nil {
+			continue
+		}
+		chatNames[chatID] = chat.Name
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(chatNames)
+}
+
+func getChatSettings(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	chatID := vars["id"]
+	userEmail := r.Header.Get("X-User-Email")
+
+	// Verify access
+	_, err := GetChat(chatID, userEmail)
+	if err != nil {
+		http.Error(w, "Chat not found", http.StatusNotFound)
+		return
+	}
+
+	settings, err := getChatSettingsFromDB(chatID)
+	if err != nil {
+		settings = getDefaultSettings(chatID) // Return default settings if none exist
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(settings)
+}
+
+func updateChatSettings(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	chatID := vars["id"]
+	userEmail := r.Header.Get("X-User-Email")
+
+	// Verify access
+	_, err := GetChat(chatID, userEmail)
+	if err != nil {
+		http.Error(w, "Chat not found", http.StatusNotFound)
+		return
+	}
+
+	var settings Settings
+	if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	settings.ID = chatID // Ensure chat ID matches URL param
+	if err := saveChatSettingsToDB(settings); err != nil {
+		http.Error(w, "Failed to update settings", http.StatusInternalServerError)
+		return
+	}
+
+	// Notify active connections about settings update
+	chatsMutex.RLock()
+	if chatConns := activeChats[chatID]; chatConns != nil {
+		select {
+		case chatConns.SettingsUpdate <- SettingsUpdate{ChatID: chatID, Settings: settings}:
+		default:
+			// Channel is full, skip update
+		}
+	}
+	chatsMutex.RUnlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(settings)
 }

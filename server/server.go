@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/levavakian/languagelearn/server/auth"
-	"github.com/levavakian/languagelearn/server/chat"
 	"github.com/levavakian/languagelearn/server/chat/course"
 	"github.com/levavakian/languagelearn/server/db"
 )
@@ -35,8 +34,6 @@ func main() {
 	r := mux.NewRouter()
 
 	api := r.PathPrefix("/api").Subrouter()
-	chat.SetupRoutes(api)
-	chat.SetupSettingsRoutes(api)
 	course.SetupRoutes(api)
 	api.HandleFunc("/profile", auth.AuthMiddleware(handleProfile)).Methods("GET")
 

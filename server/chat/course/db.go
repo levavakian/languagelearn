@@ -16,7 +16,6 @@ func CreateTables(db *sql.DB) error {
 			id TEXT PRIMARY KEY,
 			creator_id TEXT NOT NULL,
 			name TEXT NOT NULL,
-			settings TEXT NOT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
 	`)
@@ -75,7 +74,53 @@ func CreateTables(db *sql.DB) error {
 		CREATE TABLE IF NOT EXISTS course_settings (
 			course_id TEXT PRIMARY KEY,
 			settings TEXT NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+		)
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Create chat_settings table
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS chat_settings (
+			chat_id TEXT PRIMARY KEY,
+			settings TEXT NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
+		)
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Create chats table
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS chats (
+			id TEXT PRIMARY KEY,
+			creator_id TEXT NOT NULL,
+			name TEXT NOT NULL,
+			lesson_id TEXT,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE
+		)
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Create messages table
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS messages (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			chat_id TEXT NOT NULL,
+			sender TEXT NOT NULL,
+			content TEXT NOT NULL,
+			type TEXT NOT NULL,
+			response_id TEXT,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
 		)
 	`)
 	if err != nil {
@@ -87,21 +132,16 @@ func CreateTables(db *sql.DB) error {
 
 // Course operations
 func insertCourse(course Course) error {
-	settingsJSON, err := json.Marshal(course.Settings)
-	if err != nil {
-		return fmt.Errorf("error marshaling settings: %v", err)
-	}
-
-	_, err = db.DB.Exec(
-		"INSERT INTO courses (id, creator_id, name, settings, created_at) VALUES (?, ?, ?, ?, ?)",
-		course.ID, course.CreatorID, course.Name, string(settingsJSON), course.CreatedAt,
+	_, err := db.DB.Exec(
+		"INSERT INTO courses (id, creator_id, name, created_at) VALUES (?, ?, ?, ?)",
+		course.ID, course.CreatorID, course.Name, course.CreatedAt,
 	)
 	return err
 }
 
 func getUserCoursesFromDB(userEmail string) ([]Course, error) {
 	rows, err := db.DB.Query(
-		"SELECT id, creator_id, name, settings, created_at FROM courses WHERE creator_id = ? ORDER BY created_at DESC",
+		"SELECT id, creator_id, name, created_at FROM courses WHERE creator_id = ? ORDER BY created_at DESC",
 		userEmail,
 	)
 	if err != nil {
@@ -112,12 +152,8 @@ func getUserCoursesFromDB(userEmail string) ([]Course, error) {
 	var courses []Course
 	for rows.Next() {
 		var course Course
-		var settingsJSON string
-		if err := rows.Scan(&course.ID, &course.CreatorID, &course.Name, &settingsJSON, &course.CreatedAt); err != nil {
+		if err := rows.Scan(&course.ID, &course.CreatorID, &course.Name, &course.CreatedAt); err != nil {
 			return nil, err
-		}
-		if err := json.Unmarshal([]byte(settingsJSON), &course.Settings); err != nil {
-			return nil, fmt.Errorf("error parsing settings for course %s: %v", course.ID, err)
 		}
 		courses = append(courses, course)
 	}
@@ -126,32 +162,22 @@ func getUserCoursesFromDB(userEmail string) ([]Course, error) {
 
 func getCourseFromDB(courseID string) (*Course, error) {
 	var course Course
-	var settingsJSON string
 	err := db.DB.QueryRow(
-		"SELECT id, creator_id, name, settings, created_at FROM courses WHERE id = ?",
+		"SELECT id, creator_id, name, created_at FROM courses WHERE id = ?",
 		courseID,
-	).Scan(&course.ID, &course.CreatorID, &course.Name, &settingsJSON, &course.CreatedAt)
+	).Scan(&course.ID, &course.CreatorID, &course.Name, &course.CreatedAt)
 	
 	if err != nil {
 		return nil, err
-	}
-
-	if err := json.Unmarshal([]byte(settingsJSON), &course.Settings); err != nil {
-		return nil, fmt.Errorf("error parsing settings: %v", err)
 	}
 
 	return &course, nil
 }
 
 func updateCourseInDB(course Course) error {
-	settingsJSON, err := json.Marshal(course.Settings)
-	if err != nil {
-		return fmt.Errorf("error marshaling settings: %v", err)
-	}
-
 	result, err := db.DB.Exec(
-		"UPDATE courses SET name = ?, settings = ? WHERE id = ? AND creator_id = ?",
-		course.Name, string(settingsJSON), course.ID, course.CreatorID,
+		"UPDATE courses SET name = ? WHERE id = ? AND creator_id = ?",
+		course.Name, course.ID, course.CreatorID,
 	)
 	if err != nil {
 		return err
@@ -342,7 +368,7 @@ func updateVocabListInDB(vocabList VocabList) error {
 }
 
 // Course settings operations
-func getCourseSettingsFromDB(courseID string) (*CourseSettings, error) {
+func getCourseSettingsFromDB(courseID string) (*Settings, error) {
 	var settingsJSON string
 	err := db.DB.QueryRow(
 		"SELECT settings FROM course_settings WHERE course_id = ?",
@@ -353,15 +379,16 @@ func getCourseSettingsFromDB(courseID string) (*CourseSettings, error) {
 		return nil, err
 	}
 
-	var settings CourseSettings
+	var settings Settings
 	if err := json.Unmarshal([]byte(settingsJSON), &settings); err != nil {
 		return nil, fmt.Errorf("error parsing settings JSON: %v", err)
 	}
 
+	settings.ID = courseID // Convert course_id to id
 	return &settings, nil
 }
 
-func saveCourseSettingsToDB(settings CourseSettings) error {
+func saveCourseSettingsToDB(settings Settings) error {
 	settingsJSON, err := json.Marshal(settings)
 	if err != nil {
 		return fmt.Errorf("error marshaling settings: %v", err)
@@ -369,7 +396,7 @@ func saveCourseSettingsToDB(settings CourseSettings) error {
 
 	result, err := db.DB.Exec(
 		`REPLACE INTO course_settings (course_id, settings) VALUES (?, ?)`,
-		settings.CourseID, string(settingsJSON),
+		settings.ID, string(settingsJSON), // Convert id to course_id
 	)
 	if err != nil {
 		return fmt.Errorf("database error while saving settings: %v", err)
@@ -412,4 +439,168 @@ func getLessonFromDB(lessonID string, courseID string) (*Lesson, error) {
 	}
 	
 	return &lesson, nil
+}
+
+func InsertChat(chat *Chat) error {
+	_, err := db.DB.Exec(
+		"INSERT INTO chats (id, creator_id, name, lesson_id, created_at) VALUES (?, ?, ?, ?, ?)",
+		chat.ID, chat.CreatorID, chat.Name, chat.LessonID, chat.CreatedAt,
+	)
+	return err
+}
+
+func InsertMessage(msg *Message) error {
+	_, err := db.DB.Exec(
+		"INSERT INTO messages (chat_id, sender, content, type, response_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+		msg.ChatID, msg.Sender, msg.Content, msg.Type, msg.ResponseID, msg.CreatedAt,
+	)
+	return err
+}
+
+func GetChat(chatID string, userEmail string) (*Chat, error) {
+	var chat Chat
+	err := db.DB.QueryRow(`
+		SELECT c.id, c.creator_id, c.name, c.lesson_id, c.created_at 
+		FROM chats c
+		LEFT JOIN lessons l ON c.lesson_id = l.id
+		LEFT JOIN courses co ON l.course_id = co.id
+		WHERE c.id = ? AND (c.creator_id = ? OR co.creator_id = ?)`,
+		chatID, userEmail, userEmail,
+	).Scan(&chat.ID, &chat.CreatorID, &chat.Name, &chat.LessonID, &chat.CreatedAt)
+	
+	if err != nil {
+		return nil, err
+	}
+
+	messages, err := GetChatMessages(chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	chat.Messages = messages
+	return &chat, nil
+}
+
+func GetChatMessages(chatID string) ([]Message, error) {
+	rows, err := db.DB.Query(
+		"SELECT id, chat_id, sender, content, type, response_id, created_at FROM messages WHERE chat_id = ? ORDER BY created_at",
+		chatID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messages []Message
+	for rows.Next() {
+		var msg Message
+		err := rows.Scan(&msg.ID, &msg.ChatID, &msg.Sender, &msg.Content, &msg.Type, &msg.ResponseID, &msg.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, msg)
+	}
+	return messages, nil
+}
+
+func DeleteChat(chatID string) error {
+	tx, err := db.DB.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	// Get the lesson ID if it exists
+	var lessonID sql.NullString
+	err = tx.QueryRow("SELECT lesson_id FROM chats WHERE id = ?", chatID).Scan(&lessonID)
+	if err != nil && err != sql.ErrNoRows {
+		return fmt.Errorf("failed to get lesson ID: %v", err)
+	}
+
+	// Delete the chat (this will cascade delete messages)
+	_, err = tx.Exec("DELETE FROM chats WHERE id = ?", chatID)
+	if err != nil {
+		return fmt.Errorf("failed to delete chat: %v", err)
+	}
+
+	// If this chat was associated with a lesson, delete the lesson
+	if lessonID.Valid {
+		_, err = tx.Exec("DELETE FROM lessons WHERE id = ?", lessonID.String)
+		if err != nil {
+			return fmt.Errorf("failed to delete associated lesson: %v", err)
+		}
+	}
+
+	return tx.Commit()
+}
+
+func getChatSettingsFromDB(chatID string) (*Settings, error) {
+	var settingsJSON string
+	err := db.DB.QueryRow(
+		"SELECT settings FROM chat_settings WHERE chat_id = ?",
+		chatID,
+	).Scan(&settingsJSON)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var settings Settings
+	if err := json.Unmarshal([]byte(settingsJSON), &settings); err != nil {
+		return nil, fmt.Errorf("error parsing settings JSON: %v", err)
+	}
+
+	settings.ID = chatID // Convert chat_id to id
+	return &settings, nil
+}
+
+func saveChatSettingsToDB(settings Settings) error {
+	settingsJSON, err := json.Marshal(settings)
+	if err != nil {
+		return fmt.Errorf("error marshaling settings: %v", err)
+	}
+
+	result, err := db.DB.Exec(
+		`REPLACE INTO chat_settings (chat_id, settings) VALUES (?, ?)`,
+		settings.ID, string(settingsJSON), // Convert id to chat_id
+	)
+	if err != nil {
+		return fmt.Errorf("database error while saving settings: %v", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("error checking affected rows: %v", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("no rows were affected when saving settings")
+	}
+
+	return nil
+}
+
+func GetUserChats(userEmail string) ([]Chat, error) {
+	rows, err := db.DB.Query(`
+		SELECT id, creator_id, name, lesson_id, created_at 
+		FROM chats 
+		WHERE creator_id = ?
+		ORDER BY created_at DESC`,
+		userEmail,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var chats []Chat
+	for rows.Next() {
+		var chat Chat
+		err := rows.Scan(&chat.ID, &chat.CreatorID, &chat.Name, &chat.LessonID, &chat.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		chats = append(chats, chat)
+	}
+	return chats, nil
 } 
