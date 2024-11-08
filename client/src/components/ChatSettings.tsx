@@ -434,45 +434,49 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
         )}
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <button 
-          onClick={() => setAddingNodeAt({ parentId: null, type: 'folder' })}
-          style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '8px' }}
-        >
-          📁
-        </button>
-        <button 
-          onClick={() => setAddingNodeAt({ parentId: null, type: 'note' })}
-          style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '8px' }}
-        >
-          ➕
-        </button>
-      </div>
-      
-      {addingNodeAt?.parentId === null && (
+      <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#3a3f4b', borderRadius: '8px' }}>
+        <h3 style={{ margin: '0 0 15px 0' }}>Quick Notes</h3>
+        
         <div style={{ marginBottom: '20px' }}>
-          <textarea
-            value={newItemName}
-            onChange={(e) => setNewItemName(e.target.value)}
-            onKeyDown={(e) => handleKeyDown(e, null, addingNodeAt.type)}
-            placeholder={addingNodeAt.type === 'folder' ? "New folder" : "Enter note content..."}
-            autoFocus
-            style={{
-              width: '100%',
-              minHeight: addingNodeAt.type === 'note' ? '100px' : '20px',
-              backgroundColor: '#3a3f4b',
-              color: 'white',
-              border: '1px solid #61dafb',
-              borderRadius: '4px',
-              padding: '8px',
-              resize: 'vertical'
-            }}
-          />
+          <button 
+            onClick={() => setAddingNodeAt({ parentId: null, type: 'folder' })}
+            style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '8px' }}
+          >
+            📁
+          </button>
+          <button 
+            onClick={() => setAddingNodeAt({ parentId: null, type: 'note' })}
+            style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '8px' }}
+          >
+            ➕
+          </button>
         </div>
-      )}
-      
-      <div className="notes-tree">
-        {settings.notes.map(node => renderNode(node))}
+        
+        {addingNodeAt?.parentId === null && (
+          <div style={{ marginBottom: '20px' }}>
+            <textarea
+              value={newItemName}
+              onChange={(e) => setNewItemName(e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, null, addingNodeAt.type)}
+              placeholder={addingNodeAt.type === 'folder' ? "New folder" : "Enter note content..."}
+              autoFocus
+              style={{
+                width: '100%',
+                minHeight: addingNodeAt.type === 'note' ? '100px' : '20px',
+                backgroundColor: '#3a3f4b',
+                color: 'white',
+                border: '1px solid #61dafb',
+                borderRadius: '4px',
+                padding: '8px',
+                resize: 'vertical'
+              }}
+            />
+          </div>
+        )}
+        
+        <div className="notes-tree">
+          {settings.notes.map(node => renderNode(node))}
+        </div>
       </div>
     </div>
   );
