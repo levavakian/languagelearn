@@ -402,6 +402,31 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
     return isNaN(dateObj.getTime()) ? "Never" : dateObj.toLocaleDateString();
   };
 
+  // Common styles for both edit and display modes
+  const fieldStyles = {
+    base: {
+      flex: '1 1 0', // Equal flex grow, shrink, and basis
+      backgroundColor: '#3a3f4b',
+      padding: '8px',
+      borderRadius: '4px',
+      whiteSpace: 'nowrap' as const,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      fontSize: '14px',
+      lineHeight: '1.2',
+      height: '32px',
+      boxSizing: 'border-box' as const,
+      minWidth: 0 // Allow shrinking below content size
+    },
+    actions: {
+      display: 'flex',
+      gap: '8px',
+      flexShrink: 0,
+      width: '60px', // Fixed width for action buttons
+      justifyContent: 'flex-end'
+    }
+  };
+
   return (
     <div style={{ 
       padding: '20px',
@@ -619,7 +644,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
                   display: 'flex', 
                   gap: '10px', 
                   alignItems: 'center',
-                  flexWrap: 'nowrap',
+                  width: '100%',
                   minWidth: 0
                 }}>
                   <input
@@ -631,17 +656,9 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
                       });
                     }}
                     style={{
-                      backgroundColor: '#3a3f4b',
-                      color: 'white',
+                      ...fieldStyles.base,
                       border: '1px solid #61dafb',
-                      borderRadius: '4px',
-                      padding: '4px',
-                      flex: '1',
-                      minWidth: '100px',
-                      maxWidth: '200px',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      color: 'white',
                     }}
                   />
                   <input
@@ -653,17 +670,9 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
                       });
                     }}
                     style={{
-                      backgroundColor: '#3a3f4b',
-                      color: 'white',
+                      ...fieldStyles.base,
                       border: '1px solid #61dafb',
-                      borderRadius: '4px',
-                      padding: '4px',
-                      flex: '2',
-                      minWidth: '150px',
-                      maxWidth: '400px',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      color: 'white',
                     }}
                   />
                   <input
@@ -676,20 +685,12 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
                     }}
                     placeholder="Notes"
                     style={{
-                      backgroundColor: '#3a3f4b',
-                      color: 'white',
+                      ...fieldStyles.base,
                       border: '1px solid #61dafb',
-                      borderRadius: '4px',
-                      padding: '4px',
-                      flex: '2',
-                      minWidth: '150px',
-                      maxWidth: '400px',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      color: 'white',
                     }}
                   />
-                  <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                  <div style={fieldStyles.actions}>
                     <button 
                       onClick={() => {
                         if (editingVocabItem) {
@@ -719,49 +720,22 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
                   gap: '10px', 
                   alignItems: 'center',
                   flexWrap: 'nowrap',
-                  minWidth: 0
+                  minWidth: 0,
+                  height: '32px'
                 }}>
-                  <div style={{ 
-                    flex: '1',
-                    minWidth: '100px',
-                    maxWidth: '200px',
-                    backgroundColor: '#3a3f4b',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}>
+                  <div style={fieldStyles.base}>
                     <strong>{item.word}</strong>
                   </div>
-                  <div style={{ 
-                    flex: '2',
-                    minWidth: '150px',
-                    maxWidth: '400px',
-                    backgroundColor: '#3a3f4b',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}>
+                  <div style={fieldStyles.base}>
                     {item.definition}
                   </div>
-                  <div style={{ 
-                    flex: '2',
-                    minWidth: '150px',
-                    maxWidth: '400px',
-                    backgroundColor: '#3a3f4b',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                  <div style={{
+                    ...fieldStyles.base,
                     color: item.notes ? 'white' : '#666'
                   }}>
                     {item.notes || 'No notes'}
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                  <div style={fieldStyles.actions}>
                     <button 
                       onClick={() => {
                         setEditingVocabWord(word);
