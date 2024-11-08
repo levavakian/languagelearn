@@ -690,17 +690,27 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
                     }}
                   />
                   <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                    <button onClick={() => {
-                      if (editingVocabItem) {
-                        updateVocabItem(word, editingVocabItem);
-                      }
-                      setEditingVocabWord(null);
-                      setEditingVocabItem(null);
-                    }}>💾</button>
-                    <button onClick={() => {
-                      setEditingVocabWord(null);
-                      setEditingVocabItem(null);
-                    }}>❌</button>
+                    <button 
+                      onClick={() => {
+                        if (editingVocabItem) {
+                          updateVocabItem(word, editingVocabItem);
+                        }
+                        setEditingVocabWord(null);
+                        setEditingVocabItem(null);
+                      }}
+                      style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
+                    >
+                      ✓
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setEditingVocabWord(null);
+                        setEditingVocabItem(null);
+                      }}
+                      style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -759,13 +769,13 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ token, chatId, onSettingsCh
                       }}
                       style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
                     >
-                      ✏️
+                      ✎
                     </button>
                     <button 
                       onClick={() => deleteVocabItem(word)}
                       style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
                     >
-                      🗑️
+                      ⌫
                     </button>
                   </div>
                 </div>
