@@ -23,5 +23,11 @@ func InitDB(dbPath string) error {
 		return err
 	}
 
+	// Enable foreign key support
+	_, err = DB.Exec("PRAGMA foreign_keys = ON;")
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

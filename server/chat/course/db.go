@@ -10,8 +10,14 @@ import (
 
 // CreateTables creates all necessary tables for the course package
 func CreateTables(db *sql.DB) error {
+	// Enable foreign key constraints
+	_, err := db.Exec("PRAGMA foreign_keys = ON;")
+	if err != nil {
+		return fmt.Errorf("failed to enable foreign keys: %v", err)
+	}
+
 	// Create courses table
-	_, err := db.Exec(`
+	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS courses (
 			id TEXT PRIMARY KEY,
 			creator_id TEXT NOT NULL,
@@ -102,8 +108,7 @@ func CreateTables(db *sql.DB) error {
 			creator_id TEXT NOT NULL,
 			name TEXT NOT NULL,
 			lesson_id TEXT,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
 	`)
 	if err != nil {
@@ -127,8 +132,21 @@ func CreateTables(db *sql.DB) error {
 		return err
 	}
 
+	// Create trigger to delete associated lesson when a chat is deleted
+	_, err = db.Exec(`
+		CREATE TRIGGER IF NOT EXISTS delete_lesson_when_chat_deleted
+		AFTER DELETE ON chats
+		FOR EACH ROW
+		BEGIN
+			DELETE FROM lessons WHERE id = OLD.lesson_id;
+		END;
+	`)
+	if err != nil {
+		return err
+	}
+
 	return nil
-} 
+}
 
 // Course operations
 func insertCourse(course Course) error {
@@ -446,6 +464,9 @@ func InsertChat(chat *Chat) error {
 		"INSERT INTO chats (id, creator_id, name, lesson_id, created_at) VALUES (?, ?, ?, ?, ?)",
 		chat.ID, chat.CreatorID, chat.Name, chat.LessonID, chat.CreatedAt,
 	)
+	if err != nil {
+		fmt.Printf("Error inserting chat: %v\n", err)
+	}
 	return err
 }
 
@@ -459,17 +480,20 @@ func InsertMessage(msg *Message) error {
 
 func GetChat(chatID string, userEmail string) (*Chat, error) {
 	var chat Chat
+	var lessonID sql.NullString
 	err := db.DB.QueryRow(`
-		SELECT c.id, c.creator_id, c.name, c.lesson_id, c.created_at 
-		FROM chats c
-		LEFT JOIN lessons l ON c.lesson_id = l.id
-		LEFT JOIN courses co ON l.course_id = co.id
-		WHERE c.id = ? AND (c.creator_id = ? OR co.creator_id = ?)`,
-		chatID, userEmail, userEmail,
-	).Scan(&chat.ID, &chat.CreatorID, &chat.Name, &chat.LessonID, &chat.CreatedAt)
+		SELECT id, creator_id, name, lesson_id, created_at 
+		FROM chats 
+		WHERE id = ? AND creator_id = ?`,
+		chatID, userEmail,
+	).Scan(&chat.ID, &chat.CreatorID, &chat.Name, &lessonID, &chat.CreatedAt)
 	
 	if err != nil {
 		return nil, err
+	}
+
+	if lessonID.Valid {
+		chat.LessonID = lessonID.String
 	}
 
 	messages, err := GetChatMessages(chatID)
@@ -510,25 +534,10 @@ func DeleteChat(chatID string) error {
 	}
 	defer tx.Rollback()
 
-	// Get the lesson ID if it exists
-	var lessonID sql.NullString
-	err = tx.QueryRow("SELECT lesson_id FROM chats WHERE id = ?", chatID).Scan(&lessonID)
-	if err != nil && err != sql.ErrNoRows {
-		return fmt.Errorf("failed to get lesson ID: %v", err)
-	}
-
-	// Delete the chat (this will cascade delete messages)
+	// Delete the chat (this will cascade delete messages and lessons due to foreign key constraints)
 	_, err = tx.Exec("DELETE FROM chats WHERE id = ?", chatID)
 	if err != nil {
 		return fmt.Errorf("failed to delete chat: %v", err)
-	}
-
-	// If this chat was associated with a lesson, delete the lesson
-	if lessonID.Valid {
-		_, err = tx.Exec("DELETE FROM lessons WHERE id = ?", lessonID.String)
-		if err != nil {
-			return fmt.Errorf("failed to delete associated lesson: %v", err)
-		}
 	}
 
 	return tx.Commit()
@@ -581,11 +590,13 @@ func saveChatSettingsToDB(settings Settings) error {
 
 func GetUserChats(userEmail string) ([]Chat, error) {
 	rows, err := db.DB.Query(`
-		SELECT id, creator_id, name, lesson_id, created_at 
-		FROM chats 
-		WHERE creator_id = ?
-		ORDER BY created_at DESC`,
-		userEmail,
+		SELECT DISTINCT c.id, c.creator_id, c.name, c.lesson_id, c.created_at 
+		FROM chats c
+		LEFT JOIN lessons l ON c.lesson_id = l.id
+		LEFT JOIN courses co ON l.course_id = co.id
+		WHERE c.creator_id = ? OR co.creator_id = ?
+		ORDER BY c.created_at DESC`,
+		userEmail, userEmail,
 	)
 	if err != nil {
 		return nil, err
@@ -595,9 +606,14 @@ func GetUserChats(userEmail string) ([]Chat, error) {
 	var chats []Chat
 	for rows.Next() {
 		var chat Chat
-		err := rows.Scan(&chat.ID, &chat.CreatorID, &chat.Name, &chat.LessonID, &chat.CreatedAt)
+		var lessonID sql.NullString
+		err := rows.Scan(&chat.ID, &chat.CreatorID, &chat.Name, &lessonID, &chat.CreatedAt)
 		if err != nil {
 			return nil, err
+		}
+
+		if lessonID.Valid {
+			chat.LessonID = lessonID.String
 		}
 
 		chats = append(chats, chat)

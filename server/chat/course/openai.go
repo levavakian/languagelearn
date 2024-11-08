@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 	"os"
+	"encoding/json"
+
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -98,6 +100,25 @@ type InputAudioBufferCommit struct {
     Type string `json:"type"`
 }
 
+// Add these struct definitions
+type AudioTranscriptionCompleted struct {
+    EventID       string `json:"event_id"`
+    Type          string `json:"type"`
+    ItemID        string `json:"item_id"`
+    ContentIndex  int    `json:"content_index"`
+    Transcript    string `json:"transcript"`
+}
+
+type ResponseCreate struct {
+    Type     string   `json:"type"`
+    Response Response `json:"response"`
+}
+
+type Response struct {
+    Modalities   []string `json:"modalities"`
+    Instructions string   `json:"instructions,omitempty"`
+}
+
 func connectToOpenAI() (*websocket.Conn, error) {
 	secretKey := os.Getenv("OPENAI_SECRET_KEY")
 	if secretKey == "" {
@@ -130,110 +151,334 @@ func sendConversationCreate(conn *websocket.Conn, msg Message) error {
 }
 
 func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *websocket.Conn) {
-    defer conn.Close()
+	for {
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			fmt.Printf("Error reading message from OpenAI Realtime API: %v\n", err)
+			conn.Close()
+			return
+		}
 
-    var currentMessage Message
-    currentMessage.Sender = "assistant"
-    currentMessage.ID = uuid.New().String()
-    currentMessage.ChatID = chatID
-    currentMessage.CreatedAt = time.Now()
+		// Check if message contains audio data and prepare log message
+		logMessage := func() string {
+			var msgData map[string]interface{}
+			if err := json.Unmarshal(message, &msgData); err != nil {
+				return string(message)
+			}
 
-    for {
-        var msgType OpenAIMessageType
-        if err := conn.ReadJSON(&msgType); err != nil {
-            fmt.Printf("Error reading message type: %v\n", err)
-            break
-        }
+			if msgData["type"] != "response.audio.delta" {
+				return string(message)
+			}
 
-        switch msgType.Type {
-        case "response.text.delta":
-            var delta OpenAIResponseTextDelta
-            if err := conn.ReadJSON(&delta); err != nil {
-                continue
-            }
-            currentMessage.Content += delta.Delta
-            broadcastMessage(chatConns, currentMessage)
+			deltaMsg, ok := msgData["delta"].(string)
+			if !ok || len(deltaMsg) == 0 {
+				return string(message)
+			}
 
-        case "response.audio.delta":
-            var delta OpenAIResponseAudioDelta
-            if err := conn.ReadJSON(&delta); err != nil {
-                continue
-            }
-            currentMessage.Type = "audio"
-            currentMessage.Content = delta.Delta
-            currentMessage.ResponseID = delta.ResponseID
-            broadcastMessage(chatConns, currentMessage)
+			// Truncate audio data to first 10 chars for logging
+			if len(deltaMsg) > 10 {
+				msgData["delta"] = deltaMsg[:10]
+			}
+			truncatedMsg, _ := json.Marshal(msgData)
+			return string(truncatedMsg) + " (audio truncated)"
+		}()
 
-        case "response.done":
-            if err := InsertMessage(&currentMessage); err != nil {
-                fmt.Printf("Error saving message: %v\n", err)
-            }
-            return
-        }
-    }
+		fmt.Printf("Raw message from OpenAI:\n%s\n\n", logMessage)
+
+		var msgType OpenAIMessageType
+		if err := json.Unmarshal(message, &msgType); err != nil {
+			fmt.Printf("Error parsing message type from OpenAI: %v\n", err)
+			continue
+		}
+
+		addMessageToChat := func(msg Message) {
+			if err := InsertMessage(&msg); err != nil {
+				fmt.Printf("Error saving message: %v\n", err)
+			}
+		}
+
+		switch msgType.Type {
+		case "conversation.item.input_audio_transcription.completed":
+			var transcriptionMsg AudioTranscriptionCompleted
+			if err := json.Unmarshal(message, &transcriptionMsg); err != nil {
+				fmt.Printf("Error parsing transcription message from OpenAI: %v\n", err)
+				continue
+			}
+
+			userMsg := Message{
+				ChatID: chatID,
+				Sender:  "user",
+				Content: transcriptionMsg.Transcript,
+				Type:    "text",
+			}
+
+			addMessageToChat(userMsg)
+			broadcastMessage(chatConns, userMsg)
+
+		case "response.audio.delta":
+			var audioMsg OpenAIResponseAudioDelta
+			if err := json.Unmarshal(message, &audioMsg); err != nil {
+				fmt.Printf("Error parsing audio delta message from OpenAI: %v\n", err)
+				continue
+			}
+
+			assistantMsg := Message{
+				ChatID: chatID,
+				Sender:     "Assistant @OpenAI Realtime",
+				Content:    audioMsg.Delta,
+				Type:       "audio",
+				ResponseID: audioMsg.ResponseID,
+			}
+
+			broadcastMessage(chatConns, assistantMsg)
+
+		case "response.done":
+			var doneMsg OpenAIResponseDone
+			if err := json.Unmarshal(message, &doneMsg); err != nil {
+				fmt.Printf("Error parsing done message from OpenAI: %v\n", err)
+				continue
+			}
+
+			// Check specifically for server error
+			if doneMsg.Response.Status == "failed" && 
+			   doneMsg.Response.StatusDetails.Error.Type == "server_error" {
+				chatConns.ErrorState.Mutex.Lock()
+				chatConns.ErrorState.ConsecutiveErrors++
+				chatConns.ErrorState.LastError = time.Now()
+				errorCount := chatConns.ErrorState.ConsecutiveErrors
+				chatConns.ErrorState.Mutex.Unlock()
+
+				if errorCount >= maxConsecutiveErrors {
+					errorMsg := Message{
+					ChatID: chatID,
+						Sender:  "Assistant @OpenAI Realtime",
+						Content: "<Error in receiving response from Tutor>",
+						Type:    "text",
+					}
+					addMessageToChat(errorMsg)
+					broadcastMessage(chatConns, errorMsg)
+				} else {
+					// Retry with response.create
+					responseCreate := ResponseCreate{
+						Type: "response.create",
+						Response: Response{
+							Modalities: []string{"text"},
+						},
+					}
+					if err := conn.WriteJSON(responseCreate); err != nil {
+						fmt.Printf("Error sending retry response.create: %v\n", err)
+					}
+				}
+				continue
+			}
+
+			// Reset error count on successful response
+			chatConns.ErrorState.Mutex.Lock()
+			chatConns.ErrorState.ConsecutiveErrors = 0
+			chatConns.ErrorState.Mutex.Unlock()
+
+			if len(doneMsg.Response.Output) > 0 && len(doneMsg.Response.Output[0].Content) > 0 {
+				content := doneMsg.Response.Output[0].Content[0]
+				
+				var assistantMsg Message
+				assistantMsg.ChatID = chatID
+				assistantMsg.Sender = "Assistant @OpenAI Realtime"
+				assistantMsg.ResponseID = doneMsg.Response.ID
+
+				if content.Type == "text" {
+					assistantMsg.Type = "text"
+					assistantMsg.Content = content.Text
+					
+					addMessageToChat(assistantMsg)
+					broadcastMessage(chatConns, assistantMsg)
+				} else if content.Type == "audio" {
+					assistantMsg.Type = "text"
+					assistantMsg.Content = content.Transcript
+					
+					go func(msg Message) {
+						time.Sleep(500 * time.Millisecond)
+						addMessageToChat(msg)
+						broadcastMessage(chatConns, msg)
+					}(assistantMsg)
+				}
+			}
+
+		default:
+			var errorMsg OpenAIError
+			if err := json.Unmarshal(message, &errorMsg); err != nil {
+				fmt.Printf("Error parsing error message from OpenAI: %v\n", err)
+				continue
+			}
+			if errorMsg.Error.Message != "" {
+				fmt.Printf("Error from OpenAI: %v\n", errorMsg.Error.Message)
+			}
+		}
+	}
 }
 
 func sendMessageToOpenAI(conn *websocket.Conn, msg Message, chatConns *ChatConnections) error {
-    if msg.Type == "audio" {
-        if msg.Content == "commit" {
-            audioCommit := InputAudioBufferCommit{
-                Type: "input_audio_buffer.commit",
-            }
-            if err := conn.WriteJSON(audioCommit); err != nil {
-                return fmt.Errorf("error sending audio commit: %v", err)
-            }
-            return nil
-        }
+	// Reset error state at the start of new message
+	chatConns.ErrorState.Mutex.Lock()
+	chatConns.ErrorState.ConsecutiveErrors = 0
+	chatConns.ErrorState.Mutex.Unlock()
 
-        audioBuffer := InputAudioBufferAppend{
-            Type:  "input_audio_buffer.append",
-            Audio: msg.Content,
-        }
-        if err := conn.WriteJSON(audioBuffer); err != nil {
-            return fmt.Errorf("error sending audio buffer: %v", err)
-        }
-        return nil
-    }
+	if msg.Type == "audio" {
+		if msg.Content == "commit" {
+			// Cancel any pending responses first
+			cancelResponse := struct {
+				Type string `json:"type"`
+			}{
+				Type: "response.cancel",
+			}
 
-    // Handle text messages
-    create := ConversationItemCreate{
-        Type: "conversation.item.create",
-        Item: Item{
-            Type: "text",
-            Role: "user",
-            Content: []Content{
-                {
-                    Type: "text",
-                    Text: msg.Content,
-                },
-            },
-        },
-    }
+			cancelResponseBytes, err := json.Marshal(cancelResponse)
+			if err != nil {
+				return fmt.Errorf("error marshaling response.cancel: %v", err)
+			}
 
-    return conn.WriteJSON(create)
+			fmt.Printf("Sending cancel to OpenAI:\n%s\n\n", string(cancelResponseBytes))
+
+			if err := conn.WriteJSON(cancelResponse); err != nil {
+				return fmt.Errorf("error sending response.cancel: %v", err)
+			}
+
+			// Send commit message when audio recording is finished
+			audioCommit := InputAudioBufferCommit{
+				Type: "input_audio_buffer.commit",
+			}
+
+			audioCommitBytes, err := json.Marshal(audioCommit)
+			if err != nil {
+				return fmt.Errorf("error marshaling input_audio_buffer.commit: %v", err)
+			}
+
+			fmt.Printf("Sending audio commit to OpenAI:\n%s\n\n", string(audioCommitBytes))
+
+			if err := conn.WriteJSON(audioCommit); err != nil {
+				return fmt.Errorf("error sending input_audio.buffer.commit: %v", err)
+			}
+
+			// For audio messages, always request both audio and text
+			responseCreate := ResponseCreate{
+				Type: "response.create",
+				Response: Response{
+					Modalities: []string{"audio", "text"},
+				},
+			}
+
+			responseCreateBytes, err := json.Marshal(responseCreate)
+			if err != nil {
+				return fmt.Errorf("error marshaling response.create: %v", err)
+			}
+
+			fmt.Printf("Sending response create to OpenAI:\n%s\n\n", string(responseCreateBytes))
+
+			if err := conn.WriteJSON(responseCreate); err != nil {
+				return fmt.Errorf("error sending response.create: %v", err)
+			}
+
+			return nil
+		}
+
+		// Handle audio buffer append for non-commit messages
+		audioBuffer := InputAudioBufferAppend{
+			Type:   "input_audio_buffer.append",
+			Audio: msg.Content,
+		}
+
+		_, err := json.Marshal(audioBuffer)
+		if err != nil {
+			return fmt.Errorf("error marshaling input_audio.buffer.append: %v", err)
+		}
+
+		// Create a copy of audioBuffer with truncated Audio field for logging
+		logAudioBuffer := InputAudioBufferAppend{
+			Type:   audioBuffer.Type,
+			Audio:  msg.Content[:min(10, len(msg.Content))],
+		}
+		logAudioBufferBytes, _ := json.Marshal(logAudioBuffer)
+		fmt.Printf("Sending audio buffer to OpenAI:\n%s\n\n", string(logAudioBufferBytes))
+
+		if err := conn.WriteJSON(audioBuffer); err != nil {
+			return fmt.Errorf("error sending input_audio_buffer.append: %v", err)
+		}
+
+		return nil
+	}
+
+	// Handle text messages
+	conversationItem := ConversationItemCreate{
+		Type: "conversation.item.create",
+		Item: Item{
+			Type:    "message",
+			Role:    "user",
+			Content: []Content{
+				{
+					Type: "input_text",
+					Text: msg.Content,
+				},
+			},
+		},
+	}
+
+	conversationItemBytes, err := json.Marshal(conversationItem)
+	if err != nil {
+		return fmt.Errorf("error marshaling conversation.item.create: %v", err)
+	}
+
+	fmt.Printf("Sending message to OpenAI:\n%s\n\n", string(conversationItemBytes))
+
+	if err := conn.WriteJSON(conversationItem); err != nil {
+		return fmt.Errorf("error sending conversation.item.create: %v", err)
+	}
+
+	// Determine response modalities based on preferredResponseType
+	modalities := []string{"text"}
+	if msg.PreferredResponseType == "audio" {
+		modalities = []string{"audio", "text"}
+	}
+
+	responseCreate := ResponseCreate{
+		Type: "response.create",
+		Response: Response{
+			Modalities: modalities,
+		},
+	}
+
+	responseCreateBytes, err := json.Marshal(responseCreate)
+	if err != nil {
+		return fmt.Errorf("error marshaling response.create: %v", err)
+	}
+	fmt.Printf("Sending response create to OpenAI:\n%s\n\n", string(responseCreateBytes))
+
+	if err := conn.WriteJSON(responseCreate); err != nil {
+		return fmt.Errorf("error sending response.create: %v", err)
+	}
+
+	return nil
 }
 
 func updateOpenAISession(conn *websocket.Conn, instructions string) error {
-    sessionUpdate := SessionUpdate{
-        EventID: uuid.New().String(),
-        Type:    "session.update",
-        Session: Session{
-            Modalities:    []string{"text", "audio"},
-            Instructions:  instructions,
-            Voice:        "alloy",
-            InputAudioFormat: "pcm16",
-            OutputAudioFormat: "pcm16",
-            InputAudioTranscription: InputAudioTranscription{
-                Model: "whisper-1",
-            },
-            TurnDetection: nil,
-            ToolChoice:              "auto",
-            Temperature:             0.8,
-            MaxResponseOutputTokens: 4096,
-        },
-    }
+	sessionUpdate := SessionUpdate{
+		EventID: uuid.New().String(),
+		Type:    "session.update",
+		Session: Session{
+			Modalities:    []string{"text", "audio"},
+			Instructions:  instructions,
+			Voice:        "alloy",
+			InputAudioFormat: "pcm16",
+			OutputAudioFormat: "pcm16",
+			InputAudioTranscription: InputAudioTranscription{
+				Model: "whisper-1",
+			},
+			TurnDetection: nil,
+			ToolChoice:              "auto",
+			Temperature:             0.8,
+			MaxResponseOutputTokens: 4096,
+		},
+	}
 
-    return conn.WriteJSON(sessionUpdate)
+	return conn.WriteJSON(sessionUpdate)
 }
 
 func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <-chan Message) {

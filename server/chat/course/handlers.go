@@ -270,7 +270,7 @@ func createLesson(w http.ResponseWriter, r *http.Request) {
 	if chatName == "" {
 		chatName = fmt.Sprintf("Lesson #%d", orderIndex+1)
 	} else {
-		chatName = fmt.Sprintf("Lesson #%d: %s", orderIndex+1,chatName)
+		chatName = fmt.Sprintf("Lesson #%d: %s", orderIndex+1, chatName)
 	}
 	
 	if err := chat.InsertChat(chatID, userEmail, chatName); err != nil {
@@ -716,6 +716,7 @@ func getUserChats(w http.ResponseWriter, r *http.Request) {
 
 	chats, err := GetUserChats(userEmail)
 	if err != nil {
+		fmt.Printf("Error fetching chats: %v\n", err)
 		http.Error(w, "Failed to fetch chats", http.StatusInternalServerError)
 		return
 	}
@@ -729,14 +730,25 @@ func deleteChat(w http.ResponseWriter, r *http.Request) {
 	chatID := vars["id"]
 	userEmail := r.Header.Get("X-User-Email")
 
-	// Verify ownership
-	chat, err := GetChat(chatID, userEmail)
+	// Verify ownership with a simpler query
+	var creatorID string
+	err := db.DB.QueryRow(`
+		SELECT creator_id 
+		FROM chats 
+		WHERE id = ?`,
+		chatID,
+	).Scan(&creatorID)
+
 	if err != nil {
-		http.Error(w, "Chat not found", http.StatusNotFound)
+		if err == sql.ErrNoRows {
+			http.Error(w, "Chat not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Failed to verify chat ownership", http.StatusInternalServerError)
+		}
 		return
 	}
 
-	if chat.CreatorID != userEmail {
+	if creatorID != userEmail {
 		http.Error(w, "Unauthorized", http.StatusForbidden)
 		return
 	}
@@ -762,11 +774,15 @@ func getChatNames(w http.ResponseWriter, r *http.Request) {
 
 	chatNames := make(map[string]string)
 	for _, chatID := range request.ChatIDs {
-		chat, err := GetChat(chatID, userEmail)
-		if err != nil {
-			continue
+		var chatName string
+		err := db.DB.QueryRow(
+			"SELECT name FROM chats WHERE id = ? AND creator_id = ?",
+			chatID, userEmail,
+		).Scan(&chatName)
+		
+		if err == nil {
+			chatNames[chatID] = chatName
 		}
-		chatNames[chatID] = chat.Name
 	}
 
 	w.Header().Set("Content-Type", "application/json")
