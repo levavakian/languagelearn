@@ -35,30 +35,6 @@ interface SettingsProps {
   embedded?: boolean; // Whether the settings are embedded in another component
 }
 
-const fieldStyles = {
-  base: {
-    flex: '1 1 0',
-    backgroundColor: '#3a3f4b',
-    padding: '8px',
-    borderRadius: '4px',
-    whiteSpace: 'nowrap' as const,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    fontSize: '14px',
-    lineHeight: '1.2',
-    height: '32px',
-    boxSizing: 'border-box' as const,
-    minWidth: 0
-  },
-  actions: {
-    display: 'flex',
-    gap: '8px',
-    flexShrink: 0,
-    width: '60px',
-    justifyContent: 'flex-end'
-  }
-};
-
 export const fetchSettings = async (endpoint: string, token: string, onUnauthorized: () => void) => {
   try {
     const response = await fetch(endpoint, {
@@ -87,6 +63,30 @@ export const fetchSettings = async (endpoint: string, token: string, onUnauthori
 const formatLastUsed = (date: string | Date) => {
   const d = new Date(date);
   return isNaN(d.getTime()) ? 'Never' : d.toLocaleDateString();
+};
+
+const fieldStyles = {
+  base: {
+    flex: '1 1 0',
+    backgroundColor: '#3a3f4b',
+    padding: '8px',
+    borderRadius: '4px',
+    whiteSpace: 'nowrap' as const,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    fontSize: '14px',
+    lineHeight: 1.2,
+    height: '32px',
+    boxSizing: 'border-box' as const,
+    minWidth: 0
+  },
+  actions: {
+    display: 'flex',
+    gap: '8px',
+    flexShrink: 0,
+    width: '60px',
+    justifyContent: 'flex-end'
+  }
 };
 
 const Settings: React.FC<SettingsProps> = ({ 
@@ -374,17 +374,7 @@ const Settings: React.FC<SettingsProps> = ({
     );
   };
 
-  const containerStyle = embedded ? {
-    padding: '20px',
-    backgroundColor: '#282c34',
-    color: 'white',
-    borderRadius: '8px',
-  } : {
-    padding: '20px',
-    backgroundColor: '#282c34',
-    color: 'white',
-    minHeight: '100vh',
-  };
+  const containerStyle = embedded ? 'settings-container settings-container-embedded' : 'settings-container settings-container-full';
 
   const handleInstructionsUpdate = async () => {
     const newSettings = {
@@ -431,32 +421,18 @@ const Settings: React.FC<SettingsProps> = ({
     setEditingVocabWord(null);
   };
 
-  const sectionStyle = {
-    backgroundColor: '#2f333d', // Lighter shade than #282c34
-    borderRadius: '12px',
-    padding: '20px',
-    marginBottom: '20px'
-  };
-
   return (
-    <div style={containerStyle}>
+    <div className={containerStyle}>
       {!embedded && onBack && (
         <button
           onClick={onBack}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'white',
-            cursor: 'pointer',
-            fontSize: '24px',
-            marginBottom: '20px'
-          }}
+          className="back-button"
         >
           ←
         </button>
       )}
       
-      <div style={sectionStyle}>
+      <div className="section">
         <h2>Notes</h2>
         <div>
           {addingNodeAt === null ? (
@@ -466,15 +442,7 @@ const Settings: React.FC<SettingsProps> = ({
                   setAddingNodeAt({ parentId: null, type: 'folder' });
                   setNewItemName('');
                 }}
-                style={{
-                  background: 'none',
-                  border: '1px solid #61dafb',
-                  color: '#61dafb',
-                  padding: '5px 10px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  marginRight: '10px'
-                }}
+                className="button"
               >
                 New Folder
               </button>
@@ -483,14 +451,7 @@ const Settings: React.FC<SettingsProps> = ({
                   setAddingNodeAt({ parentId: null, type: 'note' });
                   setNewItemName('');
                 }}
-                style={{
-                  background: 'none',
-                  border: '1px solid #61dafb',
-                  color: '#61dafb',
-                  padding: '5px 10px',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+                className="button"
               >
                 New Note
               </button>
@@ -514,27 +475,13 @@ const Settings: React.FC<SettingsProps> = ({
               />
               <button
                 onClick={() => addNode(addingNodeAt.parentId, addingNodeAt.type, newItemName)}
-                style={{
-                  background: 'none',
-                  border: '1px solid #61dafb',
-                  color: '#61dafb',
-                  padding: '5px 10px',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+                className="button"
               >
                 Add
               </button>
               <button
                 onClick={() => setAddingNodeAt(null)}
-                style={{
-                  background: 'none',
-                  border: '1px solid #ff4444',
-                  color: '#ff4444',
-                  padding: '5px 10px',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+                className="button button-delete"
               >
                 Cancel
               </button>
@@ -544,7 +491,7 @@ const Settings: React.FC<SettingsProps> = ({
         </div>
       </div>
 
-      <div style={sectionStyle}>
+      <div className="section">
         <h2>Custom Instructions</h2>
         {editingInstructions ? (
           <div>
@@ -565,14 +512,7 @@ const Settings: React.FC<SettingsProps> = ({
             <div style={{ display: 'flex', gap: '10px' }}>
               <button
                 onClick={handleInstructionsUpdate}
-                style={{
-                  background: 'none',
-                  border: '1px solid #61dafb',
-                  color: '#61dafb',
-                  padding: '5px 10px',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+                className="button"
               >
                 Save
               </button>
@@ -581,14 +521,7 @@ const Settings: React.FC<SettingsProps> = ({
                   setEditingInstructions(false);
                   setCustomInstructions(settings.customInstructions || '');
                 }}
-                style={{
-                  background: 'none',
-                  border: '1px solid #ff4444',
-                  color: '#ff4444',
-                  padding: '5px 10px',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+                className="button button-delete"
               >
                 Cancel
               </button>
@@ -601,14 +534,7 @@ const Settings: React.FC<SettingsProps> = ({
             </p>
             <button
               onClick={() => setEditingInstructions(true)}
-              style={{
-                background: 'none',
-                border: '1px solid #61dafb',
-                color: '#61dafb',
-                padding: '5px 10px',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              className="button"
             >
               Edit
             </button>
@@ -616,7 +542,7 @@ const Settings: React.FC<SettingsProps> = ({
         )}
       </div>
 
-      <div style={sectionStyle}>
+      <div className="section">
         <h2>Vocabulary</h2>
         <div style={{ marginBottom: '20px' }}>
           <div style={{ 

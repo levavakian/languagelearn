@@ -1,0 +1,108 @@
+.settings-container {
+  padding: 20px;
+  background-color: #282c34;
+  color: white;
+}
+
+.settings-container-embedded {
+  border-radius: 8px;
+}
+
+.settings-container-full {
+  min-height: 100vh;
+}
+
+.section {
+  background-color: #2f333d;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.button {
+  background: none;
+  border: 1px solid #61dafb;
+  color: #61dafb;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.button-delete {
+  border-color: #ff4444;
+  color: #ff4444;
+}
+
+.button-icon {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.field-base {
+  flex: 1 1 0;
+  background-color: #3a3f4b;
+  padding: 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  line-height: 1.2;
+  height: 32px;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.field-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 60px;
+  justify-content: flex-end;
+}
+
+.textarea {
+  background-color: #3a3f4b;
+  color: white;
+  border: 1px solid #61dafb;
+  border-radius: 4px;
+  padding: 8px;
+  resize: vertical;
+  width: 100%;
+}
+
+.vocab-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: #282c34;
+  padding: 10px;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.vocab-item-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 0;
+  height: 32px;
+}
+
+.vocab-meta {
+  font-size: 0.8em;
+  color: #888;
+}
