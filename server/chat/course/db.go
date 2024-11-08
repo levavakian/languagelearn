@@ -62,19 +62,6 @@ func CreateTables(db *sql.DB) error {
 		return err
 	}
 
-	// Create vocab_lists table
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS vocab_lists (
-			course_id TEXT PRIMARY KEY,
-			items TEXT NOT NULL, -- JSON string of map[string]VocabItem
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
-		)
-	`)
-	if err != nil {
-		return err
-	}
-
 	// Create course_settings table
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS course_settings (
@@ -135,7 +122,7 @@ func CreateTables(db *sql.DB) error {
 	// Create trigger to delete associated lesson when a chat is deleted
 	_, err = db.Exec(`
 		CREATE TRIGGER IF NOT EXISTS delete_lesson_when_chat_deleted
-		AFTER DELETE ON chats
+		BEFORE DELETE ON chats
 		FOR EACH ROW
 		BEGIN
 			DELETE FROM lessons WHERE id = OLD.lesson_id;
@@ -341,50 +328,6 @@ func deleteLessonFromDB(lessonID string) error {
 	return err
 }
 
-// Vocab list operations
-func getVocabListFromDB(courseID string) (*VocabList, error) {
-	var vocabList VocabList
-	var itemsJSON string
-	err := db.DB.QueryRow(
-		"SELECT course_id, items, updated_at FROM vocab_lists WHERE course_id = ?",
-		courseID,
-	).Scan(&vocabList.CourseID, &itemsJSON, &vocabList.UpdatedAt)
-	
-	if err != nil {
-		return nil, err
-	}
-
-	if err := json.Unmarshal([]byte(itemsJSON), &vocabList.Items); err != nil {
-		return nil, fmt.Errorf("error parsing vocab items: %v", err)
-	}
-
-	return &vocabList, nil
-}
-
-func updateVocabListInDB(vocabList VocabList) error {
-	itemsJSON, err := json.Marshal(vocabList.Items)
-	if err != nil {
-		return fmt.Errorf("error marshaling vocab items: %v", err)
-	}
-
-	result, err := db.DB.Exec(
-		`REPLACE INTO vocab_lists (course_id, items, updated_at) VALUES (?, ?, ?)`,
-		vocabList.CourseID, string(itemsJSON), vocabList.UpdatedAt,
-	)
-	if err != nil {
-		return err
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
-		return fmt.Errorf("no rows were affected when updating vocab list")
-	}
-	return nil
-}
-
 // Course settings operations
 func getCourseSettingsFromDB(courseID string) (*Settings, error) {
 	var settingsJSON string
@@ -534,6 +477,22 @@ func DeleteChat(chatID string) error {
 	}
 	defer tx.Rollback()
 
+	// Get and log the lesson ID before deletion
+	var lessonID sql.NullString
+	err = tx.QueryRow("SELECT lesson_id FROM chats WHERE id = ?", chatID).Scan(&lessonID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("chat not found: %v", err)
+		}
+		return fmt.Errorf("failed to query chat: %v", err)
+	}
+
+	if lessonID.Valid {
+		fmt.Printf("Deleting chat %s with lesson_id: %s\n", chatID, lessonID.String)
+	} else {
+		fmt.Printf("Deleting chat %s (no lesson_id)\n", chatID)
+	}
+
 	// Delete the chat (this will cascade delete messages and lessons due to foreign key constraints)
 	_, err = tx.Exec("DELETE FROM chats WHERE id = ?", chatID)
 	if err != nil {
@@ -619,4 +578,4 @@ func GetUserChats(userEmail string) ([]Chat, error) {
 		chats = append(chats, chat)
 	}
 	return chats, nil
-} 
+}

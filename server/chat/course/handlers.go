@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/google/uuid"
 
-	"github.com/levavakian/languagelearn/server/chat"
 	"github.com/levavakian/languagelearn/server/db"
 )
 
@@ -56,6 +55,15 @@ func createCourse(w http.ResponseWriter, r *http.Request) {
 
 	if err := insertCourse(course); err != nil {
 		http.Error(w, "Failed to create course", http.StatusInternalServerError)
+		return
+	}
+
+	// Create and save default settings
+	settings := getDefaultSettings(course.ID)
+	if err := saveCourseSettingsToDB(*settings); err != nil {
+		// If settings creation fails, clean up the course
+		deleteCourseFromDB(course.ID)
+		http.Error(w, "Failed to create course settings", http.StatusInternalServerError)
 		return
 	}
 
@@ -264,7 +272,10 @@ func createLesson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create chat with meaningful name
+	// Create the lesson ID first
+	lessonID := uuid.New().String()
+	
+	// Create chat with meaningful name and lesson ID
 	chatID := uuid.New().String()
 	chatName := request.Title
 	if chatName == "" {
@@ -273,14 +284,37 @@ func createLesson(w http.ResponseWriter, r *http.Request) {
 		chatName = fmt.Sprintf("Lesson #%d: %s", orderIndex+1, chatName)
 	}
 	
-	if err := chat.InsertChat(chatID, userEmail, chatName); err != nil {
+	chat := &Chat{
+		ID:        chatID,
+		CreatorID: userEmail,
+		Name:      chatName,
+		LessonID:  lessonID,  // Set the lesson ID here
+		CreatedAt: time.Now(),
+	}
+	if err := InsertChat(chat); err != nil {
 		http.Error(w, "Failed to create chat", http.StatusInternalServerError)
+		return
+	}
+
+	// Get course settings to copy to chat
+	courseSettings, err := getCourseSettingsFromDB(courseID)
+	if err != nil {
+		courseSettings = getDefaultSettings(courseID)
+	}
+
+	// Create chat settings by copying course settings
+	chatSettings := *courseSettings
+	chatSettings.ID = chatID
+	if err := saveChatSettingsToDB(chatSettings); err != nil {
+		// Clean up the created chat if we fail
+		DeleteChat(chatID)
+		http.Error(w, "Failed to create chat settings", http.StatusInternalServerError)
 		return
 	}
 
 	// Create the lesson
 	lesson := Lesson{
-		ID:         uuid.New().String(),
+		ID:         lessonID,  // Use the pre-generated lesson ID
 		CourseID:   courseID,
 		ChatID:     chatID,
 		LessonPlan: request.LessonPlanContent,
@@ -290,7 +324,7 @@ func createLesson(w http.ResponseWriter, r *http.Request) {
 
 	if err := insertLesson(lesson); err != nil {
 		// Clean up the created chat if we fail
-		chat.DeleteChat(chatID)
+		DeleteChat(chatID)
 		http.Error(w, "Failed to create lesson", http.StatusInternalServerError)
 		return
 	}
@@ -373,7 +407,7 @@ func deleteLesson(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete the associated chat
-	if err := chat.DeleteChat(lesson.ChatID); err != nil {
+	if err := DeleteChat(lesson.ChatID); err != nil {
 		// Note: We don't rollback the lesson deletion here since the chat might have already been deleted
 		fmt.Printf("Warning: Failed to delete chat %s: %v\n", lesson.ChatID, err)
 	}
@@ -392,18 +426,14 @@ func getVocabList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vocabList, err := getVocabListFromDB(courseID)
+	settings, err := getCourseSettingsFromDB(courseID)
 	if err != nil {
-		// If no vocab list exists, return an empty one
-		vocabList = &VocabList{
-			CourseID: courseID,
-			Items:    make(map[string]VocabItem),
-			UpdatedAt: time.Now(),
-		}
+		// Return empty vocab list if no settings exist
+		settings = getDefaultSettings(courseID)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(vocabList)
+	json.NewEncoder(w).Encode(settings.VocabItems)
 }
 
 func updateVocabList(w http.ResponseWriter, r *http.Request) {
@@ -416,22 +446,26 @@ func updateVocabList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var vocabList VocabList
-	if err := json.NewDecoder(r.Body).Decode(&vocabList); err != nil {
+	settings, err := getCourseSettingsFromDB(courseID)
+	if err != nil {
+		settings = getDefaultSettings(courseID)
+	}
+
+	var vocabItems map[string]VocabItem
+	if err := json.NewDecoder(r.Body).Decode(&vocabItems); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	vocabList.CourseID = courseID
-	vocabList.UpdatedAt = time.Now()
+	settings.VocabItems = vocabItems
 
-	if err := updateVocabListInDB(vocabList); err != nil {
+	if err := saveCourseSettingsToDB(*settings); err != nil {
 		http.Error(w, "Failed to update vocab list", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(vocabList)
+	json.NewEncoder(w).Encode(vocabItems)
 }
 
 // Default course handlers
@@ -482,16 +516,26 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create chat for the lesson
+	// Create lesson ID first
+	lessonID := uuid.New().String()
 	chatID := uuid.New().String()
-	if err := chat.InsertChat(chatID, creatorEmail, fmt.Sprintf("Initial %s Assessment", req.TargetLanguage)); err != nil {
+	
+	// Create chat with lesson ID
+	chat := &Chat{
+		ID:        chatID,
+		CreatorID: creatorEmail,
+		Name:      fmt.Sprintf("Initial %s Assessment", req.TargetLanguage),
+		LessonID:  lessonID,  // Set the lesson ID here
+		CreatedAt: time.Now(),
+	}
+	if err := InsertChat(chat); err != nil {
 		http.Error(w, "Failed to create chat", http.StatusInternalServerError)
 		return
 	}
 
-	// Create initial lesson
+	// Create initial lesson with the same lesson ID
 	lesson := Lesson{
-		ID:         uuid.New().String(),
+		ID:         lessonID,  // Use the pre-generated lesson ID
 		CourseID:   courseID,
 		ChatID:     chatID,
 		LessonPlan: initialPlan.Content,
@@ -660,6 +704,7 @@ func getDefaultSettings(ID string) *Settings {
 			},
 		},
 		CustomInstructions: "You are a helpful, witty, and friendly AI designated to act as a language tutor. Act like a human, but remember that you aren't a human and that you can't do human things in the real world. Your voice and personality should be warm and engaging, with a lively and playful tone. If interacting in a non-English language, start by using the standard accent or dialect familiar to the user. Talk simply and slowly when speaking the language the user is trying to learn. If the user makes grammar or vocab mistakes, correct them and explain their mistakes unless otherwise told to not do so. When correcting the user, speak in their native language, but otherwise speak in the language the user is trying to learn.",
+		VocabItems: make(map[string]VocabItem),
 	}
 }
 

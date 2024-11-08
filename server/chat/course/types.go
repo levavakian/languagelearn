@@ -33,16 +33,9 @@ type VocabItem struct {
 	Type        string    `json:"type"`
 	Word        string    `json:"word"`
 	Definition  string    `json:"definition"`
-	Examples    []string  `json:"examples,omitempty"`
 	Notes       string    `json:"notes,omitempty"`
 	LastUsed    time.Time `json:"last_used"`
 	UsageCount  int       `json:"usage_count"`
-}
-
-type VocabList struct {
-	CourseID    string               `json:"course_id"`
-	Items       map[string]VocabItem `json:"items"`
-	UpdatedAt   time.Time            `json:"updated_at"`
 }
 
 type CreateDefaultCourseRequest struct {
@@ -78,9 +71,10 @@ type Message struct {
 }
 
 type Settings struct {
-	ID                 string     `json:"id"`
-	Notes              []NoteNode `json:"notes"`
-	CustomInstructions string     `json:"customInstructions,omitempty"`
+	ID                 string                `json:"id"`
+	Notes              []NoteNode           `json:"notes"`
+	CustomInstructions string               `json:"customInstructions,omitempty"`
+	VocabItems         map[string]VocabItem `json:"vocabItems"`
 }
 
 type NoteNode struct {
