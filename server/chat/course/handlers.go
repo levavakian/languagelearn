@@ -302,7 +302,9 @@ func createLesson(w http.ResponseWriter, r *http.Request) {
 	chatID := uuid.New().String()
 	chatName := request.Title
 	if chatName == "" {
-		chatName = fmt.Sprintf("Lesson %d", orderIndex+1)
+		chatName = fmt.Sprintf("Lesson #%d", orderIndex+1)
+	} else {
+		chatName = fmt.Sprintf("Lesson #%d: %s", orderIndex+1,chatName)
 	}
 	
 	if err := chat.InsertChat(chatID, userEmail, chatName); err != nil {
@@ -511,7 +513,7 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 
 	// Create chat for the lesson
 	chatID := uuid.New().String()
-	if err := chat.CreateChat(chatID, creatorEmail); err != nil {
+	if err := chat.InsertChat(chatID, creatorEmail, fmt.Sprintf("Initial %s Assessment", req.TargetLanguage)); err != nil {
 		http.Error(w, "Failed to create chat", http.StatusInternalServerError)
 		return
 	}

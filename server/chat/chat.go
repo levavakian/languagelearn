@@ -877,14 +877,6 @@ type SettingsUpdate struct {
 	Settings ChatSettings
 }
 
-func CreateChat(chatID string, userEmail string) error {
-	_, err := db.DB.Exec(
-		"INSERT INTO chats (id, user_id) VALUES (?, ?)",
-		chatID, userEmail,
-	)
-	return err
-}
-
 func DeleteChat(chatID string) error {
 	tx, err := db.DB.Begin()
 	if err != nil {
