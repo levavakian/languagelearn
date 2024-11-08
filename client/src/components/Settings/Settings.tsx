@@ -89,7 +89,7 @@ const fieldStyles = {
   }
 };
 
-const Settings: React.FC<SettingsProps> = ({ 
+const SettingsPage: React.FC<SettingsProps> = ({ 
   token, 
   id, 
   endpoint, 
@@ -278,7 +278,7 @@ const Settings: React.FC<SettingsProps> = ({
               {node.isExpanded ? '▼' : '▶'}
             </button>
           )}
-          {node.type === 'folder' ? '📁' : '����'}
+          {node.type === 'folder' ? '📁' : ''}
           {editingNodeId === node.id ? (
             <textarea
               value={newItemName}
@@ -421,23 +421,77 @@ const Settings: React.FC<SettingsProps> = ({
     setEditingVocabWord(null);
   };
 
+  const copySettings = async () => {
+    const settingsToExport = {
+      notes: settings.notes,
+      customInstructions: settings.customInstructions,
+      vocabItems: settings.vocabItems
+    };
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(settingsToExport, null, 2));
+    } catch (error) {
+      console.error('Failed to copy settings:', error);
+    }
+  };
+
+  const loadSettings = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const imported = JSON.parse(text);
+      const newSettings = {
+        ...settings,
+        notes: imported.notes || [],
+        customInstructions: imported.customInstructions,
+        vocabItems: imported.vocabItems || {}
+      };
+      await saveSettings(newSettings);
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    }
+  };
+
   return (
     <div className={containerStyle}>
-      <div style={{ height: '50px', position: 'relative' }}>
+      <div style={{ height: '50px', position: 'relative', display: 'flex', justifyContent: 'flex-end', gap: '10px', padding: '10px' }}>
+        <button
+          onClick={copySettings}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#919191',
+            cursor: 'pointer',
+            fontSize: '20px',
+            padding: '0px'
+          }}
+          title="Copy settings to clipboard"
+        >
+          📋
+        </button>
+        <button
+          onClick={loadSettings}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#919191',
+            cursor: 'pointer',
+            fontSize: '20px',
+            padding: '0px'
+          }}
+          title="Load settings from clipboard"
+        >
+          📥
+        </button>
         {!embedded && onBack && (
           <button
             onClick={onBack}
             style={{
-              position: 'absolute',
-              top: '-5px',
-              right: '10px',
               background: 'none',
               border: 'none',
               color: '#919191',
               cursor: 'pointer',
               fontSize: '20px',
               padding: '0px',
-              zIndex: 1
+              marginLeft: '10px'
             }}
             title="Close Settings"
           >
@@ -753,4 +807,4 @@ const Settings: React.FC<SettingsProps> = ({
   );
 };
 
-export default Settings;
+export default SettingsPage;  // Default export

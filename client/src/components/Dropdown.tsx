@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ConversationSettings, NoteNode } from './ChatSettings';
+import { Settings, NoteNode } from './Settings/Settings';
 import './Dropdown.css';
 
 interface DropdownProps {
-  settings: ConversationSettings;
+  settings: Settings;
   onSelectNote: (noteContent: string) => void;
   position: { x: number; y: number };
   expandedFolders: Set<string>;

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import Mic from './Mic';
 import { audioPlayer } from '../services/AudioPlayer';
-import Settings, { Settings as SettingsType } from './Settings/Settings';
+import SettingsPage, { Settings } from './Settings/Settings';
 import Dropdown from './Dropdown';
 import './Chat.css';
 
@@ -18,17 +18,16 @@ interface ChatProps {
   token: string;
   selectedChatId: string | null;
   onUnauthorized: () => void;
-  isSidebarExpanded: boolean;
 }
 
-const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSidebarExpanded }) => {
+const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [preferAudioResponse, setPreferAudioResponse] = useState(
     localStorage.getItem('preferAudioResponse') === 'true'
   );
-  const [settings, setSettings] = useState<SettingsType>({
+  const [settings, setSettings] = useState<Settings>({
     id: selectedChatId || '',
     notes: [],
     vocabItems: {}
@@ -273,7 +272,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized, isSi
 
   if (showSettings && selectedChatId && settingsEndpoint) {
     return (
-      <Settings
+      <SettingsPage
         token={token}
         id={selectedChatId}
         endpoint={settingsEndpoint}

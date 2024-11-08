@@ -271,7 +271,6 @@ function App() {
                   token={jwt} 
                   selectedChatId={selectedChatId} 
                   onUnauthorized={handleUnauthorized}
-                  isSidebarExpanded={isSidebarExpanded}
                 />
               </div>
             </>
