@@ -90,7 +90,7 @@ interface CoursesProps {
   token: string;
   onUnauthorized: () => void;
   onLessonSelect?: (chatId: string, courseId: string) => void;
-  onCourseSelect?: (courseId: string) => void;
+  onCourseSelect?: (courseId: string | null) => void;
   selectedCourseId?: string | null;
   forcedChatId?: string;
 }
@@ -443,8 +443,9 @@ const Courses: React.FC<CoursesProps> = ({
 
   // Update course selection handler
   const handleCourseSelect = (courseId: string | null) => {
+    setSelectedLessonChatId(null);
     setSelectedCourseId(courseId);
-    if (courseId && onCourseSelect) {
+    if (onCourseSelect) {
       onCourseSelect(courseId);
     }
   };

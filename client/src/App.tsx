@@ -331,12 +331,13 @@ function App() {
     localStorage.setItem('activeTab', 'lesson');
   };
 
-  const handleCourseSelect = (courseId: string) => {
+  const handleCourseSelect = (courseId: string | null) => {
     setSelectedCourseId(courseId);
-    localStorage.setItem('selectedCourseId', courseId);
+    localStorage.setItem('selectedCourseId', courseId || '');
     
-    // If we have a lesson state and it's for a different course, clear it
-    if (lessonState && lessonState.courseId !== courseId) {
+    // Clear lesson state and return to courses view when selecting any course
+    // (including reselecting the same course)
+    if (activeTab === 'lesson') {
       setLessonState(null);
       localStorage.removeItem('lessonState');
       setActiveTab('courses');
