@@ -46,6 +46,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   const [micAlwaysOnTimer, setMicAlwaysOnTimer] = useState<NodeJS.Timeout | null>(null);
   const micRef = useRef<{ startAlwaysOnMode: () => void, stopAlwaysOnMode: () => void } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const latchedResponseIdRef = useRef<string | null>(null);
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(
     selectedChatId ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/chat/${selectedChatId}/ws?token=${encodeURIComponent(token)}` : null,
@@ -192,6 +193,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
       if (newMessage.responseId && newMessage.responseId !== latchedResponseId) {
         console.log('Updating latched response ID:', newMessage.responseId);
         setLatchedResponseId(newMessage.responseId);
+        latchedResponseIdRef.current = newMessage.responseId;
       }
     }
   }, [lastMessage]);
@@ -272,9 +274,9 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
     inputRef.current?.focus();
   };
 
-  const handleAudioChunk = useCallback((chunk: Blob, isRecordingFinished: boolean) => {
+  const handleAudioChunk = useCallback((chunk: Blob, isRecordingFinished: boolean, stoppedAlwaysOn: boolean = false) => {
     if (readyState === ReadyState.OPEN) {
-      if (isRecordingFinished) {
+      if (isRecordingFinished && !stoppedAlwaysOn) {
         const message = {
           sender: 'user',
           content: 'commit',
@@ -283,12 +285,14 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
         };
         sendMessage(JSON.stringify(message));
       } else {
-        if (latchedResponseId) {
-          console.log('Stopping and ignoring response ID:', latchedResponseId);
-          audioPlayer.stopAndIgnoreResponse(latchedResponseId);
-        } else {
-          console.log('No response ID to stop, calling regular stop');
-          audioPlayer.stop();
+        if (!micAlwaysOn) {
+          if (latchedResponseIdRef.current) {
+            console.log('Stopping and ignoring response ID:', latchedResponseIdRef.current);
+            audioPlayer.stopAndIgnoreResponse(latchedResponseIdRef.current);
+          } else {
+            console.log('No response ID to stop, calling regular stop');
+            audioPlayer.stop();
+          }
         }
         
         const reader = new FileReader();
@@ -310,7 +314,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
         reader.readAsArrayBuffer(chunk);
       }
     }
-  }, [readyState, sendMessage, latchedResponseId]);
+  }, [readyState, sendMessage, micAlwaysOn]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

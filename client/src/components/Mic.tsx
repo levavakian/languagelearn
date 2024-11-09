@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { audioService } from '../services/AudioService';
 
 interface MicProps {
-  onAudioChunk: (chunk: Blob, isRecordingFinished: boolean) => void;
+  onAudioChunk: (chunk: Blob, isRecordingFinished: boolean, stoppedAlwaysOn?: boolean) => void;
 }
 
 const Mic = React.forwardRef<{ startAlwaysOnMode: () => void, stopAlwaysOnMode: () => void }, MicProps>(
@@ -40,10 +40,10 @@ const Mic = React.forwardRef<{ startAlwaysOnMode: () => void, stopAlwaysOnMode: 
       }
     }, [onAudioChunk]);
 
-    const stopRecording = useCallback(() => {
+    const stopRecording = useCallback((stoppedAlwaysOn: boolean = false) => {
       if (isRecording.current) {
         audioService.stopRecording();
-        onAudioChunk(new Blob(), true); // Signal recording finished
+        onAudioChunk(new Blob(), true, stoppedAlwaysOn); // Pass stoppedAlwaysOn to callback
         isRecording.current = false;
       }
     }, [onAudioChunk]);
@@ -55,7 +55,7 @@ const Mic = React.forwardRef<{ startAlwaysOnMode: () => void, stopAlwaysOnMode: 
 
     const stopAlwaysOnMode = useCallback(() => {
       setAlwaysOnMode(false);
-      stopRecording();
+      stopRecording(true); // Set stoppedAlwaysOn to true
     }, [stopRecording]);
 
     useEffect(() => {
@@ -111,11 +111,11 @@ const Mic = React.forwardRef<{ startAlwaysOnMode: () => void, stopAlwaysOnMode: 
             transition: 'box-shadow 0.3s ease',
             cursor: 'pointer'
           }}
-          onMouseDown={startRecording}
-          onMouseUp={stopRecording}
-          onMouseLeave={stopRecording}
-          onTouchStart={startRecording}
-          onTouchEnd={stopRecording}
+          onMouseDown={(e) => !alwaysOnMode && startRecording()}
+          onMouseUp={(e) => !alwaysOnMode && stopRecording()}
+          onMouseLeave={(e) => !alwaysOnMode && stopRecording()}
+          onTouchStart={(e) => !alwaysOnMode && startRecording()}
+          onTouchEnd={(e) => !alwaysOnMode && stopRecording()}
         >
           <svg 
             width="24" 
