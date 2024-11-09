@@ -478,12 +478,12 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create course
+	// Create course with the provided name
 	courseID := uuid.New().String()
 	course := Course{
 		ID:        courseID,
 		CreatorID: creatorEmail,
-		Name:      fmt.Sprintf("%s Learning Course", req.TargetLanguage),
+		Name:      req.Name,
 		CreatedAt: time.Now(),
 	}
 

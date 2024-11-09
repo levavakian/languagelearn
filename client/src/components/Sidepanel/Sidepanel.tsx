@@ -12,7 +12,7 @@ interface SidepanelProps {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onDelete?: (id: string) => void;
-  onCreate: (name: string) => void;
+  onCreate: () => void;
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
 }
@@ -43,7 +43,7 @@ const Sidepanel: React.FC<SidepanelProps> = ({
 
         <button
           className="sidepanel-button-primary"
-          onClick={() => onCreate("")}
+          onClick={() => onCreate()}
           style={{ marginBottom: '20px' }}
         >
           New {title.slice(0, -1)}
@@ -57,7 +57,9 @@ const Sidepanel: React.FC<SidepanelProps> = ({
               style={{
                 backgroundColor: selectedId === item.id ? '#3a3f4b' : 'transparent'
               }}
-              onClick={() => onSelect(item.id)}
+              onClick={() => {
+                onSelect(item.id);
+              }}
               onMouseOver={(e) => {
                 if (selectedId !== item.id) {
                   e.currentTarget.style.backgroundColor = '#3a3f4b';

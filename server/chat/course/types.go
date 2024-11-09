@@ -40,6 +40,7 @@ type VocabItem struct {
 
 type CreateDefaultCourseRequest struct {
 	TargetLanguage string `json:"target_language"`
+	Name          string `json:"name"`
 }
 
 type CourseNoteNode struct {

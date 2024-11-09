@@ -45,6 +45,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   const [showMicModal, setShowMicModal] = useState(false);
   const [micAlwaysOnTimer, setMicAlwaysOnTimer] = useState<NodeJS.Timeout | null>(null);
   const micRef = useRef<{ startAlwaysOnMode: () => void, stopAlwaysOnMode: () => void } | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(
     selectedChatId ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/chat/${selectedChatId}/ws?token=${encodeURIComponent(token)}` : null,
@@ -71,6 +72,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   const handleMicAlwaysOnToggle = () => {
     if (!micAlwaysOn) {
       setShowMicModal(true);
+      setIsModalOpen(true);
     } else {
       disableMicAlwaysOn();
     }
@@ -93,6 +95,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
 
   const handleMicModalResponse = (response: 'ten_minutes' | 'permanent' | 'cancel') => {
     setShowMicModal(false);
+    setIsModalOpen(false);
     
     if (response === 'cancel') return;
     
@@ -129,7 +132,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
 
   useEffect(() => {
     const handleGlobalKeyPress = (e: KeyboardEvent) => {
-      if (showSettings || !selectedChatId) return;
+      if (showSettings || !selectedChatId || showMicModal || isModalOpen) return;
       
       const isSidebarInputFocused = document.activeElement?.classList.contains('sidebar-chat-input');
       if (isSidebarInputFocused) return;
@@ -152,7 +155,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
 
     document.addEventListener('keydown', handleGlobalKeyPress);
     return () => document.removeEventListener('keydown', handleGlobalKeyPress);
-  }, [showSettings, selectedChatId, handleSendMessage]);
+  }, [showSettings, selectedChatId, handleSendMessage, showMicModal, isModalOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

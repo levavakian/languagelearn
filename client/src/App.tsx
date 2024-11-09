@@ -332,34 +332,46 @@ function App() {
   };
 
   const handleCourseSelect = (courseId: string | null) => {
-    setSelectedCourseId(courseId);
-    localStorage.setItem('selectedCourseId', courseId || '');
-    
-    // Only clear lesson state if selecting a different course than the lesson's course
-    if (lessonState && courseId !== lessonState.courseId) {
-      setLessonState(null);
-      localStorage.removeItem('lessonState');
-    }
-    
-    // Always return to courses view when selecting a course
-    if (activeTab === 'lesson') {
+    // If clicking the already selected course, just switch to courses tab
+    if (courseId === selectedCourseId) {
       setActiveTab('courses');
       localStorage.setItem('activeTab', 'courses');
+      return;
     }
-  };
 
-  // Update useEffect to watch selectedCourseId and clear lesson state if needed
-  useEffect(() => {
-    // Clear lesson state if the course is deleted or changed
-    if (lessonState && (!selectedCourseId || selectedCourseId !== lessonState.courseId)) {
+    setSelectedCourseId(courseId);
+    if (courseId) {
+      localStorage.setItem('selectedCourseId', courseId);
+    } else {
+      localStorage.removeItem('selectedCourseId');
+    }
+    
+    // Clear lesson state if selecting null or a different course
+    if (!courseId || (lessonState && courseId !== lessonState.courseId)) {
       setLessonState(null);
       localStorage.removeItem('lessonState');
-      // If we're in the lesson tab, switch back to courses
       if (activeTab === 'lesson') {
         setActiveTab('courses');
         localStorage.setItem('activeTab', 'courses');
       }
     }
+  };
+
+  // Add this effect to watch for course changes and clear lesson state
+  useEffect(() => {
+    const handleCourseChange = () => {
+      // If we have a lesson state but its course no longer exists in the courses list
+      if (lessonState && selectedCourseId !== lessonState.courseId) {
+        setLessonState(null);
+        localStorage.removeItem('lessonState');
+        if (activeTab === 'lesson') {
+          setActiveTab('courses');
+          localStorage.setItem('activeTab', 'courses');
+        }
+      }
+    };
+
+    handleCourseChange();
   }, [selectedCourseId, lessonState, activeTab]);
 
   return (

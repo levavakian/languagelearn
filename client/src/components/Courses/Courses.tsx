@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Sidepanel from '../Sidepanel/Sidepanel';
 import './Courses.css';
 import CreateLessonPlanModal from '../LessonPlanModals/CreateLessonPlanModal';
@@ -41,6 +41,31 @@ interface Lesson {
 const CreateCourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSubmit }) => {
   const [name, setName] = useState('My Course');
   const [language, setLanguage] = useState('');
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      nameInputRef.current?.focus();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+      
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (language.trim()) {
+          onSubmit(name, language);
+          setName('My Course');
+          setLanguage('');
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [isOpen, name, language, onSubmit]);
 
   if (!isOpen) return null;
 
@@ -60,6 +85,7 @@ const CreateCourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSubm
           <div className="form-group">
             <label>Course Name:</label>
             <input
+              ref={nameInputRef}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -167,6 +193,10 @@ const Courses: React.FC<CoursesProps> = ({
 
       const newCourse = await response.json();
       setCourses(prevCourses => [newCourse.course, ...prevCourses]);
+      
+      if (onCourseSelect) {
+        onCourseSelect(newCourse.course.id);
+      }
       setSelectedCourseId(newCourse.course.id);
       setIsModalOpen(false);
     } catch (error) {
@@ -189,10 +219,29 @@ const Courses: React.FC<CoursesProps> = ({
       }
 
       if (response.ok) {
-        setCourses(prevCourses => prevCourses.filter(course => course.id !== id));
-        if (selectedCourseId === id) {
-          setSelectedCourseId(null);
-        }
+        setCourses(prevCourses => {
+          const newCourses = prevCourses.filter(course => course.id !== id);
+          
+          // If we're deleting the selected course, select the next available one
+          if (selectedCourseId === id) {
+            const deletedIndex = prevCourses.findIndex(course => course.id === id);
+            const nextCourse = newCourses[deletedIndex] || newCourses[deletedIndex - 1];
+            
+            if (nextCourse) {
+              setSelectedCourseId(nextCourse.id);
+              if (onCourseSelect) {
+                onCourseSelect(nextCourse.id);
+              }
+            } else {
+              setSelectedCourseId(null);
+              if (onCourseSelect) {
+                onCourseSelect(null);
+              }
+            }
+          }
+          
+          return newCourses;
+        });
       }
     } catch (error) {
       console.error('Error deleting course:', error);
@@ -210,10 +259,16 @@ const Courses: React.FC<CoursesProps> = ({
         onUnauthorized();
         return;
       }
+      if (!response.ok) {
+        console.error(`Error fetching lesson plans: ${await response.text()}`);
+        setLessonPlans([]);
+        return;
+      }
       const data = await response.json();
       setLessonPlans(data || []);
     } catch (error) {
       console.error('Error fetching lesson plans:', error);
+      setLessonPlans([]);
     }
   }, [token, onUnauthorized]);
 
@@ -228,10 +283,16 @@ const Courses: React.FC<CoursesProps> = ({
         onUnauthorized();
         return;
       }
+      if (!response.ok) {
+        console.error(`Error fetching lessons: ${await response.text()}`);
+        setLessons([]);
+        return;
+      }
       const data = await response.json();
       setLessons(data || []);
     } catch (error) {
       console.error('Error fetching lessons:', error);
+      setLessons([]);
     }
   }, [token, onUnauthorized]);
 
