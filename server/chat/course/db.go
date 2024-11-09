@@ -402,6 +402,20 @@ func getLessonFromDB(lessonID string, courseID string) (*Lesson, error) {
 	return &lesson, nil
 }
 
+func getLessonFromDBRaw(lessonID string) (*Lesson, error) {
+	var lesson Lesson
+	err := db.DB.QueryRow(
+		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at FROM lessons WHERE id = ?",
+		lessonID,
+	).Scan(&lesson.ID, &lesson.CourseID, &lesson.ChatID, &lesson.LessonPlan, &lesson.Summary, &lesson.OrderIndex, &lesson.CreatedAt)
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	return &lesson, nil
+}
+
 func InsertChat(chat *Chat) error {
 	_, err := db.DB.Exec(
 		"INSERT INTO chats (id, creator_id, name, lesson_id, created_at) VALUES (?, ?, ?, ?, ?)",
@@ -429,6 +443,33 @@ func GetChat(chatID string, userEmail string) (*Chat, error) {
 		FROM chats 
 		WHERE id = ? AND creator_id = ?`,
 		chatID, userEmail,
+	).Scan(&chat.ID, &chat.CreatorID, &chat.Name, &lessonID, &chat.CreatedAt)
+	
+	if err != nil {
+		return nil, err
+	}
+
+	if lessonID.Valid {
+		chat.LessonID = lessonID.String
+	}
+
+	messages, err := GetChatMessages(chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	chat.Messages = messages
+	return &chat, nil
+}
+
+func GetChatRaw(chatID string) (*Chat, error) {
+	var chat Chat
+	var lessonID sql.NullString
+	err := db.DB.QueryRow(`
+		SELECT id, creator_id, name, lesson_id, created_at 
+		FROM chats 
+		WHERE id = ?`,
+		chatID,
 	).Scan(&chat.ID, &chat.CreatorID, &chat.Name, &lessonID, &chat.CreatedAt)
 	
 	if err != nil {

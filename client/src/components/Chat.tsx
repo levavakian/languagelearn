@@ -5,6 +5,7 @@ import { audioPlayer } from '../services/AudioPlayer';
 import SettingsPage, { Settings } from './Settings/Settings';
 import Dropdown from './Dropdown';
 import './Chat.css';
+import MicAlwaysOnModal from './MicAlwaysOnModal';
 
 interface Message {
   sender: string;
@@ -40,6 +41,10 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [messagesBlurred, setMessagesBlurred] = useState(false);
   const [latchedResponseId, setLatchedResponseId] = useState<string | null>(null);
+  const [micAlwaysOn, setMicAlwaysOn] = useState(false);
+  const [showMicModal, setShowMicModal] = useState(false);
+  const [micAlwaysOnTimer, setMicAlwaysOnTimer] = useState<NodeJS.Timeout | null>(null);
+  const micRef = useRef<{ startAlwaysOnMode: () => void, stopAlwaysOnMode: () => void } | null>(null);
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(
     selectedChatId ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/chat/${selectedChatId}/ws?token=${encodeURIComponent(token)}` : null,
@@ -52,6 +57,62 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
       },
     }
   );
+
+  useEffect(() => {
+    setMicAlwaysOn(false);
+    return () => {
+      if (micAlwaysOnTimer) {
+        clearTimeout(micAlwaysOnTimer);
+      }
+      setMicAlwaysOn(false);
+    };
+  }, [selectedChatId]);
+
+  const handleMicAlwaysOnToggle = () => {
+    if (!micAlwaysOn) {
+      setShowMicModal(true);
+    } else {
+      disableMicAlwaysOn();
+    }
+  };
+
+  const disableMicAlwaysOn = () => {
+    setMicAlwaysOn(false);
+    if (micAlwaysOnTimer) {
+      clearTimeout(micAlwaysOnTimer);
+      setMicAlwaysOnTimer(null);
+    }
+    micRef.current?.stopAlwaysOnMode?.();
+    sendMessage(JSON.stringify({
+      sender: 'user',
+      content: 'server_vad:disable',
+      type: 'audio' as const,
+      preferredResponseType: 'audio'
+    }));
+  };
+
+  const handleMicModalResponse = (response: 'ten_minutes' | 'permanent' | 'cancel') => {
+    setShowMicModal(false);
+    
+    if (response === 'cancel') return;
+    
+    setMicAlwaysOn(true);
+    micRef.current?.startAlwaysOnMode?.();
+    
+    sendMessage(JSON.stringify({
+      sender: 'user',
+      content: 'server_vad:enable',
+      type: 'audio' as const,
+      preferredResponseType: 'audio'
+    }));
+
+    if (response === 'ten_minutes') {
+      const timer = setTimeout(() => {
+        disableMicAlwaysOn();
+      }, 10 * 60 * 1000); // 10 minutes
+      setMicAlwaysOnTimer(timer);
+    }
+  };
 
   const handleSendMessage = useCallback(() => {
     if (inputMessage.trim() && readyState === ReadyState.OPEN) {
@@ -304,6 +365,23 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
     <div className="chat-window" style={chatStyles.chatWindow}>
       <div style={{ height: '50px', position: 'relative' }}>
         <div 
+          onClick={handleMicAlwaysOnToggle}
+          title={micAlwaysOn ? "Microphone always on - click to disable" : "Click to enable always-on microphone mode"}
+          style={{
+            position: 'absolute',
+            top: '17px',
+            right: '130px',
+            cursor: 'pointer',
+            zIndex: 1,
+            transition: 'all 0.3s ease',
+            filter: micAlwaysOn 
+              ? 'brightness(100%) sepia(100%) saturate(10000%) hue-rotate(0deg)'
+              : 'grayscale(100%)'
+          }}
+        >
+          <span style={{ fontSize: '12px' }}>🎤</span>
+        </div>
+        <div 
           onClick={toggleAudioPreference}
           title={preferAudioResponse ? "Model will prefer to respond with voice even when you text, toggle to disable" : "Model will respond to text with text, toggle to have model respond with voice even when you text"}
           style={{
@@ -468,6 +546,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
             gap: '10px'
           }}>
             <Mic 
+              ref={micRef}
               onAudioChunk={handleAudioChunk} 
             />
             <button 
@@ -486,6 +565,9 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
           </div>
         </div>
       </div>
+      {showMicModal && (
+        <MicAlwaysOnModal onResponse={handleMicModalResponse} />
+      )}
     </div>
   );
 };

@@ -133,14 +133,27 @@ func connectToOpenAI() (*websocket.Conn, error) {
 }
 
 func sendConversationCreate(conn *websocket.Conn, msg Message) error {
+    messageRole := "assistant"
+    if msg.Sender == "user" {
+        messageRole = "user"
+    }
+
+    contentType := "input_text"
+    if msg.Type != "text" {
+        contentType = "input_audio"
+    }
+	if messageRole == "assistant" {
+		contentType = "text"
+	}
+
     create := ConversationItemCreate{
         Type: "conversation.item.create",
         Item: Item{
-            Type: "text",
-            Role: "user",
+            Type: "message",
+            Role: messageRole,
             Content: []Content{
                 {
-                    Type: msg.Type,
+                    Type: contentType,
                     Text: msg.Content,
                 },
             },
@@ -323,6 +336,38 @@ func sendMessageToOpenAI(conn *websocket.Conn, msg Message, chatConns *ChatConne
 	chatConns.ErrorState.Mutex.Unlock()
 
 	if msg.Type == "audio" {
+		if msg.Content == "server_vad:enable" {
+			// Get current instructions
+			instructions, err := getInstructions(msg.ChatID)
+			if err != nil {
+				fmt.Printf("Error getting instructions: %v\n", err)
+				// Continue with empty instructions if there's an error
+				instructions = ""
+			}
+
+			// Enable server VAD
+			turnDetection := &TurnDetection{
+				Type:              "server_vad",
+				Threshold:         0.5,
+				PrefixPaddingMs:  300,
+				SilenceDurationMs: 500,
+			}
+			return updateOpenAISession(conn, instructions, turnDetection)
+		}
+		
+		if msg.Content == "server_vad:disable" {
+			// Get current instructions
+			instructions, err := getInstructions(msg.ChatID)
+			if err != nil {
+				fmt.Printf("Error getting instructions: %v\n", err)
+				// Continue with empty instructions if there's an error
+				instructions = ""
+			}
+
+			// Disable server VAD by setting TurnDetection to nil
+			return updateOpenAISession(conn, instructions, nil)
+		}
+
 		if msg.Content == "commit" {
 			// Cancel any pending responses first
 			cancelResponse := struct {
@@ -458,7 +503,7 @@ func sendMessageToOpenAI(conn *websocket.Conn, msg Message, chatConns *ChatConne
 	return nil
 }
 
-func updateOpenAISession(conn *websocket.Conn, instructions string) error {
+func updateOpenAISession(conn *websocket.Conn, instructions string, turnDetection *TurnDetection) error {
 	sessionUpdate := SessionUpdate{
 		EventID: uuid.New().String(),
 		Type:    "session.update",
@@ -471,7 +516,7 @@ func updateOpenAISession(conn *websocket.Conn, instructions string) error {
 			InputAudioTranscription: InputAudioTranscription{
 				Model: "whisper-1",
 			},
-			TurnDetection: nil,
+			TurnDetection: turnDetection,
 			ToolChoice:              "auto",
 			Temperature:             0.8,
 			MaxResponseOutputTokens: 4096,
@@ -481,15 +526,39 @@ func updateOpenAISession(conn *websocket.Conn, instructions string) error {
 	return conn.WriteJSON(sessionUpdate)
 }
 
+func getInstructions(chatID string) (string, error) {
+	settings, err := getChatSettingsFromDB(chatID)
+	if err != nil {
+		// If there's an error getting settings, return default settings
+		defaultSettings := getDefaultSettings(chatID)
+		return defaultSettings.CustomInstructions, nil
+	}
+
+	instructions := settings.CustomInstructions
+
+	// Get chat to check for associated lesson
+	chat, err := GetChatRaw(chatID)
+	if err != nil {
+		return instructions, nil
+	}
+
+	// If chat has an associated lesson, get the lesson plan
+	if chat.LessonID != "" {
+		lesson, err := getLessonFromDBRaw(chat.LessonID)
+		if err == nil && lesson.LessonPlan != "" {
+			instructions = instructions + "\nYou have a lesson plan for today, provided in the brackets <[" + lesson.LessonPlan + "]>"
+		}
+	}
+
+	return instructions, nil
+}
+
 func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <-chan Message) {
 	var openAIConn *websocket.Conn
 	var err error
 
 	// Get initial settings
-	settings, err := getChatSettingsFromDB(chat.ID)
-	if err != nil {
-		settings = getDefaultSettings(chat.ID)
-	}
+	instructions, _ := getInstructions(chat.ID)
 
 	for {
 		if openAIConn == nil {
@@ -500,32 +569,34 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 			}
 
 			// Send initial session update
-			if err := updateOpenAISession(openAIConn, settings.CustomInstructions); err != nil {
+			if err := updateOpenAISession(openAIConn, instructions, nil); err != nil {
 				fmt.Printf("Error sending session update: %v\n", err)
 				openAIConn.Close()
 				openAIConn = nil
 				continue
 			}
 
-			injectItem := ConversationItemCreate{
-				Type: "conversation.item.create",
-				Item: Item{
-					Type: "message",
-					Role: "user",
-					Content: []Content{
-						{
-							Type: "input_text",
-							Text: "<FOLLOW THESE INSTRUCTIONS: when responding in text, do not respond in JSON or pesudo code unless explicitly requested to do so>",
-						},
-					},
-				},
+			// Send message history to OpenAI
+			// Send initial greeting message to OpenAI
+			initialMsg := Message{
+				ChatID:     chat.ID,
+				Sender:     "Assistant @OpenAI Realtime", 
+				Content:    "Hey, are you ready for your lesson?",
+				Type:       "text",
 			}
-
-			if err := openAIConn.WriteJSON(injectItem); err != nil {
-				fmt.Printf("Error sending injection message: %v\n", err)
+			if err := sendConversationCreate(openAIConn, initialMsg); err != nil {
+				fmt.Printf("Error sending initial message to OpenAI: %v\n", err)
 				openAIConn.Close()
 				openAIConn = nil
 				continue
+			}
+			for _, msg := range chat.Messages {
+				if err := sendConversationCreate(openAIConn, msg); err != nil {
+					fmt.Printf("Error sending message history to OpenAI: %v\n", err)
+					openAIConn.Close()
+					openAIConn = nil
+					break
+				}
 			}
 
 			go handleOpenAIMessages(chat.ID, chatConns, openAIConn)
@@ -540,7 +611,7 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 				openAIConn = nil
 			}
 		case update := <-chatConns.SettingsUpdate:
-			if err := updateOpenAISession(openAIConn, update.Settings.CustomInstructions); err != nil {
+			if err := updateOpenAISession(openAIConn, update.Settings.CustomInstructions, nil); err != nil {
 				fmt.Printf("Error updating OpenAI session: %v\n", err)
 				openAIConn.Close()
 				openAIConn = nil

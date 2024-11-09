@@ -533,6 +533,16 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create chat settings by copying course settings
+	chatSettings := *settings
+	chatSettings.ID = chatID
+	if err := saveChatSettingsToDB(chatSettings); err != nil {
+		// Clean up the created chat if we fail
+		DeleteChat(chatID)
+		http.Error(w, "Failed to create chat settings", http.StatusInternalServerError)
+		return
+	}
+
 	// Create initial lesson with the same lesson ID
 	lesson := Lesson{
 		ID:         lessonID,  // Use the pre-generated lesson ID

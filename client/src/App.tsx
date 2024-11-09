@@ -348,6 +348,20 @@ function App() {
     }
   };
 
+  // Update useEffect to watch selectedCourseId and clear lesson state if needed
+  useEffect(() => {
+    // Clear lesson state if the course is deleted or changed
+    if (lessonState && (!selectedCourseId || selectedCourseId !== lessonState.courseId)) {
+      setLessonState(null);
+      localStorage.removeItem('lessonState');
+      // If we're in the lesson tab, switch back to courses
+      if (activeTab === 'lesson') {
+        setActiveTab('courses');
+        localStorage.setItem('activeTab', 'courses');
+      }
+    }
+  }, [selectedCourseId, lessonState, activeTab]);
+
   return (
     <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
       <div style={styles.app}>

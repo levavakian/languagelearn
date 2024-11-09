@@ -97,6 +97,18 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendMessageHistory(conn *websocket.Conn, chat *Chat) {
+    // Send initial greeting message
+    initialMsg := Message{
+        ChatID:     chat.ID,
+        Sender:     "Assistant @OpenAI Realtime",
+        Content:    "Hey, are you ready for your lesson?",
+        Type:       "text",
+    }
+    if err := conn.WriteJSON(initialMsg); err != nil {
+        fmt.Printf("Error sending initial message: %v\n", err)
+        return
+    }
+
     for _, msg := range chat.Messages {
         if err := conn.WriteJSON(msg); err != nil {
             fmt.Printf("Error sending message history: %v\n", err)
