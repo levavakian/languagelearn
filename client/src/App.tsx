@@ -103,6 +103,12 @@ const styles = {
   },
 };
 
+// Add new interface for lesson state
+interface LessonState {
+  courseId: string;
+  chatId: string;
+}
+
 function App() {
   const [jwt, setJwt] = useState<string | null>(null);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(() => {
@@ -112,11 +118,18 @@ function App() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(window.innerWidth >= 768);
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const storedTab = localStorage.getItem('activeTab');
-    return (storedTab === 'chats' || storedTab === 'courses') ? storedTab : 'chats';
+    return (storedTab as Tab) || 'chats';
   });
   const [chats, setChats] = useState<Array<{ id: string; name: string }>>([]);
   const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState(false);
-  const [lessonChatId, setLessonChatId] = useState<string | null>(null);
+  const [lessonState, setLessonState] = useState<LessonState | null>(() => {
+    const stored = localStorage.getItem('lessonState');
+    return stored ? JSON.parse(stored) : null;
+  });
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(() => {
+    const stored = localStorage.getItem('selectedCourseId');
+    return stored || null;
+  });
 
   useEffect(() => {
     const storedJwt = localStorage.getItem('jwt');
@@ -227,15 +240,10 @@ function App() {
     }
   };
 
-  // Add tab handling function
+  // Update tab handling function
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
     localStorage.setItem('activeTab', tab);
-    
-    // Clear lesson chat when going back to courses
-    if (tab === 'courses') {
-      setLessonChatId(null);
-    }
   };
 
   // Add new chat handler
@@ -315,9 +323,25 @@ function App() {
     }
   };
 
-  const handleLessonSelect = (chatId: string) => {
-    setLessonChatId(chatId);
+  const handleLessonSelect = (chatId: string, courseId: string) => {
+    const newLessonState = { chatId, courseId };
+    setLessonState(newLessonState);
+    localStorage.setItem('lessonState', JSON.stringify(newLessonState));
     setActiveTab('lesson');
+    localStorage.setItem('activeTab', 'lesson');
+  };
+
+  const handleCourseSelect = (courseId: string) => {
+    setSelectedCourseId(courseId);
+    localStorage.setItem('selectedCourseId', courseId);
+    
+    // If we have a lesson state and it's for a different course, clear it
+    if (lessonState && lessonState.courseId !== courseId) {
+      setLessonState(null);
+      localStorage.removeItem('lessonState');
+      setActiveTab('courses');
+      localStorage.setItem('activeTab', 'courses');
+    }
   };
 
   return (
@@ -394,14 +418,18 @@ function App() {
               token={jwt} 
               onUnauthorized={handleUnauthorized}
               onLessonSelect={handleLessonSelect}
+              onCourseSelect={handleCourseSelect}
+              selectedCourseId={selectedCourseId}
             />
           )}
-          {jwt && activeTab === 'lesson' && lessonChatId && (
+          {jwt && activeTab === 'lesson' && lessonState && (
             <Courses 
               token={jwt} 
               onUnauthorized={handleUnauthorized}
               onLessonSelect={handleLessonSelect}
-              forcedChatId={lessonChatId}
+              onCourseSelect={handleCourseSelect}
+              selectedCourseId={lessonState.courseId}
+              forcedChatId={lessonState.chatId}
             />
           )}
         </div>

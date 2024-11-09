@@ -89,11 +89,20 @@ const CreateCourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSubm
 interface CoursesProps {
   token: string;
   onUnauthorized: () => void;
-  onLessonSelect?: (chatId: string) => void;
+  onLessonSelect?: (chatId: string, courseId: string) => void;
+  onCourseSelect?: (courseId: string) => void;
+  selectedCourseId?: string | null;
   forcedChatId?: string;
 }
 
-const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized, onLessonSelect, forcedChatId }) => {
+const Courses: React.FC<CoursesProps> = ({
+  token,
+  onUnauthorized,
+  onLessonSelect,
+  onCourseSelect,
+  selectedCourseId: propSelectedCourseId,
+  forcedChatId
+}) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -420,9 +429,23 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized, onLessonSelect
   }, [lessons, fetchChatNames]);
 
   const handleLessonClick = (chatId: string) => {
-    setSelectedLessonChatId(chatId);
-    if (onLessonSelect) {
-      onLessonSelect(chatId);
+    if (selectedCourseId && onLessonSelect) {
+      onLessonSelect(chatId, selectedCourseId);
+    }
+  };
+
+  // Update local state when prop changes
+  useEffect(() => {
+    if (propSelectedCourseId) {
+      setSelectedCourseId(propSelectedCourseId);
+    }
+  }, [propSelectedCourseId]);
+
+  // Update course selection handler
+  const handleCourseSelect = (courseId: string | null) => {
+    setSelectedCourseId(courseId);
+    if (courseId && onCourseSelect) {
+      onCourseSelect(courseId);
     }
   };
 
@@ -435,7 +458,7 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized, onLessonSelect
           name: course.name
         }))}
         selectedId={selectedCourseId}
-        onSelect={setSelectedCourseId}
+        onSelect={handleCourseSelect}
         onCreate={() => setIsModalOpen(true)}
         expanded={isSidebarExpanded}
         onExpandedChange={setIsSidebarExpanded}
