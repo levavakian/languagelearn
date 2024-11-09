@@ -90,6 +90,13 @@
   border-radius: 4px;
   padding: 5px 10px;
   cursor: pointer;
+  min-width: 60px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.sidepanel-button-delete:hover {
+  opacity: 1;
 }
 
 .sidepanel-list {
@@ -107,6 +114,7 @@
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
+  gap: 8px;
 }
 
 .sidepanel-item-text {

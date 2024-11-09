@@ -50,7 +50,7 @@ const Sidepanel: React.FC<SidepanelProps> = ({
         </button>
 
         <ul className="sidepanel-list">
-          {items.map(item => (
+          {items?.map(item => (
             <li 
               key={item.id}
               className="sidepanel-list-item"

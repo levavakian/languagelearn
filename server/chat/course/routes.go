@@ -42,6 +42,7 @@ func SetupRoutes(api *mux.Router) {
 	api.HandleFunc("/chat", auth.AuthMiddleware(createChat)).Methods("POST")
 	api.HandleFunc("/chat/{id}/ws", auth.AuthMiddleware(handleWebSocket))
 	api.HandleFunc("/chats", auth.AuthMiddleware(getUserChats)).Methods("GET")
+	api.HandleFunc("/standalone-chats", auth.AuthMiddleware(getStandaloneUserChats)).Methods("GET")
 	api.HandleFunc("/chat/{id}", auth.AuthMiddleware(deleteChat)).Methods("DELETE")
 	api.HandleFunc("/chats/names", auth.AuthMiddleware(getChatNames)).Methods("POST")
 	api.HandleFunc("/chat/{id}/settings", auth.AuthMiddleware(getChatSettings)).Methods("GET")

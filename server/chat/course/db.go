@@ -579,3 +579,35 @@ func GetUserChats(userEmail string) ([]Chat, error) {
 	}
 	return chats, nil
 }
+
+func getStandaloneChats(userEmail string) ([]Chat, error) {
+	rows, err := db.DB.Query(`
+		SELECT id, creator_id, name, lesson_id, created_at 
+		FROM chats 
+		WHERE creator_id = ? 
+		AND (lesson_id IS NULL OR lesson_id = '')
+		ORDER BY created_at DESC`,
+		userEmail,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var chats []Chat
+	for rows.Next() {
+		var chat Chat
+		var lessonID sql.NullString
+		err := rows.Scan(&chat.ID, &chat.CreatorID, &chat.Name, &lessonID, &chat.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		if lessonID.Valid {
+			chat.LessonID = lessonID.String
+		}
+
+		chats = append(chats, chat)
+	}
+	return chats, nil
+}

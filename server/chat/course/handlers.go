@@ -893,3 +893,18 @@ func updateChatSettings(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(settings)
 }
+
+// Add this new handler
+func getStandaloneUserChats(w http.ResponseWriter, r *http.Request) {
+	userEmail := r.Header.Get("X-User-Email")
+
+	chats, err := getStandaloneChats(userEmail)
+	if err != nil {
+		fmt.Printf("Error fetching standalone chats: %v\n", err)
+		http.Error(w, "Failed to fetch chats", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(chats)
+}

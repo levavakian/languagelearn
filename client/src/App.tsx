@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
-import Sidebar from './components/Sidebar';
+import Sidepanel from './components/Sidepanel/Sidepanel';
 import Chat from './components/Chat';
 import Courses from './components/Courses/Courses';
+import CreateChatModal from './components/ChatModals/CreateChatModal';
 
 // Add tab type and colors
 type Tab = 'chats' | 'courses';
@@ -52,24 +53,6 @@ const styles = {
     msOverflowStyle: 'none' as const,
     scrollbarWidth: 'none' as 'none',
   },
-  sidebar: {
-    width: '250px',
-    borderRight: `1px solid ${darkModeColors.accent}`,
-    height: '100%',
-    transition: 'all 0.3s ease',
-    overflow: 'hidden',
-    backgroundColor: darkModeColors.sidebarBackground,
-    msOverflowStyle: 'none' as const,
-    scrollbarWidth: 'none' as 'none',
-    '&::-webkit-scrollbar': {
-      display: 'none'
-    }
-  },
-  sidebarCollapsed: {
-    width: '0px',
-    padding: '0',
-    opacity: '0',
-  },
   chatContainer: {
     flex: 1,
     display: 'flex',
@@ -113,13 +96,17 @@ const styles = {
 
 function App() {
   const [jwt, setJwt] = useState<string | null>(null);
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(() => 
-    localStorage.getItem('selectedChatId')
-  );
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(() => {
+    const storedId = localStorage.getItem('selectedChatId');
+    return storedId || null;
+  });
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(window.innerWidth >= 768);
-  const [activeTab, setActiveTab] = useState<Tab>(() => 
-    (localStorage.getItem('activeTab') as Tab) || 'chats'
-  );
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const storedTab = localStorage.getItem('activeTab');
+    return (storedTab === 'chats' || storedTab === 'courses') ? storedTab : 'chats';
+  });
+  const [chats, setChats] = useState<Array<{ id: string; name: string }>>([]);
+  const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState(false);
 
   useEffect(() => {
     const storedJwt = localStorage.getItem('jwt');
@@ -143,6 +130,34 @@ function App() {
       window.removeEventListener('toggleSidebar', handleToggleSidebar);
     };
   }, [isSidebarExpanded]);
+
+  useEffect(() => {
+    const fetchChats = async () => {
+      if (!jwt) return;
+      
+      try {
+        const response = await fetch('/api/standalone-chats', {
+          headers: {
+            'Authorization': `Bearer ${jwt}`
+          }
+        });
+
+        if (response.status === 401) {
+          handleUnauthorized();
+          return;
+        }
+
+        if (response.ok) {
+          const fetchedChats = await response.json();
+          setChats(fetchedChats);
+        }
+      } catch (error) {
+        console.error('Error fetching chats:', error);
+      }
+    };
+
+    fetchChats();
+  }, [jwt]);
 
   const handleLoginSuccess = (response: any) => {
     console.log('Login Success:', response);
@@ -171,7 +186,7 @@ function App() {
     localStorage.removeItem('selectedChatId');
   };
 
-  const handleSelectChat = (chatId: string) => {
+  const handleSelectChat = (chatId: string | null) => {
     console.log('Selected chat:', chatId);
     const newSelectedChatId = chatId || null;
     setSelectedChatId(newSelectedChatId);
@@ -208,6 +223,73 @@ function App() {
     localStorage.setItem('activeTab', tab);
   };
 
+  // Add new chat handler
+  const handleCreateChat = async (name: string) => {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name })
+      });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      const newChat = await response.json();
+      setChats(prevChats => [...prevChats, newChat]);
+      setSelectedChatId(newChat.id);
+      setIsCreateChatModalOpen(false);
+    } catch (error) {
+      console.error('Error creating chat:', error);
+    }
+  };
+
+  // Add delete chat handler
+  const handleDeleteChat = async (chatId: string) => {
+    try {
+      const response = await fetch(`/api/chat/${chatId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${jwt}`
+        }
+      });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      if (response.ok) {
+        setChats(prevChats => {
+          const newChats = prevChats.filter(chat => chat.id !== chatId);
+          
+          // If we're deleting the selected chat, select the next available one
+          if (selectedChatId === chatId) {
+            const deletedIndex = prevChats.findIndex(chat => chat.id === chatId);
+            const nextChat = newChats[deletedIndex] || newChats[deletedIndex - 1];
+            
+            if (nextChat) {
+              setSelectedChatId(nextChat.id);
+              localStorage.setItem('selectedChatId', nextChat.id);
+            } else {
+              setSelectedChatId(null);
+              localStorage.removeItem('selectedChatId');
+            }
+          }
+          
+          return newChats;
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+    }
+  };
+
   return (
     <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
       <div style={styles.app}>
@@ -239,32 +321,16 @@ function App() {
         <div style={styles.content} className="hide-scrollbar">
           {jwt && activeTab === 'chats' && (
             <>
-              <div style={styles.sidebarContainer}>
-                <button
-                  className={`sidebar-toggle ${isSidebarExpanded ? 'expanded' : 'collapsed'}`}
-                  onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-                  style={{
-                    ...styles.toggleButton,
-                    right: isSidebarExpanded ? '0px' : '-15px',
-                  }}
-                >
-                  {isSidebarExpanded ? '←' : '→'}
-                </button>
-                <div 
-                  className="hide-scrollbar"
-                  style={{
-                    ...styles.sidebar,
-                    ...(isSidebarExpanded ? {} : styles.sidebarCollapsed)
-                  }}
-                >
-                  <Sidebar 
-                    token={jwt} 
-                    onSelectChat={handleSelectChat} 
-                    onUnauthorized={handleUnauthorized}
-                    selectedChatId={selectedChatId}
-                  />
-                </div>
-              </div>
+              <Sidepanel
+                title="Chats"
+                items={chats}
+                selectedId={selectedChatId}
+                onSelect={handleSelectChat}
+                onDelete={handleDeleteChat}
+                onCreate={() => setIsCreateChatModalOpen(true)}
+                expanded={isSidebarExpanded}
+                onExpandedChange={setIsSidebarExpanded}
+              />
               <div style={styles.chatContainer}>
                 <Chat 
                   key={selectedChatId || 'empty'} 
@@ -273,6 +339,11 @@ function App() {
                   onUnauthorized={handleUnauthorized}
                 />
               </div>
+              <CreateChatModal
+                isOpen={isCreateChatModalOpen}
+                onClose={() => setIsCreateChatModalOpen(false)}
+                onSubmit={handleCreateChat}
+              />
             </>
           )}
           {jwt && activeTab === 'courses' && (
