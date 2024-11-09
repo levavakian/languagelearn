@@ -443,7 +443,9 @@ const Courses: React.FC<CoursesProps> = ({
 
   // Update course selection handler
   const handleCourseSelect = (courseId: string | null) => {
-    setSelectedLessonChatId(null);
+    if (courseId !== selectedCourseId) {
+      setSelectedLessonChatId(null);
+    }
     setSelectedCourseId(courseId);
     if (onCourseSelect) {
       onCourseSelect(courseId);

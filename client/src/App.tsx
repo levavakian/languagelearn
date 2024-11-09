@@ -335,11 +335,14 @@ function App() {
     setSelectedCourseId(courseId);
     localStorage.setItem('selectedCourseId', courseId || '');
     
-    // Clear lesson state and return to courses view when selecting any course
-    // (including reselecting the same course)
-    if (activeTab === 'lesson') {
+    // Only clear lesson state if selecting a different course than the lesson's course
+    if (lessonState && courseId !== lessonState.courseId) {
       setLessonState(null);
       localStorage.removeItem('lessonState');
+    }
+    
+    // Always return to courses view when selecting a course
+    if (activeTab === 'lesson') {
       setActiveTab('courses');
       localStorage.setItem('activeTab', 'courses');
     }
@@ -369,14 +372,15 @@ function App() {
               >
                 Courses
               </button>
-              {activeTab === 'lesson' && (
+              {lessonState && (
                 <>
                   <span style={styles.arrow}>▶</span>
                   <button
                     style={{
                       ...styles.tab,
-                      backgroundColor: darkModeColors.tabActive,
+                      backgroundColor: activeTab === 'lesson' ? darkModeColors.tabActive : darkModeColors.tabInactive,
                     }}
+                    onClick={() => handleTabChange('lesson')}
                   >
                     Lesson
                   </button>
