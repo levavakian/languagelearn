@@ -6,6 +6,7 @@ import EditLessonPlanModal from '../LessonPlanModals/EditLessonPlanModal';
 import CreateLessonModal from '../LessonModals/CreateLessonModal';
 import EditLessonModal from '../LessonModals/EditLessonModal';
 import SettingsPage from '../Settings/Settings';
+import Chat from '../Chat';
 
 interface CourseModalProps {
   isOpen: boolean;
@@ -104,6 +105,7 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
   const [isEditLessonModalOpen, setIsEditLessonModalOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [chatNames, setChatNames] = useState<{[key: string]: string}>({});
+  const [selectedLessonChatId, setSelectedLessonChatId] = useState<string | null>(null);
 
   const fetchCourses = useCallback(async () => {
     try {
@@ -415,6 +417,10 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
     }
   }, [lessons, fetchChatNames]);
 
+  const handleLessonClick = (chatId: string) => {
+    setSelectedLessonChatId(chatId);
+  };
+
   return (
     <div className="courses-container">
       <Sidepanel
@@ -430,7 +436,13 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
         onExpandedChange={setIsSidebarExpanded}
       />
       <div className="course-content">
-        {selectedCourse ? (
+        {selectedLessonChatId ? (
+          <Chat
+            token={token}
+            selectedChatId={selectedLessonChatId}
+            onUnauthorized={onUnauthorized}
+          />
+        ) : selectedCourse ? (
           <div className="selected-course">
             <div className="course-header">
               <h2>{selectedCourse.name}</h2>
@@ -474,7 +486,7 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
                 <div key={lesson.id} className="lesson-item">
                   <div 
                     className="lesson-content"
-                    onClick={() => console.log(`Would navigate to chat ${lesson.chat_id}`)}
+                    onClick={() => handleLessonClick(lesson.chat_id)}
                   >
                     <span className="lesson-title">
                       {chatNames[lesson.chat_id] || 'Loading...'}
