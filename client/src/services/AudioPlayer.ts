@@ -60,7 +60,6 @@ class AudioPlayer {
 
   async playChunk(pcm16Blob: Blob, responseId: string) {
     if (responseId === this.ignoredResponseId) {
-      console.log('🔇 Ignoring response ID:', responseId);
       return;
     }
 

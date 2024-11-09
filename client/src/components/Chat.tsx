@@ -296,11 +296,8 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
       } else {
         if (!micAlwaysOnRef.current) {
           if (latchedResponseIdRef.current) {
-            console.log('Stopping and ignoring response ID:', latchedResponseIdRef.current);
-            console.log('mic always on:', micAlwaysOnRef.current);
             audioPlayer.stopAndIgnoreResponse(latchedResponseIdRef.current);
           } else {
-            console.log('No response ID to stop, calling regular stop');
             audioPlayer.stop();
           }
         }
