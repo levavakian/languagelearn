@@ -42,6 +42,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   const [messagesBlurred, setMessagesBlurred] = useState(false);
   const [latchedResponseId, setLatchedResponseId] = useState<string | null>(null);
   const [micAlwaysOn, setMicAlwaysOn] = useState(false);
+  const micAlwaysOnRef = useRef(false);
   const [showMicModal, setShowMicModal] = useState(false);
   const [micAlwaysOnTimer, setMicAlwaysOnTimer] = useState<NodeJS.Timeout | null>(null);
   const micRef = useRef<{ startAlwaysOnMode: () => void, stopAlwaysOnMode: () => void } | null>(null);
@@ -59,6 +60,10 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
       },
     }
   );
+
+  useEffect(() => {
+    micAlwaysOnRef.current = micAlwaysOn;
+  }, [micAlwaysOn]);
 
   useEffect(() => {
     setMicAlwaysOn(false);
@@ -285,9 +290,10 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
         };
         sendMessage(JSON.stringify(message));
       } else {
-        if (!micAlwaysOn) {
+        if (!micAlwaysOnRef.current) {
           if (latchedResponseIdRef.current) {
             console.log('Stopping and ignoring response ID:', latchedResponseIdRef.current);
+            console.log('mic always on:', micAlwaysOnRef.current);
             audioPlayer.stopAndIgnoreResponse(latchedResponseIdRef.current);
           } else {
             console.log('No response ID to stop, calling regular stop');
@@ -314,7 +320,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
         reader.readAsArrayBuffer(chunk);
       }
     }
-  }, [readyState, sendMessage, micAlwaysOn]);
+  }, [readyState, sendMessage, micAlwaysOnRef]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

@@ -374,6 +374,13 @@ function App() {
     handleCourseChange();
   }, [selectedCourseId, lessonState, activeTab]);
 
+  // Add new effect to handle auto-selection
+  useEffect(() => {
+    if (chats.length > 0 && (!selectedChatId || !chats.find(chat => chat.id === selectedChatId))) {
+      handleSelectChat(chats[0].id);
+    }
+  }, [chats, selectedChatId]);
+
   return (
     <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
       <div style={styles.app}>
