@@ -24,6 +24,7 @@ const EditLessonModal: React.FC<EditLessonModalProps> = ({
 }) => {
   const [summary, setSummary] = useState(initialSummary);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingVocab, setIsGeneratingVocab] = useState(false);
 
   useEffect(() => {
     setSummary(initialSummary);
@@ -39,7 +40,7 @@ const EditLessonModal: React.FC<EditLessonModalProps> = ({
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      const response = await fetch(`/api/course/0/lesson/${lessonId}/generate-summary`, {
+      const response = await fetch(`/api/lesson/${lessonId}/generate-summary`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,6 +64,35 @@ const EditLessonModal: React.FC<EditLessonModalProps> = ({
       // Optionally add error handling UI here
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateVocab = async () => {
+    setIsGeneratingVocab(true);
+    try {
+      const response = await fetch(`/api/lesson/${lessonId}/generate-vocab`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        onUnauthorized();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to generate vocab');
+      }
+
+      onClose();
+    } catch (error) {
+      console.error('Error generating vocab:', error);
+      // Optionally add error handling UI here
+    } finally {
+      setIsGeneratingVocab(false);
     }
   };
 
@@ -94,7 +124,15 @@ const EditLessonModal: React.FC<EditLessonModalProps> = ({
               disabled={isGenerating}
               className="generate-button"
             >
-              {isGenerating ? 'Generating...' : 'Generate'}
+              {isGenerating ? 'Generating Summary...' : 'Generate Summary'}
+            </button>
+            <button
+              type="button"
+              onClick={handleGenerateVocab}
+              disabled={isGeneratingVocab}
+              className="generate-button"
+            >
+              {isGeneratingVocab ? 'Updating Vocab...' : 'Update Vocab'}
             </button>
             <button type="button" onClick={onClose}>Cancel</button>
           </div>

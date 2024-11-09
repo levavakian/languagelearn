@@ -149,36 +149,38 @@ func generateLessonSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update the lesson summary in the database
+	// Get the summary from the OpenAI response
 	summary := completionResponse.Choices[0].Message.Content
-	lesson.Summary = summary
-	if err := updateLessonInDB(*lesson); err != nil {
-		fmt.Printf("Error updating lesson in DB: %v\n", err)
-		http.Error(w, "Failed to update lesson summary", http.StatusInternalServerError)
+
+	// Return just the summary as JSON
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"summary": summary,
+	})
+}
+
+func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	lessonID := vars["lessonId"]
+	userEmail := r.Header.Get("X-User-Email")
+
+	// Get the lesson
+	lesson, err := getLessonFromDBRaw(lessonID)
+	if err != nil {
+		fmt.Printf("Error getting lesson: %v\n", err)
+		http.Error(w, "Lesson not found", http.StatusNotFound)
 		return
 	}
 
-	// Generate vocab updates
-	// Remove first and last messages before passing to vocab generation
-	if len(messages) >= 2 {
-		messages = messages[1 : len(messages)-1]
-	}
-	if err := generateVocabUpdates(lesson.CourseID, messages); err != nil {
-		fmt.Printf("Error generating vocab updates: %v\n", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(lesson)
-}
-
-func generateVocabUpdates(courseID string, chatMessages []ChatMessage) error {
-	// Get current vocab list
-	settings, err := getCourseSettingsFromDB(courseID)
+	// Get the chat history
+	chat, err := GetChat(lesson.ChatID, userEmail)
 	if err != nil {
-		settings = getDefaultSettings(courseID)
+		fmt.Printf("Error getting chat: %v\n", err)
+		http.Error(w, "Chat not found", http.StatusNotFound)
+		return
 	}
 
-	// Prepare messages for OpenAI
+	// Convert chat messages to ChatMessage format
 	messages := []ChatMessage{
 		{
 			Role: "system",
@@ -190,13 +192,30 @@ func generateVocabUpdates(courseID string, chatMessages []ChatMessage) error {
 	}
 
 	// Add chat history
-	messages = append(messages, chatMessages...)
+	for _, msg := range chat.Messages {
+		role := "user"
+		if msg.Sender != "user" {
+			role = "assistant"
+		}
+		messages = append(messages, ChatMessage{
+			Role:    role,
+			Content: msg.Content,
+		})
+	}
+
+	// Get current vocab list
+	settings, err := getCourseSettingsFromDB(lesson.CourseID)
+	if err != nil {
+		settings = getDefaultSettings(lesson.CourseID)
+	}
 
 	// Add current vocab list
 	vocabListMsg := "Current vocabulary list contents:\n"
 	vocabListBytes, err := json.MarshalIndent(settings.VocabItems, "", "  ")
 	if err != nil {
-		return fmt.Errorf("error marshaling vocab list: %v", err)
+		fmt.Printf("Error marshaling vocab list: %v\n", err)
+		http.Error(w, "Failed to marshal vocab list", http.StatusInternalServerError)
+		return
 	}
 	messages = append(messages, ChatMessage{
 		Role:    "user",
@@ -206,7 +225,7 @@ func generateVocabUpdates(courseID string, chatMessages []ChatMessage) error {
 	// Add final instruction
 	messages = append(messages, ChatMessage{
 		Role: "user",
-		Content: "Based on this lesson, provide updates or additions to the vocabulary list. Suggestions should be concise and information-dense. They do not have to be only vocab words and their definitions, they can be tenses, idioms, conjunctions, etc. Anything that would be helpful during language learning." +
+		Content: "Based on this lesson, provide updates or additions to the vocabulary list. Suggestions should be concise and information-dense. They do not have to be only vocab words and their definitions, they can be tenses, idioms, conjunctions, etc. Anything that would be helpful during language learning. Focus on things that seemed new or tough for the student, or things they seemed to be particularly curious or interested in." +
 			"Return the response in the specified JSON format.",
 	})
 
@@ -247,13 +266,15 @@ func generateVocabUpdates(courseID string, chatMessages []ChatMessage) error {
 	jsonBody, err := json.Marshal(requestBody)
 	if err != nil {
 		fmt.Printf("Error marshaling request: %v\n", err)
-		return fmt.Errorf("error marshaling request: %v", err)
+		http.Error(w, "Failed to prepare request", http.StatusInternalServerError)
+		return
 	}
 
 	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(jsonBody))
 	if err != nil {
 		fmt.Printf("Error creating request: %v\n", err)
-		return fmt.Errorf("error creating request: %v", err)
+		http.Error(w, "Failed to create request", http.StatusInternalServerError)
+		return
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -263,20 +284,22 @@ func generateVocabUpdates(courseID string, chatMessages []ChatMessage) error {
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Printf("Error sending request to OpenAI: %v\n", err)
-		return fmt.Errorf("error sending request to OpenAI: %v", err)
+		http.Error(w, "Failed to send request to OpenAI", http.StatusInternalServerError)
+		return
 	}
 	defer resp.Body.Close()
 
-	// Parse the response
 	var completionResponse ChatCompletionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&completionResponse); err != nil {
 		fmt.Printf("Error parsing OpenAI response: %v\n", err)
-		return fmt.Errorf("error parsing OpenAI response: %v", err)
+		http.Error(w, "Failed to parse OpenAI response", http.StatusInternalServerError)
+		return
 	}
 
 	if len(completionResponse.Choices) == 0 {
 		fmt.Println("Error: OpenAI returned no choices")
-		return fmt.Errorf("OpenAI returned no choices")
+		http.Error(w, "No response from OpenAI", http.StatusInternalServerError)
+		return
 	}
 
 	var vocabResponse struct {
@@ -290,24 +313,31 @@ func generateVocabUpdates(courseID string, chatMessages []ChatMessage) error {
 
 	if err := json.Unmarshal([]byte(completionResponse.Choices[0].Message.Content), &vocabResponse); err != nil {
 		fmt.Printf("Error parsing vocab updates: %v\n", err)
-		return fmt.Errorf("error parsing vocab updates: %v", err)
+		http.Error(w, "Failed to parse vocab updates", http.StatusInternalServerError)
+		return
 	}
 
 	// Update vocab items in settings
 	for _, update := range vocabResponse.VocabUpdates {
 		key := update.Word
-		settings.VocabItems[key] = VocabItem{
-			Type:       update.Type,
-			Word:       update.Word,
-			Definition: update.Definition,
-			Notes:      update.Notes,
-			LastUsed:   time.Now(),
-			UsageCount: settings.VocabItems[key].UsageCount + 1,
-		}
+			settings.VocabItems[key] = VocabItem{
+				Type:       update.Type,
+				Word:       update.Word,
+				Definition: update.Definition,
+				Notes:      update.Notes,
+				LastUsed:   time.Now(),
+				UsageCount: settings.VocabItems[key].UsageCount + 1,
+			}
 	}
 
 	// Save updated settings
-	return saveCourseSettingsToDB(*settings)
+	saveCourseSettingsToDB(*settings)
+
+	// Add success response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "success",
+	})
 }
 
 func ptr(b bool) *bool {

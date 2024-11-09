@@ -376,7 +376,7 @@ function App() {
 
   // Add new effect to handle auto-selection
   useEffect(() => {
-    if (chats.length > 0 && (!selectedChatId || !chats.find(chat => chat.id === selectedChatId))) {
+    if (chats?.length > 0 && (!selectedChatId || !chats.find(chat => chat.id === selectedChatId))) {
       handleSelectChat(chats[0].id);
     }
   }, [chats, selectedChatId]);
