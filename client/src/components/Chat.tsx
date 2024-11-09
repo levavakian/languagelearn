@@ -40,11 +40,10 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [messagesBlurred, setMessagesBlurred] = useState(false);
-  const [latchedResponseId, setLatchedResponseId] = useState<string | null>(null);
   const [micAlwaysOn, setMicAlwaysOn] = useState(false);
   const micAlwaysOnRef = useRef(false);
   const [showMicModal, setShowMicModal] = useState(false);
-  const [micAlwaysOnTimer, setMicAlwaysOnTimer] = useState<NodeJS.Timeout | null>(null);
+  const micAlwaysOnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const micRef = useRef<{ startAlwaysOnMode: () => void, stopAlwaysOnMode: () => void } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const latchedResponseIdRef = useRef<string | null>(null);
@@ -68,8 +67,8 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   useEffect(() => {
     setMicAlwaysOn(false);
     return () => {
-      if (micAlwaysOnTimer) {
-        clearTimeout(micAlwaysOnTimer);
+      if (micAlwaysOnTimerRef.current) {
+        clearTimeout(micAlwaysOnTimerRef.current);
       }
       setMicAlwaysOn(false);
     };
@@ -86,9 +85,9 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
 
   const disableMicAlwaysOn = () => {
     setMicAlwaysOn(false);
-    if (micAlwaysOnTimer) {
-      clearTimeout(micAlwaysOnTimer);
-      setMicAlwaysOnTimer(null);
+    if (micAlwaysOnTimerRef.current) {
+      clearTimeout(micAlwaysOnTimerRef.current);
+      micAlwaysOnTimerRef.current = null;
     }
     micRef.current?.stopAlwaysOnMode?.();
     sendMessage(JSON.stringify({
@@ -119,7 +118,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
       const timer = setTimeout(() => {
         disableMicAlwaysOn();
       }, 10 * 60 * 1000); // 10 minutes
-      setMicAlwaysOnTimer(timer);
+      micAlwaysOnTimerRef.current = timer;
     }
   };
 
@@ -199,9 +198,8 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   useEffect(() => {
     if (lastMessage !== null) {
       const newMessage = JSON.parse(lastMessage.data);
-      if (newMessage.responseId && newMessage.responseId !== latchedResponseId) {
+      if (newMessage.responseId && newMessage.responseId !== latchedResponseIdRef.current) {
         console.log('Updating latched response ID:', newMessage.responseId);
-        setLatchedResponseId(newMessage.responseId);
         latchedResponseIdRef.current = newMessage.responseId;
       }
     }
@@ -210,7 +208,7 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   useEffect(() => {
     if (selectedChatId) {
       setMessages([]);
-      setLatchedResponseId(null);
+      latchedResponseIdRef.current = null;
       console.log('Reset latched response ID');
     }
   }, [selectedChatId]);
