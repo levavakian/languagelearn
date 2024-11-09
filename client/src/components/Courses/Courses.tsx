@@ -687,6 +687,9 @@ const Courses: React.FC<CoursesProps> = ({
           }
         }}
         initialSummary={selectedLesson?.summary || ''}
+        lessonId={selectedLesson?.id || ''}
+        token={token}
+        onUnauthorized={onUnauthorized}
       />
     </div>
   );

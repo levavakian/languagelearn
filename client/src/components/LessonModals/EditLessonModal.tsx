@@ -7,6 +7,9 @@ interface EditLessonModalProps {
   onSave: (summary: string) => void;
   onDelete: () => void;
   initialSummary: string;
+  lessonId: string;
+  token: string;
+  onUnauthorized: () => void;
 }
 
 const EditLessonModal: React.FC<EditLessonModalProps> = ({
@@ -15,8 +18,12 @@ const EditLessonModal: React.FC<EditLessonModalProps> = ({
   onSave,
   onDelete,
   initialSummary,
+  lessonId,
+  token,
+  onUnauthorized,
 }) => {
   const [summary, setSummary] = useState(initialSummary);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     setSummary(initialSummary);
@@ -26,8 +33,37 @@ const EditLessonModal: React.FC<EditLessonModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!summary.trim()) return;
     onSave(summary);
+  };
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      const response = await fetch(`/api/course/0/lesson/${lessonId}/generate-summary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        onUnauthorized();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to generate summary');
+      }
+
+      const data = await response.json();
+      setSummary(data.summary);
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      // Optionally add error handling UI here
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -52,6 +88,14 @@ const EditLessonModal: React.FC<EditLessonModalProps> = ({
               Delete
             </button>
             <button type="submit">Save</button>
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="generate-button"
+            >
+              {isGenerating ? 'Generating...' : 'Generate'}
+            </button>
             <button type="button" onClick={onClose}>Cancel</button>
           </div>
         </form>

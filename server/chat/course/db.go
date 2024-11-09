@@ -590,13 +590,11 @@ func saveChatSettingsToDB(settings Settings) error {
 
 func GetUserChats(userEmail string) ([]Chat, error) {
 	rows, err := db.DB.Query(`
-		SELECT DISTINCT c.id, c.creator_id, c.name, c.lesson_id, c.created_at 
-		FROM chats c
-		LEFT JOIN lessons l ON c.lesson_id = l.id
-		LEFT JOIN courses co ON l.course_id = co.id
-		WHERE c.creator_id = ? OR co.creator_id = ?
-		ORDER BY c.created_at DESC`,
-		userEmail, userEmail,
+		SELECT id, creator_id, name, lesson_id, created_at 
+		FROM chats
+		WHERE creator_id = ?
+		ORDER BY created_at DESC`,
+		userEmail,
 	)
 	if err != nil {
 		return nil, err

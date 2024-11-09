@@ -199,7 +199,6 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
     if (lastMessage !== null) {
       const newMessage = JSON.parse(lastMessage.data);
       if (newMessage.responseId && newMessage.responseId !== latchedResponseIdRef.current) {
-        console.log('Updating latched response ID:', newMessage.responseId);
         latchedResponseIdRef.current = newMessage.responseId;
       }
     }

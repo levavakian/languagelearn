@@ -116,4 +116,14 @@
 .create-plan-button {
   flex: 3;
   white-space: nowrap;
+}
+
+.generate-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.generate-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 } 

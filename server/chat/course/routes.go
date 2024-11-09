@@ -47,4 +47,7 @@ func SetupRoutes(api *mux.Router) {
 	api.HandleFunc("/chats/names", auth.AuthMiddleware(getChatNames)).Methods("POST")
 	api.HandleFunc("/chat/{id}/settings", auth.AuthMiddleware(getChatSettings)).Methods("GET")
 	api.HandleFunc("/chat/{id}/settings", auth.AuthMiddleware(updateChatSettings)).Methods("POST")
+
+	// Lesson summary routes
+	api.HandleFunc("/course/{id}/lesson/{lessonId}/generate-summary", auth.AuthMiddleware(generateLessonSummary)).Methods("POST")
 }
