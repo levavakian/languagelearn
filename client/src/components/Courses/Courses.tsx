@@ -89,9 +89,11 @@ const CreateCourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSubm
 interface CoursesProps {
   token: string;
   onUnauthorized: () => void;
+  onLessonSelect?: (chatId: string) => void;
+  forcedChatId?: string;
 }
 
-const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
+const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized, onLessonSelect, forcedChatId }) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -419,6 +421,9 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
 
   const handleLessonClick = (chatId: string) => {
     setSelectedLessonChatId(chatId);
+    if (onLessonSelect) {
+      onLessonSelect(chatId);
+    }
   };
 
   return (
@@ -435,13 +440,24 @@ const Courses: React.FC<CoursesProps> = ({ token, onUnauthorized }) => {
         expanded={isSidebarExpanded}
         onExpandedChange={setIsSidebarExpanded}
       />
-      <div className="course-content">
-        {selectedLessonChatId ? (
-          <Chat
-            token={token}
-            selectedChatId={selectedLessonChatId}
-            onUnauthorized={onUnauthorized}
-          />
+      <div className={`course-content ${forcedChatId || selectedLessonChatId ? 'chat-view' : ''}`}>
+        {forcedChatId || selectedLessonChatId ? (
+          <div style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            <Chat
+              token={token}
+              selectedChatId={forcedChatId || selectedLessonChatId}
+              onUnauthorized={onUnauthorized}
+            />
+          </div>
         ) : selectedCourse ? (
           <div className="selected-course">
             <div className="course-header">

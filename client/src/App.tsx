@@ -7,7 +7,7 @@ import Courses from './components/Courses/Courses';
 import CreateChatModal from './components/ChatModals/CreateChatModal';
 
 // Add tab type and colors
-type Tab = 'chats' | 'courses';
+type Tab = 'chats' | 'courses' | 'lesson';
 
 const darkModeColors = {
   background: '#1e1e1e',
@@ -92,6 +92,15 @@ const styles = {
     border: 'none',
     color: darkModeColors.text,
   },
+  tabsContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  arrow: {
+    color: darkModeColors.text,
+    fontSize: '12px',
+  },
 };
 
 function App() {
@@ -107,6 +116,7 @@ function App() {
   });
   const [chats, setChats] = useState<Array<{ id: string; name: string }>>([]);
   const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState(false);
+  const [lessonChatId, setLessonChatId] = useState<string | null>(null);
 
   useEffect(() => {
     const storedJwt = localStorage.getItem('jwt');
@@ -221,6 +231,11 @@ function App() {
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
     localStorage.setItem('activeTab', tab);
+    
+    // Clear lesson chat when going back to courses
+    if (tab === 'courses') {
+      setLessonChatId(null);
+    }
   };
 
   // Add new chat handler
@@ -240,8 +255,18 @@ function App() {
         return;
       }
 
+      if (!response.ok) {
+        console.error('Error creating chat:', response.statusText);
+        return;
+      }
+
       const newChat = await response.json();
-      setChats(prevChats => [...prevChats, newChat]);
+      if (!newChat || typeof newChat.id !== 'string' || typeof newChat.name !== 'string') {
+        console.error('Invalid chat data received:', newChat);
+        return;
+      }
+
+      setChats(prevChats => Array.isArray(prevChats) ? [...prevChats, newChat] : [newChat]);
       setSelectedChatId(newChat.id);
       setIsCreateChatModalOpen(false);
     } catch (error) {
@@ -290,12 +315,17 @@ function App() {
     }
   };
 
+  const handleLessonSelect = (chatId: string) => {
+    setLessonChatId(chatId);
+    setActiveTab('lesson');
+  };
+
   return (
     <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
       <div style={styles.app}>
         <header style={styles.header}>
           {jwt && (
-            <div style={styles.tabs}>
+            <div style={styles.tabsContainer}>
               <button
                 style={{
                   ...styles.tab,
@@ -314,6 +344,19 @@ function App() {
               >
                 Courses
               </button>
+              {activeTab === 'lesson' && (
+                <>
+                  <span style={styles.arrow}>▶</span>
+                  <button
+                    style={{
+                      ...styles.tab,
+                      backgroundColor: darkModeColors.tabActive,
+                    }}
+                  >
+                    Lesson
+                  </button>
+                </>
+              )}
             </div>
           )}
           {renderAuthButton()}
@@ -347,7 +390,19 @@ function App() {
             </>
           )}
           {jwt && activeTab === 'courses' && (
-            <Courses token={jwt} onUnauthorized={handleUnauthorized} />
+            <Courses 
+              token={jwt} 
+              onUnauthorized={handleUnauthorized}
+              onLessonSelect={handleLessonSelect}
+            />
+          )}
+          {jwt && activeTab === 'lesson' && lessonChatId && (
+            <Courses 
+              token={jwt} 
+              onUnauthorized={handleUnauthorized}
+              onLessonSelect={handleLessonSelect}
+              forcedChatId={lessonChatId}
+            />
           )}
         </div>
       </div>

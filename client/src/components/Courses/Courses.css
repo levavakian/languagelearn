@@ -10,6 +10,11 @@
   overflow-y: auto;
 }
 
+.course-content.chat-view {
+  padding: 0;
+  position: relative;
+}
+
 .selected-course {
   color: #e0e0e0;
 }
