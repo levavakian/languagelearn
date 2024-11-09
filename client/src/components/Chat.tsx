@@ -179,13 +179,17 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
     if (lastMessage !== null) {
       const newMessage = JSON.parse(lastMessage.data);
       if (newMessage.type === 'audio' && newMessage.sender !== 'user') {
-        const binaryStr = atob(newMessage.content);
-        const bytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) {
-          bytes[i] = binaryStr.charCodeAt(i);
+        if (newMessage.content === 'speech_stopped') {
+          audioPlayer.flush();
+        } else {
+          const binaryStr = atob(newMessage.content);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+          }
+          const audioBlob = new Blob([bytes.buffer], { type: 'audio/pcm' });
+          audioPlayer.playChunk(audioBlob, newMessage.responseId);
         }
-        const audioBlob = new Blob([bytes.buffer], { type: 'audio/pcm' });
-        audioPlayer.playChunk(audioBlob, newMessage.responseId);
       } else if (newMessage.type !== 'audio') {
         setMessages((prevMessages) => [...prevMessages, newMessage]);
       }

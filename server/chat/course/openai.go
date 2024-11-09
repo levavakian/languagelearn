@@ -316,6 +316,16 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 				}
 			}
 
+		case "input_audio_buffer.speech_stopped":
+			speechStoppedMsg := Message{
+				ChatID:  chatID,
+				Sender:  "Assistant @OpenAI Realtime",
+				Content: "speech_stopped", 
+				Type:    "audio",
+			}
+			
+			broadcastMessage(chatConns, speechStoppedMsg)
+
 		default:
 			var errorMsg OpenAIError
 			if err := json.Unmarshal(message, &errorMsg); err != nil {

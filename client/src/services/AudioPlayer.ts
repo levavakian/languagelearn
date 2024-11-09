@@ -153,6 +153,10 @@ class AudioPlayer {
       }
     }
   }
+
+  flush() {
+    this.audioQueue = [];
+  }
 }
 
 export const audioPlayer = new AudioPlayer();
