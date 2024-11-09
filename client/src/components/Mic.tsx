@@ -3,11 +3,9 @@ import { audioService } from '../services/AudioService';
 
 interface MicProps {
   onAudioChunk: (chunk: Blob, isRecordingFinished: boolean) => void;
-  preferAudioResponse: boolean;
-  onToggleAudioPreference: () => void;
 }
 
-const Mic: React.FC<MicProps> = ({ onAudioChunk, preferAudioResponse, onToggleAudioPreference }) => {
+const Mic: React.FC<MicProps> = ({ onAudioChunk }) => {
   const [hasPermission, setHasPermission] = useState(false);
   const [lastChunkTime, setLastChunkTime] = useState<number | null>(null);
   const chunkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -109,23 +107,6 @@ const Mic: React.FC<MicProps> = ({ onAudioChunk, preferAudioResponse, onToggleAu
           <line x1="12" y1="19" x2="12" y2="23"/>
           <line x1="8" y1="23" x2="16" y2="23"/>
         </svg>
-      </div>
-      <div 
-        onClick={onToggleAudioPreference}
-        title={preferAudioResponse ? "Model will prefer to respond with voice even when you text, toggle to disable" : "Model will respond to text with text, toggle to have model respond with voice even when you text"}
-        style={{
-          width: '20px',
-          height: '20px',
-          backgroundColor: preferAudioResponse ? '#4CAF50' : '#808080',
-          borderRadius: '50%',
-          cursor: 'pointer',
-          transition: 'background-color 0.3s ease',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
-        <span style={{ fontSize: '12px' }}>🔊</span>
       </div>
     </div>
   );

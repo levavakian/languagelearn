@@ -303,6 +303,21 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
   return (
     <div className="chat-window" style={chatStyles.chatWindow}>
       <div style={{ height: '50px', position: 'relative' }}>
+        <div 
+          onClick={toggleAudioPreference}
+          title={preferAudioResponse ? "Model will prefer to respond with voice even when you text, toggle to disable" : "Model will respond to text with text, toggle to have model respond with voice even when you text"}
+          style={{
+            position: 'absolute',
+            top: '17px',
+            right: '100px',
+            cursor: 'pointer',
+            zIndex: 1,
+            transition: 'filter 0.3s ease',
+            filter: preferAudioResponse ? 'none' : 'grayscale(100%)',
+          }}
+        >
+          <span style={{ fontSize: '12px' }}>🔊</span>
+        </div>
         <button
           onClick={() => setMessagesBlurred(!messagesBlurred)}
           style={{
@@ -454,8 +469,6 @@ const Chat: React.FC<ChatProps> = ({ token, selectedChatId, onUnauthorized }) =>
           }}>
             <Mic 
               onAudioChunk={handleAudioChunk} 
-              preferAudioResponse={preferAudioResponse}
-              onToggleAudioPreference={toggleAudioPreference}
             />
             <button 
               onClick={handleSendMessage} 
