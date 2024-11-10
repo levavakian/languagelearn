@@ -7,6 +7,9 @@ interface CreateLessonModalProps {
   onClose: () => void;
   onSubmit: (title: string, content: string) => void;
   lessonPlans: Array<{ id: string; title: string; content: string }>;
+  courseId: string;
+  token: string;
+  onUnauthorized: () => void;
 }
 
 const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
@@ -14,6 +17,9 @@ const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
   onClose,
   onSubmit,
   lessonPlans,
+  courseId,
+  token,
+  onUnauthorized,
 }) => {
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [isCreatePlanModalOpen, setIsCreatePlanModalOpen] = useState(false);
@@ -75,6 +81,9 @@ const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
           setIsCreatePlanModalOpen(false);
           onClose();
         }}
+        courseId={courseId}
+        token={token}
+        onUnauthorized={onUnauthorized}
       />
     </div>
   );

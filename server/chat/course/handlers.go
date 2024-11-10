@@ -918,3 +918,48 @@ func getStandaloneUserChats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(chats)
 }
+
+// Add this new type for the response
+type LessonNameResponse struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+}
+
+func getCourseLessonNames(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	courseID := vars["id"]
+	userEmail := r.Header.Get("X-User-Email")
+
+	if err := verifyOwnership(courseID, userEmail); err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+
+	// Query to get lesson IDs and chat names in one go
+	rows, err := db.DB.Query(`
+		SELECT l.id, c.name 
+		FROM lessons l 
+		JOIN chats c ON l.chat_id = c.id 
+		WHERE l.course_id = ? 
+		ORDER BY l.order_index`,
+		courseID,
+	)
+	if err != nil {
+		http.Error(w, "Failed to fetch lesson names", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var lessons []LessonNameResponse
+	for rows.Next() {
+		var lesson LessonNameResponse
+		if err := rows.Scan(&lesson.ID, &lesson.Title); err != nil {
+			http.Error(w, "Failed to scan lesson data", http.StatusInternalServerError)
+			return
+		}
+		lessons = append(lessons, lesson)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(lessons)
+}

@@ -579,6 +579,7 @@ const Courses: React.FC<CoursesProps> = ({
               <button
                 className="add-lesson-plan-button"
                 onClick={() => setIsCreateLessonPlanModalOpen(true)}
+                disabled={!selectedCourseId}
               >
                 + Add Lesson Plan
               </button>
@@ -639,6 +640,9 @@ const Courses: React.FC<CoursesProps> = ({
         isOpen={isCreateLessonPlanModalOpen}
         onClose={() => setIsCreateLessonPlanModalOpen(false)}
         onSubmit={handleCreateLessonPlan}
+        courseId={selectedCourseId || ''}
+        token={token}
+        onUnauthorized={onUnauthorized}
       />
       <EditLessonPlanModal
         isOpen={isEditLessonPlanModalOpen}
@@ -656,6 +660,9 @@ const Courses: React.FC<CoursesProps> = ({
         onClose={() => setIsCreateLessonModalOpen(false)}
         onSubmit={handleCreateLesson}
         lessonPlans={lessonPlans}
+        courseId={selectedCourseId || ''}
+        token={token}
+        onUnauthorized={onUnauthorized}
       />
       <EditLessonModal
         isOpen={isEditLessonModalOpen}

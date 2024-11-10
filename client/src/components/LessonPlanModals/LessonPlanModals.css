@@ -63,7 +63,16 @@
   color: white;
 }
 
-.modal-buttons button[type="button"]:not(.delete-button) {
+.modal-buttons .generate-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.modal-buttons .generate-button:hover {
+  background-color: #45a049;
+}
+
+.modal-buttons button[type="button"]:not(.generate-button):not(.delete-button) {
   background-color: #666;
   color: white;
 }
@@ -76,4 +85,128 @@
 
 .modal-buttons .delete-button:hover {
   background-color: #c82333;
-} 
+}
+
+.generation-options {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: #282c34;
+  border: 1px solid #3f51b5;
+  border-radius: 4px;
+  color: #e0e0e0;
+}
+
+.lesson-selection {
+  margin-top: 1rem;
+}
+
+.select-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.select-actions button {
+  padding: 4px 8px;
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.select-actions button:hover {
+  background-color: #303f9f;
+}
+
+.lesson-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #3f51b5;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  background-color: #1e1e1e;
+}
+
+.lesson-item {
+  display: flex;
+  align-items: left;
+  margin: 4px 0;
+  width: 100%;
+}
+
+.generate-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.generate-button:hover {
+  background-color: #45a049;
+}
+
+.lesson-list.scrollable {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px;
+  margin: 10px 0;
+}
+
+.lesson-item {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.truncated-label {
+  margin-left: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.truncated-label:hover {
+  text-decoration: underline;
+}
+
+.lesson-item {
+  text-align: left;
+  margin: 5px 0;
+}
+
+.lesson-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.lesson-label input[type="checkbox"] {
+  flex: 0 0 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.lesson-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Add new styles for disabled generate button */
+.modal-buttons button[type="button"]:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+}
+
+.modal-buttons button[type="button"]:disabled:hover {
+  cursor: not-allowed;
+}
+  
