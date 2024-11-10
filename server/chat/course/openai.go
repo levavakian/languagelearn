@@ -6,6 +6,7 @@ import (
 	"time"
 	"os"
 	"encoding/json"
+	"strings"
 
 
 	"github.com/google/uuid"
@@ -586,12 +587,54 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 				continue
 			}
 
-			// Send message history to OpenAI
+			// Get lesson plan and vocab list if available and add them to the chat just for openai
+			if chat.LessonID != "" {
+				lesson, err := getLessonFromDBRaw(chat.LessonID)
+				if err == nil && lesson.LessonPlan != "" {
+					lessonPlanMsg := Message{
+						ChatID:  chat.ID,
+						Sender:  "Assistant @OpenAI Realtime",
+						Content: fmt.Sprintf("Our lesson plan for the day is:\n%s", lesson.LessonPlan),
+						Type:    "text",
+					}
+					if err := sendConversationCreate(openAIConn, lessonPlanMsg); err != nil {
+						fmt.Printf("Error sending lesson plan message to OpenAI: %v\n", err)
+					}
+				}
+
+				// Get vocab list from chat settings
+				settings, err := getChatSettingsFromDB(chat.ID)
+				if err == nil && settings.VocabItems != nil && len(settings.VocabItems) > 0 {
+					var vocabList strings.Builder
+					vocabList.WriteString("Here is the list of vocab and concepts you have been reviewing:\n")
+					
+					for word, item := range settings.VocabItems {
+						vocabList.WriteString(fmt.Sprintf("- %s (%s): %s", word, item.Type, item.Definition))
+						if item.Notes != "" {
+							vocabList.WriteString(fmt.Sprintf(" (Notes: %s)", item.Notes))
+						}
+						vocabList.WriteString(fmt.Sprintf(" [Used %d times, last used: %s]\n", 
+							item.UsageCount, 
+							item.LastUsed.Format("2006-01-02")))
+					}
+
+					vocabMsg := Message{
+						ChatID:  chat.ID,
+						Sender:  "Assistant @OpenAI Realtime",
+						Content: vocabList.String(),
+						Type:    "text",
+					}
+					if err := sendConversationCreate(openAIConn, vocabMsg); err != nil {
+						fmt.Printf("Error sending vocab list message to OpenAI: %v\n", err)
+					}
+				}
+			}
+
 			// Send initial greeting message to OpenAI
 			initialMsg := Message{
 				ChatID:     chat.ID,
 				Sender:     "Assistant @OpenAI Realtime", 
-				Content:    "Hey, are you ready for your lesson?",
+				Content:    "Hey, are you ready for your lesson? We can do over chat and over voice, and switch between at any time.",
 				Type:       "text",
 			}
 			if err := sendConversationCreate(openAIConn, initialMsg); err != nil {
@@ -600,6 +643,8 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 				openAIConn = nil
 				continue
 			}
+
+			// Send message history to OpenAI
 			for _, msg := range chat.Messages {
 				if err := sendConversationCreate(openAIConn, msg); err != nil {
 					fmt.Printf("Error sending message history to OpenAI: %v\n", err)
