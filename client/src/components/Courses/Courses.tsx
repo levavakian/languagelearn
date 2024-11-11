@@ -584,7 +584,18 @@ const Courses: React.FC<CoursesProps> = ({
                 + Add Lesson Plan
               </button>
             </div>
-            <h3 className="section-header">Lessons</h3>
+            <h3 className="section-header">
+              Lessons
+              <div className="hint-text" style={{ 
+                fontSize: '0.9em', 
+                color: '#666', 
+                marginTop: '5px',
+                marginBottom: '0',
+                fontStyle: 'italic'
+              }}>
+                Tip: Click the ⚙️ icon to create summaries for use in future lesson plans
+              </div>
+            </h3>
             <div className="lessons-list">
               {lessons.map(lesson => (
                 <div key={lesson.id} className="lesson-item">
