@@ -587,6 +587,82 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 				continue
 			}
 
+			// Add initialization sequence for audio
+			initMsg := ConversationItemCreate{
+				Type: "conversation.item.create",
+				Item: Item{
+					Type: "message",
+					Role: "system",
+					Content: []Content{
+						{
+							Type: "text",
+							Text: "Initialize audio session",
+						},
+					},
+				},
+			}
+
+			if err := openAIConn.WriteJSON(initMsg); err != nil {
+				fmt.Printf("Error sending audio init message: %v\n", err)
+				openAIConn.Close()
+				openAIConn = nil
+				continue
+			}
+
+			// Request response with audio and text modalities
+			responseCreate := ResponseCreate{
+				Type: "response.create",
+				Response: Response{
+					Modalities: []string{"audio", "text"},
+				},
+			}
+
+			if err := openAIConn.WriteJSON(responseCreate); err != nil {
+				fmt.Printf("Error sending initial response.create: %v\n", err)
+				openAIConn.Close()
+				openAIConn = nil
+				continue
+			}
+
+			// Wait for response.done before continuing
+			done := make(chan bool)
+			go func() {
+				for {
+					_, message, err := openAIConn.ReadMessage()
+					if err != nil {
+						fmt.Printf("Error reading init response: %v\n", err)
+						done <- false
+						return
+					}
+
+					var msgType OpenAIMessageType
+					if err := json.Unmarshal(message, &msgType); err != nil {
+						fmt.Printf("Error unmarshaling init response: %v\n", err)
+						done <- false
+						return
+					}
+
+					if msgType.Type == "response.done" {
+						done <- true
+						return
+					}
+				}
+			}()
+
+			select {
+			case success := <-done:
+				if !success {
+					openAIConn.Close()
+					openAIConn = nil
+					continue
+				}
+			case <-time.After(10 * time.Second):
+				fmt.Printf("Timeout waiting for init response\n")
+				openAIConn.Close()
+				openAIConn = nil
+				continue
+			}
+
 			// Get lesson plan and vocab list if available and add them to the chat just for openai
 			if chat.LessonID != "" {
 				lesson, err := getLessonFromDBRaw(chat.LessonID)
