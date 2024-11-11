@@ -619,12 +619,16 @@ const Courses: React.FC<CoursesProps> = ({
                   </div>
                 </div>
               ))}
-              <button
-                className="add-lesson-button"
-                onClick={() => setIsCreateLessonModalOpen(true)}
-              >
-                + Add Lesson
-              </button>
+              <div className="lesson-item">
+                <div className="lesson-content">
+                  <button
+                    className="lesson-title add-lesson-button"
+                    onClick={() => setIsCreateLessonModalOpen(true)}
+                  >
+                    + Add Lesson
+                  </button>
+                </div>
+              </div>
             </div>
             <h3 className="section-header">Settings</h3>
             <SettingsPage
