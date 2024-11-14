@@ -27,6 +27,10 @@ WORKDIR /app
 # Copy the application code
 COPY . .
 
+# Add build arguments
+ARG SQUARE_LOCATION_ID
+ARG SQUARE_APP_ID
+
 # Build the UI
 WORKDIR /app/client
 RUN npm install
