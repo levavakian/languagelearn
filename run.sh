@@ -28,6 +28,9 @@ docker run -itd \
     -e GROUP_ID=$GROUP_ID \
     -e OPENAI_SECRET_KEY="$OPENAI_SECRET_KEY" \
     -e GOOGLE_API_SECRET="$GOOGLE_API_SECRET" \
+    -e SQUARE_APP_ID="$SQUARE_APP_ID" \
+    -e SQUARE_LOCATION_ID="$SQUARE_LOCATION_ID" \
+    -e SQUARE_ACCESS_TOKEN="$SQUARE_ACCESS_TOKEN" \
     $IMAGE_NAME /bin/bash
 
 # The container will now stay running and you'll be attached to it automatically

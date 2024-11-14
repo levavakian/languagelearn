@@ -5,7 +5,7 @@ set -e  # Exit immediately if a command exits with a non-zero status
 # Build the client
 echo "Building client..."
 cd client || exit 1
-npm run build || { echo "Client build failed"; exit 1; }
+REACT_APP_SQUARE_LOCATION_ID=${SQUARE_LOCATION_ID} REACT_APP_SQUARE_APP_ID=${SQUARE_APP_ID} npm run build || { echo "Client build failed"; exit 1; }
 cd ..
 
 # Build the server

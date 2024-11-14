@@ -30,7 +30,7 @@ COPY . .
 # Build the UI
 WORKDIR /app/client
 RUN npm install
-RUN npm run build
+RUN REACT_APP_SQUARE_LOCATION_ID=${SQUARE_LOCATION_ID} REACT_APP_SQUARE_APP_ID=${SQUARE_APP_ID} npm run build
 
 # Build the server
 WORKDIR /app/server
@@ -49,6 +49,12 @@ EXPOSE 8080
 # Start the server
 CMD ["./server"]
 
+# Docker build command to use:
+#    docker build \
+#    --build-arg SQUARE_LOCATION_ID=your_location_id \
+#    --build-arg SQUARE_APP_ID=your_app_id \
+#    -t languagelearn-deploy .
+    
 # Docker run command to use:
 # docker run -d \
 #   --name languagelearn \
@@ -56,5 +62,8 @@ CMD ["./server"]
 #   -v /path/to/local/dbdata:/var/dbdata \
 #   -e OPENAI_SECRET_KEY \
 #   -e GOOGLE_API_SECRET \
+#   -e SQUARE_APP_ID \
+#   -e SQUARE_LOCATION_ID \
+#   -e SQUARE_ACCESS_TOKEN \
 #   languagelearn-deploy
 
