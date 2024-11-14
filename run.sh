@@ -13,12 +13,6 @@ if [ -z "$OPENAI_SECRET_KEY" ]; then
     exit 1
 fi
 
-# Check if GOOGLE_API_SECRET is set
-if [ -z "$GOOGLE_API_SECRET" ]; then
-    echo "Error: GOOGLE_API_SECRET environment variable is not set."
-    exit 1
-fi
-
 # Run the Docker container with network passthrough
 docker run -itd \
     --name cll \
