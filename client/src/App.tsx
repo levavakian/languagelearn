@@ -5,6 +5,7 @@ import Sidepanel from './components/Sidepanel/Sidepanel';
 import Chat from './components/Chat';
 import Courses from './components/Courses/Courses';
 import CreateChatModal from './components/ChatModals/CreateChatModal';
+import PaymentModal from './components/PaymentModal/PaymentModal';
 
 // Add tab type and colors
 type Tab = 'chats' | 'courses' | 'lesson';
@@ -122,6 +123,7 @@ function App() {
   });
   const [chats, setChats] = useState<Array<{ id: string; name: string }>>([]);
   const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [lessonState, setLessonState] = useState<LessonState | null>(() => {
     const stored = localStorage.getItem('lessonState');
     return stored ? JSON.parse(stored) : null;
@@ -223,12 +225,27 @@ function App() {
     }
   };
 
+  const handleOpenPaymentModal = () => {
+    setIsPaymentModalOpen(true);
+  };
+
   const renderAuthButton = () => {
     if (jwt) {
       return (
-        <button onClick={handleLogout} style={styles.button}>
-          Logout
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button 
+            onClick={handleOpenPaymentModal} 
+            style={{
+              ...styles.button,
+              backgroundColor: darkModeColors.tabInactive
+            }}
+          >
+            Buy Credits
+          </button>
+          <button onClick={handleLogout} style={styles.button}>
+            Logout
+          </button>
+        </div>
       );
     } else {
       return (
@@ -471,6 +488,7 @@ function App() {
             />
           )}
         </div>
+        <PaymentModal isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} />
       </div>
     </GoogleOAuthProvider>
   );
