@@ -462,12 +462,6 @@ function App() {
                 onClose={() => setIsCreateChatModalOpen(false)}
                 onSubmit={handleCreateChat}
               />
-              <PaymentModal
-                isOpen={isPaymentModalOpen}
-                onClose={() => setIsPaymentModalOpen(false)}
-                token={jwt}
-                onUnauthorized={handleUnauthorized}
-              />
             </>
           )}
           {jwt && activeTab === 'courses' && (
@@ -490,6 +484,14 @@ function App() {
             />
           )}
         </div>
+        {jwt && (
+          <PaymentModal
+            isOpen={isPaymentModalOpen}
+            onClose={() => setIsPaymentModalOpen(false)}
+            token={jwt}
+            onUnauthorized={handleUnauthorized}
+          />
+        )}
       </div>
     </GoogleOAuthProvider>
   );
