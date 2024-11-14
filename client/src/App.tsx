@@ -123,7 +123,6 @@ function App() {
   });
   const [chats, setChats] = useState<Array<{ id: string; name: string }>>([]);
   const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState(false);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [lessonState, setLessonState] = useState<LessonState | null>(() => {
     const stored = localStorage.getItem('lessonState');
     return stored ? JSON.parse(stored) : null;
@@ -132,6 +131,7 @@ function App() {
     const stored = localStorage.getItem('selectedCourseId');
     return stored || null;
   });
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   useEffect(() => {
     const storedJwt = localStorage.getItem('jwt');
@@ -225,19 +225,15 @@ function App() {
     }
   };
 
-  const handleOpenPaymentModal = () => {
-    setIsPaymentModalOpen(true);
-  };
-
   const renderAuthButton = () => {
     if (jwt) {
       return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px' }}>
           <button 
-            onClick={handleOpenPaymentModal} 
+            onClick={() => setIsPaymentModalOpen(true)} 
             style={{
-              ...styles.button,
-              backgroundColor: darkModeColors.tabInactive
+              ...styles.tab,
+              backgroundColor: darkModeColors.tabInactive,
             }}
           >
             Buy Credits
@@ -466,6 +462,12 @@ function App() {
                 onClose={() => setIsCreateChatModalOpen(false)}
                 onSubmit={handleCreateChat}
               />
+              <PaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                token={jwt}
+                onUnauthorized={handleUnauthorized}
+              />
             </>
           )}
           {jwt && activeTab === 'courses' && (
@@ -488,7 +490,6 @@ function App() {
             />
           )}
         </div>
-        <PaymentModal isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} />
       </div>
     </GoogleOAuthProvider>
   );

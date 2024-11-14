@@ -1,0 +1,175 @@
+package course
+
+import (
+	"database/sql"
+	"encoding/json"
+	"net/http"
+	"bytes"
+	"os"
+	"fmt"
+	"strings"
+
+	"github.com/google/uuid"
+
+	"github.com/levavakian/languagelearn/server/db"
+)
+
+// BuyCreditsRequest represents the request body for buying credits
+type BuyCreditsRequest struct {
+	SourceID string `json:"sourceId"`
+	Credits  int    `json:"credits"`
+}
+
+// BuyCredits handles the purchase of credits
+func buyCredits(w http.ResponseWriter, r *http.Request) {
+	var req BuyCreditsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		fmt.Printf("Error decoding request body: %v\n", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	userEmail := r.Header.Get("X-User-Email")
+
+	// Check if user already has credits
+	var currentCredits int
+	err := db.DB.QueryRow("SELECT credits FROM user_credits WHERE email = ?", userEmail).Scan(&currentCredits)
+
+	if err == sql.ErrNoRows {
+		// User does not have an entry, create one with 0 credits before starting the transaction
+		_, err = db.DB.Exec("INSERT INTO user_credits (email, credits) VALUES (?, ?)", userEmail, 0)
+		if err != nil {
+			fmt.Printf("Error creating user credits entry: %v\n", err)
+			http.Error(w, "Failed to create user credits entry", http.StatusInternalServerError)
+			return
+		}
+		currentCredits = 0
+	}
+
+	// Start a transaction
+	tx, err := db.DB.Begin()
+	if err != nil {
+		fmt.Printf("Error starting transaction: %v\n", err)
+		http.Error(w, "Failed to start transaction", http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	if err != nil {
+		http.Error(w, "Failed to check user credits", http.StatusInternalServerError)
+		return
+	} else {
+		// User exists, update their credits with optimistic concurrency control
+		_, err = tx.Exec("UPDATE user_credits SET credits = credits + ? WHERE email = ? AND credits = ?", req.Credits * 100, userEmail, currentCredits)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				fmt.Printf("Concurrent modification detected: %v\n", err)
+				http.Error(w, "Credits have been modified by another transaction", http.StatusConflict)
+				return
+			}
+			fmt.Printf("Error updating user credits: %v\n", err)
+			http.Error(w, "Failed to update user credits", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Prepare the payment request to Square
+	idempotencyKey := uuid.New().String()
+	paymentRequest := map[string]interface{}{
+		"source_id":        req.SourceID,
+		"idempotency_key": idempotencyKey,
+		"amount_money": map[string]interface{}{
+			"amount":   req.Credits * 100, // Amount in cents
+			"currency": "USD",
+		},
+	}
+
+	// Convert paymentRequest to JSON
+	jsonData, err := json.Marshal(paymentRequest)
+	if err != nil {
+		fmt.Printf("Error marshaling payment request: %v\n", err)
+		http.Error(w, "Failed to create payment request", http.StatusInternalServerError)
+		return
+	}
+
+	// Make the request to Square Payments API
+	baseURL := "https://connect.squareup.com"
+	if strings.HasPrefix(os.Getenv("SQUARE_APP_ID"), "sandbox") {
+		baseURL = "https://connect.squareupsandbox.com"
+	}
+	squareURL := baseURL + "/v2/payments"
+	reqSquare, err := http.NewRequest("POST", squareURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Printf("Error creating Square request: %v\n", err)
+		http.Error(w, "Failed to create request to Square", http.StatusInternalServerError)
+		return
+	}
+
+	// Set headers
+	reqSquare.Header.Set("Content-Type", "application/json")
+	reqSquare.Header.Set("Authorization", "Bearer " + os.Getenv("SQUARE_ACCESS_TOKEN"))
+	reqSquare.Header.Set("Square-Version", "2024-10-17")
+
+	client := &http.Client{}
+	resp, err := client.Do(reqSquare)
+	if err != nil {
+		fmt.Printf("Error processing payment with Square: %v\n", err)
+		http.Error(w, "Failed to process payment", http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		// Read and log the error response
+		var responseBody bytes.Buffer
+		_, err := responseBody.ReadFrom(resp.Body)
+		if err != nil {
+			fmt.Printf("Error reading Square error response: %v\n", err)
+		} else {
+			fmt.Printf("Square API error response: %s\n", responseBody.String())
+		}
+		http.Error(w, "Payment processing failed", http.StatusBadRequest)
+		return
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		fmt.Printf("Error committing transaction: %v\n", err)
+		http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
+		return
+	}
+
+	// Log the payment
+	err = logPayment(userEmail, currentCredits, currentCredits + req.Credits * 100, req.Credits * 100, true)
+	if err != nil {
+		fmt.Printf("Error logging payment: %v\n", err)
+		http.Error(w, "Failed to log payment", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Credits purchased successfully",
+		"credits": currentCredits + req.Credits * 100,
+	})
+}
+
+// GetUserCredits handles fetching the user's current credits
+func getUserCredits(w http.ResponseWriter, r *http.Request) {
+	userEmail := r.Header.Get("X-User-Email")
+
+	var credits int
+	err := db.DB.QueryRow("SELECT credits FROM user_credits WHERE email = ?", userEmail).Scan(&credits)
+
+	if err != nil && err != sql.ErrNoRows {
+		fmt.Printf("Error fetching user credits: %v\n", err)
+		http.Error(w, "Failed to fetch user credits", http.StatusInternalServerError)
+		return
+	} else if err == sql.ErrNoRows {
+		// User does not have credits
+		credits = 0
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]int{"credits": credits})
+}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/levavakian/languagelearn/server/db"
+	"github.com/google/uuid"
 )
 
 // CreateTables creates all necessary tables for the course package
@@ -128,6 +129,40 @@ func CreateTables(db *sql.DB) error {
 			DELETE FROM lessons WHERE id = OLD.lesson_id;
 		END;
 	`)
+	if err != nil {
+		return err
+	}
+
+	// Create user_credits table
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS user_credits (
+			email TEXT PRIMARY KEY,
+			credits INTEGER NOT NULL DEFAULT 0
+		)
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Create payments table
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS payments (
+			id TEXT PRIMARY KEY, -- UUID
+			email TEXT NOT NULL,
+			ordering INTEGER NOT NULL,
+			previous_amount INTEGER NOT NULL,
+			adjusted_amount INTEGER NOT NULL,
+			change_amount INTEGER NOT NULL,
+			successful BOOLEAN NOT NULL,
+			FOREIGN KEY (email) REFERENCES user_credits(email) ON DELETE CASCADE
+		)
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Create index for email in payments table
+	_, err = db.Exec("CREATE INDEX IF NOT EXISTS idx_payments_email ON payments(email)")
 	if err != nil {
 		return err
 	}
@@ -649,4 +684,48 @@ func getStandaloneChats(userEmail string) ([]Chat, error) {
 		chats = append(chats, chat)
 	}
 	return chats, nil
+}
+
+// LogPayment logs a payment in the database
+func logPayment(email string, previousAmount int, adjustedAmount int, changeAmount int, successful bool) error {
+	// Begin a transaction to ensure consistency
+	tx, err := db.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Get the current maximum ordering value for the user
+	var maxOrdering sql.NullInt64
+	err = tx.QueryRow(
+		"SELECT MAX(ordering) FROM payments WHERE email = ?",
+		email,
+	).Scan(&maxOrdering)
+	if err != nil {
+		return fmt.Errorf("error fetching max ordering: %v", err)
+	}
+
+	// Calculate the next ordering value
+	nextOrdering := 1
+	if maxOrdering.Valid {
+		nextOrdering = int(maxOrdering.Int64) + 1
+	}
+
+	// Insert the new payment record with the calculated ordering
+	_, err = tx.Exec(
+		"INSERT INTO payments (id, email, ordering, previous_amount, adjusted_amount, change_amount, successful) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		uuid.New().String(),
+		email,
+		nextOrdering,
+		previousAmount,
+		adjustedAmount,
+		changeAmount,
+		successful,
+	)
+	if err != nil {
+		return fmt.Errorf("error inserting payment: %v", err)
+	}
+
+	// Commit the transaction
+	return tx.Commit()
 }

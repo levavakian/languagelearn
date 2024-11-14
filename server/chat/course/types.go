@@ -90,3 +90,9 @@ type SettingsUpdate struct {
 	ChatID       string   `json:"id"`
 	Settings Settings `json:"settings"`
 }
+
+// UserCredits represents the user's credits
+type UserCredits struct {
+	UserEmail string `json:"user_email"`
+	Credits   int    `json:"credits"`
+}

@@ -55,4 +55,8 @@ func SetupRoutes(api *mux.Router) {
 
 	// Add this new route in SetupRoutes
 	api.HandleFunc("/course/{id}/lesson-names", auth.AuthMiddleware(getCourseLessonNames)).Methods("GET")
+
+	// Add credit endpoints
+	api.HandleFunc("/user/credits", auth.AuthMiddleware(getUserCredits)).Methods("GET")
+	api.HandleFunc("/user/credits/buy", auth.AuthMiddleware(buyCredits)).Methods("POST")
 }
