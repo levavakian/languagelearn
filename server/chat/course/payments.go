@@ -8,6 +8,7 @@ import (
 	"os"
 	"fmt"
 	"strings"
+	"math"
 
 	"github.com/google/uuid"
 
@@ -32,18 +33,18 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 	userEmail := r.Header.Get("X-User-Email")
 
 	// Check if user already has credits
-	var currentCredits int
-	err := db.DB.QueryRow("SELECT credits FROM user_credits WHERE email = ?", userEmail).Scan(&currentCredits)
+	var currentNanoCredits int
+	err := db.DB.QueryRow("SELECT nanocredits FROM user_credits WHERE email = ?", userEmail).Scan(&currentNanoCredits)
 
 	if err == sql.ErrNoRows {
 		// User does not have an entry, create one with 0 credits before starting the transaction
-		_, err = db.DB.Exec("INSERT INTO user_credits (email, credits) VALUES (?, ?)", userEmail, 0)
+		_, err = db.DB.Exec("INSERT INTO user_credits (email, nanocredits) VALUES (?, ?)", userEmail, 0)
 		if err != nil {
 			fmt.Printf("Error creating user credits entry: %v\n", err)
 			http.Error(w, "Failed to create user credits entry", http.StatusInternalServerError)
 			return
 		}
-		currentCredits = 0
+		currentNanoCredits = 0
 	}
 
 	// Start a transaction
@@ -60,7 +61,7 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		// User exists, update their credits with optimistic concurrency control
-		_, err = tx.Exec("UPDATE user_credits SET credits = credits + ? WHERE email = ? AND credits = ?", req.Credits * 100, userEmail, currentCredits)
+		_, err = tx.Exec("UPDATE user_credits SET nanocredits = nanocredits + ? WHERE email = ? AND nanocredits = ?", req.Credits * 1e9, userEmail, currentNanoCredits)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				fmt.Printf("Concurrent modification detected: %v\n", err)
@@ -79,7 +80,7 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 		"source_id":        req.SourceID,
 		"idempotency_key": idempotencyKey,
 		"amount_money": map[string]interface{}{
-			"amount":   req.Credits * 100, // Amount in cents
+			"amount":   req.Credits, // Amount in cents
 			"currency": "USD",
 		},
 	}
@@ -140,7 +141,8 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Log the payment
-	err = logPayment(userEmail, currentCredits, currentCredits + req.Credits * 100, req.Credits * 100, true)
+	currentCredits := int(math.Floor(float64(currentNanoCredits) / 1e9))
+	err = logPayment(userEmail, currentCredits, currentCredits + req.Credits, req.Credits, true)
 	if err != nil {
 		fmt.Printf("Error logging payment: %v\n", err)
 		http.Error(w, "Failed to log payment", http.StatusInternalServerError)
@@ -150,7 +152,7 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Credits purchased successfully",
-		"credits": currentCredits + req.Credits * 100,
+		"credits": currentCredits + req.Credits,
 	})
 }
 
@@ -158,8 +160,8 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 func getUserCredits(w http.ResponseWriter, r *http.Request) {
 	userEmail := r.Header.Get("X-User-Email")
 
-	var credits int
-	err := db.DB.QueryRow("SELECT credits FROM user_credits WHERE email = ?", userEmail).Scan(&credits)
+	var nanocredits int
+	err := db.DB.QueryRow("SELECT nanocredits FROM user_credits WHERE email = ?", userEmail).Scan(&nanocredits)
 
 	if err != nil && err != sql.ErrNoRows {
 		fmt.Printf("Error fetching user credits: %v\n", err)
@@ -167,8 +169,9 @@ func getUserCredits(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if err == sql.ErrNoRows {
 		// User does not have credits
-		credits = 0
+		nanocredits = 0
 	}
+	credits := int(math.Floor(float64(nanocredits) / 1e9))
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]int{"credits": credits})

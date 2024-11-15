@@ -69,7 +69,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, token, onU
         },
         body: JSON.stringify({
           sourceId: paymentToken.token,
-          credits: dollars,
+          credits: (typeof dollars === 'number' ? dollars : 0) * 100,
         }),
       });
 

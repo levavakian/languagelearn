@@ -137,7 +137,7 @@ func CreateTables(db *sql.DB) error {
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS user_credits (
 			email TEXT PRIMARY KEY,
-			credits INTEGER NOT NULL DEFAULT 0
+			nanocredits INTEGER NOT NULL DEFAULT 0
 		)
 	`)
 	if err != nil {
