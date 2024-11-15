@@ -170,7 +170,14 @@ func generateLessonSummary(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to parse OpenAI response", http.StatusInternalServerError)
 		return
 	}
-	
+
+	// Calculate and deduct credits
+	creditCost := calculateCompletionCreditUsage(completionResponse.Usage)
+	if err := DeductCredits(userEmail, creditCost); err != nil {
+		fmt.Printf("Error deducting credits: %v\n", err)
+		http.Error(w, "Failed to deduct credits", http.StatusInternalServerError)
+		return
+	}
 
 	if len(completionResponse.Choices) == 0 {
 		fmt.Println("Error: OpenAI returned no choices")
@@ -334,6 +341,14 @@ func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(resp.Body).Decode(&completionResponse); err != nil {
 		fmt.Printf("Error parsing OpenAI response: %v\n", err)
 		http.Error(w, "Failed to parse OpenAI response", http.StatusInternalServerError)
+		return
+	}
+
+	// Calculate and deduct credits
+	creditCost := calculateCompletionCreditUsage(completionResponse.Usage)
+	if err := DeductCredits(userEmail, creditCost); err != nil {
+		fmt.Printf("Error deducting credits: %v\n", err)
+		http.Error(w, "Failed to deduct credits", http.StatusInternalServerError)
 		return
 	}
 
@@ -539,6 +554,14 @@ func generateNextLessonPlan(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(resp.Body).Decode(&completionResponse); err != nil {
 		fmt.Printf("Error parsing OpenAI response: %v\n", err)
 		http.Error(w, "Failed to parse OpenAI response", http.StatusInternalServerError)
+		return
+	}
+
+	// Calculate and deduct credits
+	creditCost := calculateCompletionCreditUsage(completionResponse.Usage)
+	if err := DeductCredits(userEmail, creditCost); err != nil {
+		fmt.Printf("Error deducting credits: %v\n", err)
+		http.Error(w, "Failed to deduct credits", http.StatusInternalServerError)
 		return
 	}
 

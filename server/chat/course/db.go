@@ -756,11 +756,16 @@ func DeductCredits(email string, amount int64) error {
 		return fmt.Errorf("failed to update balance: %v", err)
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction while deducting credits: %v", err)
+	}
+
 	// Log the payment
 	err = logPayment(email, currentBalance, currentBalance - amount, -amount, true)
 	if err != nil {
 		return fmt.Errorf("failed to log payment: %v", err)
 	}
 
-	return tx.Commit()
+	return nil
 }

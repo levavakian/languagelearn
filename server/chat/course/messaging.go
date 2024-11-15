@@ -26,6 +26,7 @@ type ChatConnections struct {
 	Mutex   sync.RWMutex
 	ErrorState ChatErrorState
 	SettingsUpdate chan SettingsUpdate
+	UserEmail string
 }
 
 type ChatErrorState struct {
@@ -60,6 +61,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		activeChats[chatID] = &ChatConnections{
 			Clients: make(map[*websocket.Conn]bool),
 			SettingsUpdate: make(chan SettingsUpdate, 1),
+			UserEmail: userEmail,
 		}
 	}
 	chatConns := activeChats[chatID]

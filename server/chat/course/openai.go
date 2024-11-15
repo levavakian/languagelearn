@@ -274,6 +274,12 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 				continue
 			}
 
+			// Calculate and deduct credits before processing the response
+			creditCost := calculateRealtimeCreditUsage(doneMsg.Response.Usage)
+			if err := DeductCredits(chatConns.UserEmail, creditCost); err != nil {
+				fmt.Printf("Error deducting credits: %v\n", err)
+			}
+
 			// Check specifically for server error
 			if doneMsg.Response.Status == "failed" && 
 			   doneMsg.Response.StatusDetails.Error.Type == "server_error" {
