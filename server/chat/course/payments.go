@@ -140,8 +140,7 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Log the payment
-	currentCredits := int(math.Floor(float64(currentNanoCredits) / 1e9))
-	err = logPayment(userEmail, currentCredits, currentCredits + req.Credits, req.Credits, true)
+	err = logPayment(userEmail, currentNanoCredits, currentNanoCredits + int64(req.Credits * 1e9), int64(req.Credits * 1e9), true)
 	if err != nil {
 		fmt.Printf("Error logging payment: %v\n", err)
 		http.Error(w, "Failed to log payment", http.StatusInternalServerError)
@@ -151,7 +150,7 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Credits purchased successfully",
-		"credits": currentCredits + req.Credits,
+		"credits": int(math.Floor(float64(currentNanoCredits) / 1e9)) + req.Credits,
 	})
 }
 
@@ -180,12 +179,12 @@ func getUserCredits(w http.ResponseWriter, r *http.Request) {
 func calculateRealtimeCreditUsage(usage OpenAIResponseDoneUsage) int64 {
     // Hardcoded rates in nanocredits per token
     const (
-        textInputRate        int64 = 500000    // 500 credits per million tokens
-        textCachedInputRate  int64 = 250000    // 250 credits per million tokens
-        textOutputRate       int64 = 2000000   // 2000 credits per million tokens
-        audioInputRate       int64 = 10000000  // 10000 credits per million tokens
-        audioCachedInputRate int64 = 2000000   // 2000 credits per million tokens
-        audioOutputRate      int64 = 20000000  // 20000 credits per million tokens
+        textInputRate        int64 = int64(1.2 * 500000)    // 500 credits per million tokens
+        textCachedInputRate  int64 = int64(1.2 * 250000)    // 250 credits per million tokens
+        textOutputRate       int64 = int64(1.2 * 2000000)   // 2000 credits per million tokens
+        audioInputRate       int64 = int64(1.2 * 10000000)  // 10000 credits per million tokens
+        audioCachedInputRate int64 = int64(1.2 * 2000000)   // 2000 credits per million tokens
+        audioOutputRate      int64 = int64(1.2 * 20000000)  // 20000 credits per million tokens
     )
 
     var totalCost int64 = 0
@@ -209,8 +208,8 @@ func calculateRealtimeCreditUsage(usage OpenAIResponseDoneUsage) int64 {
 func calculateCompletionCreditUsage(usage ChatCompletionUsage) int64 {
     // Hardcoded rates in nanocredits per token
     const (
-        promptTokenRate     int64 = 250000    // 250 credits per million tokens
-        completionTokenRate int64 = 1000000   // 1000 credits per million tokens
+        promptTokenRate     int64 = int64(1.2 * 250000)    // 250 credits per million tokens
+        completionTokenRate int64 = int64(1.2 * 1000000)   // 1000 credits per million tokens
     )
 
     var totalCost int64 = 0

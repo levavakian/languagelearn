@@ -687,7 +687,7 @@ func getStandaloneChats(userEmail string) ([]Chat, error) {
 }
 
 // LogPayment logs a payment in the database
-func logPayment(email string, previousAmount int, adjustedAmount int, changeAmount int, successful bool) error {
+func logPayment(email string, previousAmount int64, adjustedAmount int64, changeAmount int64, successful bool) error {
 	// Begin a transaction to ensure consistency
 	tx, err := db.DB.Begin()
 	if err != nil {
@@ -750,14 +750,14 @@ func DeductCredits(email string, amount int64) error {
 	}
 
 	// Atomically update balance
-	result, err := tx.Exec("UPDATE user_credits SET nanocredits = nanocredits - ? WHERE email = ?", 
+	_, err = tx.Exec("UPDATE user_credits SET nanocredits = nanocredits - ? WHERE email = ?", 
 		amount, email)
 	if err != nil {
 		return fmt.Errorf("failed to update balance: %v", err)
 	}
 
 	// Log the payment
-	err = logPayment(email, int(currentBalance), int(currentBalance-amount), int(-amount), true)
+	err = logPayment(email, currentBalance, currentBalance - amount, -amount, true)
 	if err != nil {
 		return fmt.Errorf("failed to log payment: %v", err)
 	}
