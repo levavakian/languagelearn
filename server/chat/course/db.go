@@ -729,3 +729,38 @@ func logPayment(email string, previousAmount int, adjustedAmount int, changeAmou
 	// Commit the transaction
 	return tx.Commit()
 }
+
+// DeductCredits subtracts the specified amount of nanocredits from the user's account.
+// Returns an error if the user doesn't have sufficient credits or if there's a database error.
+func DeductCredits(email string, amount int64) error {
+	tx, err := db.DB.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	// Get current balance (for logging purposes only)
+	var currentBalance int64
+	err = tx.QueryRow("SELECT nanocredits FROM user_credits WHERE email = ?", email).Scan(&currentBalance)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("user not found")
+		}
+		return fmt.Errorf("failed to get current balance: %v", err)
+	}
+
+	// Atomically update balance
+	result, err := tx.Exec("UPDATE user_credits SET nanocredits = nanocredits - ? WHERE email = ?", 
+		amount, email)
+	if err != nil {
+		return fmt.Errorf("failed to update balance: %v", err)
+	}
+
+	// Log the payment
+	err = logPayment(email, int(currentBalance), int(currentBalance-amount), int(-amount), true)
+	if err != nil {
+		return fmt.Errorf("failed to log payment: %v", err)
+	}
+
+	return tx.Commit()
+}

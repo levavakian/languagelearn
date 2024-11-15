@@ -51,8 +51,29 @@ type OpenAIResponseDone struct {
                 Transcript string `json:"transcript,omitempty"`
             } `json:"content"`
         } `json:"output"`
+		Usage OpenAIResponseDoneUsage `json:"usage"`
     } `json:"response"`
 }
+
+type OpenAIResponseDoneUsage struct {
+	TotalTokens int `json:"total_tokens"`
+	InputTokens int `json:"input_tokens"`
+	OutputTokens int `json:"output_tokens"`
+	InputTokenDetails struct {
+		TextTokens int `json:"text_tokens"`
+		AudioTokens int `json:"audio_tokens"`
+		CachedTokens int `json:"cached_tokens"`
+		CachedTokenDetails struct {
+			TextTokens int `json:"text_tokens"`
+			AudioTokens int `json:"audio_tokens"`
+		} `json:"cached_token_details"`
+	} `json:"input_token_details"`
+	OutputTokenDetails struct {
+		TextTokens int `json:"text_tokens"`
+		AudioTokens int `json:"audio_tokens"`
+	} `json:"output_token_details"`
+}
+
 
 type OpenAIError struct {
     Type  string `json:"type"`

@@ -48,6 +48,13 @@ type ChatCompletionResponse struct {
 			Content string `json:"content"`
 		} `json:"message"`
 	} `json:"choices"`
+	Usage ChatCompletionUsage `json:"usage"`
+}
+
+type ChatCompletionUsage struct {
+	PromptTokens int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens int `json:"total_tokens"`
 }
 
 type ChatMessage struct {
@@ -145,12 +152,25 @@ func generateLessonSummary(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
+	// Add these lines to print raw response
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %v\n", err)
+		http.Error(w, "Failed to read OpenAI response", http.StatusInternalServerError)
+		return
+	}
+	fmt.Printf("OpenAI Response: %s\n", string(respBody))
+
+	// Create a new reader with the response body
+	resp.Body = io.NopCloser(bytes.NewBuffer(respBody))
+
 	var completionResponse ChatCompletionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&completionResponse); err != nil {
 		fmt.Printf("Error parsing OpenAI response: %v\n", err)
 		http.Error(w, "Failed to parse OpenAI response", http.StatusInternalServerError)
 		return
 	}
+	
 
 	if len(completionResponse.Choices) == 0 {
 		fmt.Println("Error: OpenAI returned no choices")
@@ -297,6 +317,18 @@ func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer resp.Body.Close()
+
+	// Add these lines to print raw response
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %v\n", err)
+		http.Error(w, "Failed to read OpenAI response", http.StatusInternalServerError)
+		return
+	}
+	fmt.Printf("OpenAI Response: %s\n", string(respBody))
+
+	// Create a new reader with the response body
+	resp.Body = io.NopCloser(bytes.NewBuffer(respBody))
 
 	var completionResponse ChatCompletionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&completionResponse); err != nil {

@@ -33,7 +33,7 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 	userEmail := r.Header.Get("X-User-Email")
 
 	// Check if user already has credits
-	var currentNanoCredits int
+	var currentNanoCredits int64
 	err := db.DB.QueryRow("SELECT nanocredits FROM user_credits WHERE email = ?", userEmail).Scan(&currentNanoCredits)
 
 	if err == sql.ErrNoRows {
@@ -45,6 +45,10 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		currentNanoCredits = 0
+	} else if err != nil {
+		fmt.Printf("Error fetching user credits: %v\n", err)
+		http.Error(w, "Failed to fetch user credits", http.StatusInternalServerError)
+		return
 	}
 
 	// Start a transaction
@@ -56,22 +60,17 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback()
 
+	// User exists, update their credits with optimistic concurrency control
+	_, err = tx.Exec("UPDATE user_credits SET nanocredits = nanocredits + ? WHERE email = ?", req.Credits * 1e9, userEmail)
 	if err != nil {
-		http.Error(w, "Failed to check user credits", http.StatusInternalServerError)
-		return
-	} else {
-		// User exists, update their credits with optimistic concurrency control
-		_, err = tx.Exec("UPDATE user_credits SET nanocredits = nanocredits + ? WHERE email = ? AND nanocredits = ?", req.Credits * 1e9, userEmail, currentNanoCredits)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				fmt.Printf("Concurrent modification detected: %v\n", err)
-				http.Error(w, "Credits have been modified by another transaction", http.StatusConflict)
-				return
-			}
-			fmt.Printf("Error updating user credits: %v\n", err)
-			http.Error(w, "Failed to update user credits", http.StatusInternalServerError)
+		if err == sql.ErrNoRows {
+			fmt.Printf("Concurrent modification detected: %v\n", err)
+			http.Error(w, "Credits have been modified by another transaction", http.StatusConflict)
 			return
 		}
+		fmt.Printf("Error updating user credits: %v\n", err)
+		http.Error(w, "Failed to update user credits", http.StatusInternalServerError)
+		return
 	}
 
 	// Prepare the payment request to Square
@@ -160,7 +159,7 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 func getUserCredits(w http.ResponseWriter, r *http.Request) {
 	userEmail := r.Header.Get("X-User-Email")
 
-	var nanocredits int
+	var nanocredits int64
 	err := db.DB.QueryRow("SELECT nanocredits FROM user_credits WHERE email = ?", userEmail).Scan(&nanocredits)
 
 	if err != nil && err != sql.ErrNoRows {
@@ -175,4 +174,52 @@ func getUserCredits(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]int{"credits": credits})
+}
+
+// calculateRealtimeCreditUsage calculates the credit cost in nanocredits based on the usage data from the OpenAI Realtime API.
+func calculateRealtimeCreditUsage(usage OpenAIResponseDoneUsage) int64 {
+    // Hardcoded rates in nanocredits per token
+    const (
+        textInputRate        int64 = 500000    // 500 credits per million tokens
+        textCachedInputRate  int64 = 250000    // 250 credits per million tokens
+        textOutputRate       int64 = 2000000   // 2000 credits per million tokens
+        audioInputRate       int64 = 10000000  // 10000 credits per million tokens
+        audioCachedInputRate int64 = 2000000   // 2000 credits per million tokens
+        audioOutputRate      int64 = 20000000  // 20000 credits per million tokens
+    )
+
+    var totalCost int64 = 0
+
+    // Input tokens
+    totalCost += int64(usage.InputTokenDetails.TextTokens - usage.InputTokenDetails.CachedTokenDetails.TextTokens) * textInputRate
+    totalCost += int64(usage.InputTokenDetails.AudioTokens - usage.InputTokenDetails.CachedTokenDetails.AudioTokens) * audioInputRate
+
+    // Cached input tokens
+    totalCost += int64(usage.InputTokenDetails.CachedTokenDetails.TextTokens) * textCachedInputRate
+    totalCost += int64(usage.InputTokenDetails.CachedTokenDetails.AudioTokens) * audioCachedInputRate
+
+    // Output tokens
+    totalCost += int64(usage.OutputTokenDetails.TextTokens) * textOutputRate
+    totalCost += int64(usage.OutputTokenDetails.AudioTokens) * audioOutputRate
+
+    return totalCost
+}
+
+// calculateCompletionCreditUsage calculates the credit cost in nanocredits based on the usage data from the OpenAI Completions API.
+func calculateCompletionCreditUsage(usage ChatCompletionUsage) int64 {
+    // Hardcoded rates in nanocredits per token
+    const (
+        promptTokenRate     int64 = 250000    // 250 credits per million tokens
+        completionTokenRate int64 = 1000000   // 1000 credits per million tokens
+    )
+
+    var totalCost int64 = 0
+
+    // Calculate cost for prompt tokens
+    totalCost += int64(usage.PromptTokens) * promptTokenRate
+
+    // Calculate cost for completion tokens
+    totalCost += int64(usage.CompletionTokens) * completionTokenRate
+
+    return totalCost
 }
