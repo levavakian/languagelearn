@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y \
     git \
     golang \
     sudo \
-    sqlite3
+    postgresql \
+    postgresql-contrib
 
 # Install Node.js and npm using NodeSource
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \

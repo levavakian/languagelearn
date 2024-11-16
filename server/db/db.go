@@ -2,32 +2,36 @@ package db
 
 import (
 	"database/sql"
-	"os"
-	"path/filepath"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq" // PostgreSQL driver
+	"fmt"
+	"time"
 )
 
 var DB *sql.DB
 
-func InitDB(dbPath string) error {
-	// Create parent directory if it doesn't exist
-	dbDir := filepath.Dir(dbPath)
-	err := os.MkdirAll(dbDir, 0755)
-	if err != nil {
-		return err
+func InitDB(connStr string) error {
+	var err error
+	
+	// Try connecting for up to 20 seconds
+	for attempts := 0; attempts < 20; attempts++ {
+		// Open PostgreSQL database
+		DB, err = sql.Open("postgres", connStr)
+		if err != nil {
+			println("Failed to open database:", err.Error())
+			time.Sleep(time.Second)
+			continue
+		}
+
+		// Test the connection
+		err = DB.Ping()
+		if err != nil {
+			println("Failed to connect to database:", err.Error())
+			time.Sleep(time.Second)
+			continue
+		}
+
+		return nil // Successfully connected
 	}
 
-	// Open/create database
-	DB, err = sql.Open("sqlite3", dbPath)
-	if err != nil {
-		return err
-	}
-
-	// Enable foreign key support
-	_, err = DB.Exec("PRAGMA foreign_keys = ON;")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return fmt.Errorf("failed to connect to database after 20 attempts: %v", err)
 }

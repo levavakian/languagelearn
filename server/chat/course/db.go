@@ -11,14 +11,8 @@ import (
 
 // CreateTables creates all necessary tables for the course package
 func CreateTables(db *sql.DB) error {
-	// Enable foreign key constraints
-	_, err := db.Exec("PRAGMA foreign_keys = ON;")
-	if err != nil {
-		return fmt.Errorf("failed to enable foreign keys: %v", err)
-	}
-
 	// Create courses table
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS courses (
 			id TEXT PRIMARY KEY,
 			creator_id TEXT NOT NULL,
@@ -30,15 +24,14 @@ func CreateTables(db *sql.DB) error {
 		return err
 	}
 
-	// Create lesson_plans table
+	// Create chats table
 	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS lesson_plans (
+		CREATE TABLE IF NOT EXISTS chats (
 			id TEXT PRIMARY KEY,
-			course_id TEXT NOT NULL,
-			title TEXT NOT NULL,
-			content TEXT NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+			creator_id TEXT NOT NULL,
+			name TEXT NOT NULL,
+			lesson_id TEXT,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
 	`)
 	if err != nil {
@@ -57,6 +50,21 @@ func CreateTables(db *sql.DB) error {
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
 			FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
+		)
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Create lesson_plans table
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS lesson_plans (
+			id TEXT PRIMARY KEY,
+			course_id TEXT NOT NULL,
+			title TEXT NOT NULL,
+			content TEXT NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 		)
 	`)
 	if err != nil {
@@ -89,24 +97,10 @@ func CreateTables(db *sql.DB) error {
 		return err
 	}
 
-	// Create chats table
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS chats (
-			id TEXT PRIMARY KEY,
-			creator_id TEXT NOT NULL,
-			name TEXT NOT NULL,
-			lesson_id TEXT,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-		)
-	`)
-	if err != nil {
-		return err
-	}
-
 	// Create messages table
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS messages (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			id SERIAL PRIMARY KEY,
 			chat_id TEXT NOT NULL,
 			sender TEXT NOT NULL,
 			content TEXT NOT NULL,
@@ -122,12 +116,20 @@ func CreateTables(db *sql.DB) error {
 
 	// Create trigger to delete associated lesson when a chat is deleted
 	_, err = db.Exec(`
-		CREATE TRIGGER IF NOT EXISTS delete_lesson_when_chat_deleted
-		BEFORE DELETE ON chats
-		FOR EACH ROW
+		CREATE OR REPLACE FUNCTION delete_lesson_when_chat_deleted()
+		RETURNS TRIGGER AS $$
 		BEGIN
 			DELETE FROM lessons WHERE id = OLD.lesson_id;
+			RETURN OLD;
 		END;
+		$$ LANGUAGE plpgsql;
+
+		DROP TRIGGER IF EXISTS delete_lesson_when_chat_deleted ON chats;
+		
+		CREATE TRIGGER delete_lesson_when_chat_deleted
+		BEFORE DELETE ON chats
+		FOR EACH ROW
+		EXECUTE FUNCTION delete_lesson_when_chat_deleted();
 	`)
 	if err != nil {
 		return err
@@ -137,7 +139,7 @@ func CreateTables(db *sql.DB) error {
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS user_credits (
 			email TEXT PRIMARY KEY,
-			nanocredits INTEGER NOT NULL DEFAULT 0
+			nanocredits BIGINT NOT NULL DEFAULT 0
 		)
 	`)
 	if err != nil {
@@ -150,9 +152,9 @@ func CreateTables(db *sql.DB) error {
 			id TEXT PRIMARY KEY, -- UUID
 			email TEXT NOT NULL,
 			ordering INTEGER NOT NULL,
-			previous_amount INTEGER NOT NULL,
-			adjusted_amount INTEGER NOT NULL,
-			change_amount INTEGER NOT NULL,
+			previous_amount BIGINT NOT NULL,
+			adjusted_amount BIGINT NOT NULL,
+			change_amount BIGINT NOT NULL,
 			successful BOOLEAN NOT NULL,
 			FOREIGN KEY (email) REFERENCES user_credits(email) ON DELETE CASCADE
 		)
@@ -173,7 +175,7 @@ func CreateTables(db *sql.DB) error {
 // Course operations
 func insertCourse(course Course) error {
 	_, err := db.DB.Exec(
-		"INSERT INTO courses (id, creator_id, name, created_at) VALUES (?, ?, ?, ?)",
+		"INSERT INTO courses (id, creator_id, name, created_at) VALUES ($1, $2, $3, $4)",
 		course.ID, course.CreatorID, course.Name, course.CreatedAt,
 	)
 	return err
@@ -181,7 +183,7 @@ func insertCourse(course Course) error {
 
 func getUserCoursesFromDB(userEmail string) ([]Course, error) {
 	rows, err := db.DB.Query(
-		"SELECT id, creator_id, name, created_at FROM courses WHERE creator_id = ? ORDER BY created_at DESC",
+		"SELECT id, creator_id, name, created_at FROM courses WHERE creator_id = $1 ORDER BY created_at DESC",
 		userEmail,
 	)
 	if err != nil {
@@ -203,7 +205,7 @@ func getUserCoursesFromDB(userEmail string) ([]Course, error) {
 func getCourseFromDB(courseID string) (*Course, error) {
 	var course Course
 	err := db.DB.QueryRow(
-		"SELECT id, creator_id, name, created_at FROM courses WHERE id = ?",
+		"SELECT id, creator_id, name, created_at FROM courses WHERE id = $1",
 		courseID,
 	).Scan(&course.ID, &course.CreatorID, &course.Name, &course.CreatedAt)
 	
@@ -216,7 +218,7 @@ func getCourseFromDB(courseID string) (*Course, error) {
 
 func updateCourseInDB(course Course) error {
 	result, err := db.DB.Exec(
-		"UPDATE courses SET name = ? WHERE id = ? AND creator_id = ?",
+		"UPDATE courses SET name = $1 WHERE id = $2 AND creator_id = $3",
 		course.Name, course.ID, course.CreatorID,
 	)
 	if err != nil {
@@ -234,14 +236,14 @@ func updateCourseInDB(course Course) error {
 }
 
 func deleteCourseFromDB(courseID string) error {
-	_, err := db.DB.Exec("DELETE FROM courses WHERE id = ?", courseID)
+	_, err := db.DB.Exec("DELETE FROM courses WHERE id = $1", courseID)
 	return err
 }
 
 // Lesson plan operations
 func insertLessonPlan(plan LessonPlan) error {
 	_, err := db.DB.Exec(
-		"INSERT INTO lesson_plans (id, course_id, title, content, created_at) VALUES (?, ?, ?, ?, ?)",
+		"INSERT INTO lesson_plans (id, course_id, title, content, created_at) VALUES ($1, $2, $3, $4, $5)",
 		plan.ID, plan.CourseID, plan.Title, plan.Content, plan.CreatedAt,
 	)
 	return err
@@ -249,7 +251,7 @@ func insertLessonPlan(plan LessonPlan) error {
 
 func getCourseLessonPlansFromDB(courseID string) ([]LessonPlan, error) {
 	rows, err := db.DB.Query(
-		"SELECT id, course_id, title, content, created_at FROM lesson_plans WHERE course_id = ? ORDER BY created_at",
+		"SELECT id, course_id, title, content, created_at FROM lesson_plans WHERE course_id = $1 ORDER BY created_at",
 		courseID,
 	)
 	if err != nil {
@@ -270,7 +272,7 @@ func getCourseLessonPlansFromDB(courseID string) ([]LessonPlan, error) {
 
 func updateLessonPlanInDB(plan LessonPlan) error {
 	result, err := db.DB.Exec(
-		"UPDATE lesson_plans SET title = ?, content = ? WHERE id = ? AND course_id = ?",
+		"UPDATE lesson_plans SET title = $1, content = $2 WHERE id = $3 AND course_id = $4",
 		plan.Title, plan.Content, plan.ID, plan.CourseID,
 	)
 	if err != nil {
@@ -288,7 +290,7 @@ func updateLessonPlanInDB(plan LessonPlan) error {
 }
 
 func deleteLessonPlanFromDB(planID string) error {
-	_, err := db.DB.Exec("DELETE FROM lesson_plans WHERE id = ?", planID)
+	_, err := db.DB.Exec("DELETE FROM lesson_plans WHERE id = $1", planID)
 	return err
 }
 
@@ -296,7 +298,7 @@ func deleteLessonPlanFromDB(planID string) error {
 func getNextLessonOrderIndex(courseID string) (int, error) {
 	var maxIndex sql.NullInt64
 	err := db.DB.QueryRow(
-		"SELECT MAX(order_index) FROM lessons WHERE course_id = ?",
+		"SELECT MAX(order_index) FROM lessons WHERE course_id = $1",
 		courseID,
 	).Scan(&maxIndex)
 	
@@ -312,7 +314,7 @@ func getNextLessonOrderIndex(courseID string) (int, error) {
 
 func insertLesson(lesson Lesson) error {
 	_, err := db.DB.Exec(
-		"INSERT INTO lessons (id, course_id, chat_id, lesson_plan, summary, order_index, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO lessons (id, course_id, chat_id, lesson_plan, summary, order_index, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)",
 		lesson.ID, lesson.CourseID, lesson.ChatID, lesson.LessonPlan, lesson.Summary, lesson.OrderIndex, lesson.CreatedAt,
 	)
 	return err
@@ -320,7 +322,7 @@ func insertLesson(lesson Lesson) error {
 
 func getCourseLessonsFromDB(courseID string) ([]Lesson, error) {
 	rows, err := db.DB.Query(
-		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at FROM lessons WHERE course_id = ? ORDER BY order_index",
+		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at FROM lessons WHERE course_id = $1 ORDER BY order_index",
 		courseID,
 	)
 	if err != nil {
@@ -341,7 +343,7 @@ func getCourseLessonsFromDB(courseID string) ([]Lesson, error) {
 
 func updateLessonInDB(lesson Lesson) error {
 	result, err := db.DB.Exec(
-		"UPDATE lessons SET lesson_plan = ?, summary = ?, order_index = ? WHERE id = ? AND course_id = ?",
+		"UPDATE lessons SET lesson_plan = $1, summary = $2, order_index = $3 WHERE id = $4 AND course_id = $5",
 		lesson.LessonPlan, lesson.Summary, lesson.OrderIndex, lesson.ID, lesson.CourseID,
 	)
 	if err != nil {
@@ -359,7 +361,7 @@ func updateLessonInDB(lesson Lesson) error {
 }
 
 func deleteLessonFromDB(lessonID string) error {
-	_, err := db.DB.Exec("DELETE FROM lessons WHERE id = ?", lessonID)
+	_, err := db.DB.Exec("DELETE FROM lessons WHERE id = $1", lessonID)
 	return err
 }
 
@@ -367,7 +369,7 @@ func deleteLessonFromDB(lessonID string) error {
 func getCourseSettingsFromDB(courseID string) (*Settings, error) {
 	var settingsJSON string
 	err := db.DB.QueryRow(
-		"SELECT settings FROM course_settings WHERE course_id = ?",
+		"SELECT settings FROM course_settings WHERE course_id = $1",
 		courseID,
 	).Scan(&settingsJSON)
 
@@ -391,8 +393,10 @@ func saveCourseSettingsToDB(settings Settings) error {
 	}
 
 	result, err := db.DB.Exec(
-		`REPLACE INTO course_settings (course_id, settings) VALUES (?, ?)`,
-		settings.ID, string(settingsJSON), // Convert id to course_id
+		`INSERT INTO course_settings (course_id, settings) 
+		 VALUES ($1, $2)
+		 ON CONFLICT (course_id) DO UPDATE SET settings = $2`,
+		settings.ID, string(settingsJSON),
 	)
 	if err != nil {
 		return fmt.Errorf("database error while saving settings: %v", err)
@@ -412,7 +416,7 @@ func saveCourseSettingsToDB(settings Settings) error {
 func getLessonPlanFromDB(planID string, courseID string) (*LessonPlan, error) {
 	var plan LessonPlan
 	err := db.DB.QueryRow(
-		"SELECT id, course_id, title, content, created_at FROM lesson_plans WHERE id = ? AND course_id = ?",
+		"SELECT id, course_id, title, content, created_at FROM lesson_plans WHERE id = $1 AND course_id = $2",
 		planID, courseID,
 	).Scan(&plan.ID, &plan.CourseID, &plan.Title, &plan.Content, &plan.CreatedAt)
 	
@@ -426,7 +430,7 @@ func getLessonPlanFromDB(planID string, courseID string) (*LessonPlan, error) {
 func getLessonFromDB(lessonID string, courseID string) (*Lesson, error) {
 	var lesson Lesson
 	err := db.DB.QueryRow(
-		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at FROM lessons WHERE id = ? AND course_id = ?",
+		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at FROM lessons WHERE id = $1 AND course_id = $2",
 		lessonID, courseID,
 	).Scan(&lesson.ID, &lesson.CourseID, &lesson.ChatID, &lesson.LessonPlan, &lesson.Summary, &lesson.OrderIndex, &lesson.CreatedAt)
 	
@@ -440,7 +444,7 @@ func getLessonFromDB(lessonID string, courseID string) (*Lesson, error) {
 func getLessonFromDBRaw(lessonID string) (*Lesson, error) {
 	var lesson Lesson
 	err := db.DB.QueryRow(
-		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at FROM lessons WHERE id = ?",
+		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at FROM lessons WHERE id = $1",
 		lessonID,
 	).Scan(&lesson.ID, &lesson.CourseID, &lesson.ChatID, &lesson.LessonPlan, &lesson.Summary, &lesson.OrderIndex, &lesson.CreatedAt)
 	
@@ -453,7 +457,7 @@ func getLessonFromDBRaw(lessonID string) (*Lesson, error) {
 
 func InsertChat(chat *Chat) error {
 	_, err := db.DB.Exec(
-		"INSERT INTO chats (id, creator_id, name, lesson_id, created_at) VALUES (?, ?, ?, ?, ?)",
+		"INSERT INTO chats (id, creator_id, name, lesson_id, created_at) VALUES ($1, $2, $3, $4, $5)",
 		chat.ID, chat.CreatorID, chat.Name, chat.LessonID, chat.CreatedAt,
 	)
 	if err != nil {
@@ -464,7 +468,7 @@ func InsertChat(chat *Chat) error {
 
 func InsertMessage(msg *Message) error {
 	_, err := db.DB.Exec(
-		"INSERT INTO messages (chat_id, sender, content, type, response_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+		"INSERT INTO messages (chat_id, sender, content, type, response_id, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
 		msg.ChatID, msg.Sender, msg.Content, msg.Type, msg.ResponseID, msg.CreatedAt,
 	)
 	return err
@@ -476,7 +480,7 @@ func GetChat(chatID string, userEmail string) (*Chat, error) {
 	err := db.DB.QueryRow(`
 		SELECT id, creator_id, name, lesson_id, created_at 
 		FROM chats 
-		WHERE id = ? AND creator_id = ?`,
+		WHERE id = $1 AND creator_id = $2`,
 		chatID, userEmail,
 	).Scan(&chat.ID, &chat.CreatorID, &chat.Name, &lessonID, &chat.CreatedAt)
 	
@@ -503,7 +507,7 @@ func GetChatRaw(chatID string) (*Chat, error) {
 	err := db.DB.QueryRow(`
 		SELECT id, creator_id, name, lesson_id, created_at 
 		FROM chats 
-		WHERE id = ?`,
+		WHERE id = $1`,
 		chatID,
 	).Scan(&chat.ID, &chat.CreatorID, &chat.Name, &lessonID, &chat.CreatedAt)
 	
@@ -526,7 +530,7 @@ func GetChatRaw(chatID string) (*Chat, error) {
 
 func GetChatMessages(chatID string) ([]Message, error) {
 	rows, err := db.DB.Query(
-		"SELECT id, chat_id, sender, content, type, response_id, created_at FROM messages WHERE chat_id = ? ORDER BY created_at",
+		"SELECT id, chat_id, sender, content, type, response_id, created_at FROM messages WHERE chat_id = $1 ORDER BY created_at",
 		chatID,
 	)
 	if err != nil {
@@ -555,7 +559,7 @@ func DeleteChat(chatID string) error {
 
 	// Get and log the lesson ID before deletion
 	var lessonID sql.NullString
-	err = tx.QueryRow("SELECT lesson_id FROM chats WHERE id = ?", chatID).Scan(&lessonID)
+	err = tx.QueryRow("SELECT lesson_id FROM chats WHERE id = $1", chatID).Scan(&lessonID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("chat not found: %v", err)
@@ -570,7 +574,7 @@ func DeleteChat(chatID string) error {
 	}
 
 	// Delete the chat (this will cascade delete messages and lessons due to foreign key constraints)
-	_, err = tx.Exec("DELETE FROM chats WHERE id = ?", chatID)
+	_, err = tx.Exec("DELETE FROM chats WHERE id = $1", chatID)
 	if err != nil {
 		return fmt.Errorf("failed to delete chat: %v", err)
 	}
@@ -581,7 +585,7 @@ func DeleteChat(chatID string) error {
 func getChatSettingsFromDB(chatID string) (*Settings, error) {
 	var settingsJSON string
 	err := db.DB.QueryRow(
-		"SELECT settings FROM chat_settings WHERE chat_id = ?",
+		"SELECT settings FROM chat_settings WHERE chat_id = $1",
 		chatID,
 	).Scan(&settingsJSON)
 
@@ -605,8 +609,10 @@ func saveChatSettingsToDB(settings Settings) error {
 	}
 
 	result, err := db.DB.Exec(
-		`REPLACE INTO chat_settings (chat_id, settings) VALUES (?, ?)`,
-		settings.ID, string(settingsJSON), // Convert id to chat_id
+		`INSERT INTO chat_settings (chat_id, settings) 
+		 VALUES ($1, $2)
+		 ON CONFLICT (chat_id) DO UPDATE SET settings = $2`,
+		settings.ID, string(settingsJSON),
 	)
 	if err != nil {
 		return fmt.Errorf("database error while saving settings: %v", err)
@@ -627,7 +633,7 @@ func GetUserChats(userEmail string) ([]Chat, error) {
 	rows, err := db.DB.Query(`
 		SELECT id, creator_id, name, lesson_id, created_at 
 		FROM chats
-		WHERE creator_id = ?
+		WHERE creator_id = $1
 		ORDER BY created_at DESC`,
 		userEmail,
 	)
@@ -658,8 +664,8 @@ func getStandaloneChats(userEmail string) ([]Chat, error) {
 	rows, err := db.DB.Query(`
 		SELECT id, creator_id, name, lesson_id, created_at 
 		FROM chats 
-		WHERE creator_id = ? 
-		AND (lesson_id IS NULL OR lesson_id = '')
+		WHERE creator_id = $1 
+		AND lesson_id IS NULL
 		ORDER BY created_at DESC`,
 		userEmail,
 	)
@@ -698,7 +704,7 @@ func logPayment(email string, previousAmount int64, adjustedAmount int64, change
 	// Get the current maximum ordering value for the user
 	var maxOrdering sql.NullInt64
 	err = tx.QueryRow(
-		"SELECT MAX(ordering) FROM payments WHERE email = ?",
+		"SELECT MAX(ordering) FROM payments WHERE email = $1",
 		email,
 	).Scan(&maxOrdering)
 	if err != nil {
@@ -713,7 +719,7 @@ func logPayment(email string, previousAmount int64, adjustedAmount int64, change
 
 	// Insert the new payment record with the calculated ordering
 	_, err = tx.Exec(
-		"INSERT INTO payments (id, email, ordering, previous_amount, adjusted_amount, change_amount, successful) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO payments (id, email, ordering, previous_amount, adjusted_amount, change_amount, successful) VALUES ($1, $2, $3, $4, $5, $6, $7)",
 		uuid.New().String(),
 		email,
 		nextOrdering,
@@ -741,7 +747,7 @@ func DeductCredits(email string, amount int64) error {
 
 	// Get current balance (for logging purposes only)
 	var currentBalance int64
-	err = tx.QueryRow("SELECT nanocredits FROM user_credits WHERE email = ?", email).Scan(&currentBalance)
+	err = tx.QueryRow("SELECT nanocredits FROM user_credits WHERE email = $1", email).Scan(&currentBalance)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("user not found")
@@ -750,7 +756,7 @@ func DeductCredits(email string, amount int64) error {
 	}
 
 	// Atomically update balance
-	_, err = tx.Exec("UPDATE user_credits SET nanocredits = nanocredits - ? WHERE email = ?", 
+	_, err = tx.Exec("UPDATE user_credits SET nanocredits = nanocredits - $1 WHERE email = $2", 
 		amount, email)
 	if err != nil {
 		return fmt.Errorf("failed to update balance: %v", err)

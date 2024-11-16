@@ -34,11 +34,11 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 
 	// Check if user already has credits
 	var currentNanoCredits int64
-	err := db.DB.QueryRow("SELECT nanocredits FROM user_credits WHERE email = ?", userEmail).Scan(&currentNanoCredits)
+	err := db.DB.QueryRow("SELECT nanocredits FROM user_credits WHERE email = $1", userEmail).Scan(&currentNanoCredits)
 
 	if err == sql.ErrNoRows {
 		// User does not have an entry, create one with 0 credits before starting the transaction
-		_, err = db.DB.Exec("INSERT INTO user_credits (email, nanocredits) VALUES (?, ?)", userEmail, 0)
+		_, err = db.DB.Exec("INSERT INTO user_credits (email, nanocredits) VALUES ($1, $2)", userEmail, 0)
 		if err != nil {
 			fmt.Printf("Error creating user credits entry: %v\n", err)
 			http.Error(w, "Failed to create user credits entry", http.StatusInternalServerError)
@@ -61,7 +61,7 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	// User exists, update their credits with optimistic concurrency control
-	_, err = tx.Exec("UPDATE user_credits SET nanocredits = nanocredits + ? WHERE email = ?", req.Credits * 1e9, userEmail)
+	_, err = tx.Exec("UPDATE user_credits SET nanocredits = nanocredits + $1 WHERE email = $2", req.Credits * 1e9, userEmail)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Printf("Concurrent modification detected: %v\n", err)
@@ -143,8 +143,6 @@ func buyCredits(w http.ResponseWriter, r *http.Request) {
 	err = logPayment(userEmail, currentNanoCredits, currentNanoCredits + int64(req.Credits * 1e9), int64(req.Credits * 1e9), true)
 	if err != nil {
 		fmt.Printf("Error logging payment: %v\n", err)
-		http.Error(w, "Failed to log payment", http.StatusInternalServerError)
-		return
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -159,7 +157,7 @@ func getUserCredits(w http.ResponseWriter, r *http.Request) {
 	userEmail := r.Header.Get("X-User-Email")
 
 	var nanocredits int64
-	err := db.DB.QueryRow("SELECT nanocredits FROM user_credits WHERE email = ?", userEmail).Scan(&nanocredits)
+	err := db.DB.QueryRow("SELECT nanocredits FROM user_credits WHERE email = $1", userEmail).Scan(&nanocredits)
 
 	if err != nil && err != sql.ErrNoRows {
 		fmt.Printf("Error fetching user credits: %v\n", err)

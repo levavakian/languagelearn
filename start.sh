@@ -16,4 +16,4 @@ cd ..
 
 # Start the server
 echo "Starting server..."
-(cd server && ./server) || { echo "Server failed to start"; exit 1; }
+(cd server && DB_PATH="postgresql://user@localhost:5432/postgres?sslmode=disable" ./server) || { echo "Server failed to start"; exit 1; }

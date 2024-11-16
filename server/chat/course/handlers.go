@@ -22,7 +22,7 @@ type CreateLessonRequest struct {
 func getCourseCreator(courseID string) (string, error) {
 	var creatorID string
 	err := db.DB.QueryRow(
-		"SELECT creator_id FROM courses WHERE id = ?",
+		"SELECT creator_id FROM courses WHERE id = $1",
 		courseID,
 	).Scan(&creatorID)
 	return creatorID, err
@@ -790,7 +790,7 @@ func deleteChat(w http.ResponseWriter, r *http.Request) {
 	err := db.DB.QueryRow(`
 		SELECT creator_id 
 		FROM chats 
-		WHERE id = ?`,
+		WHERE id = $1`,
 		chatID,
 	).Scan(&creatorID)
 
@@ -831,7 +831,7 @@ func getChatNames(w http.ResponseWriter, r *http.Request) {
 	for _, chatID := range request.ChatIDs {
 		var chatName string
 		err := db.DB.QueryRow(
-			"SELECT name FROM chats WHERE id = ? AND creator_id = ?",
+			"SELECT name FROM chats WHERE id = $1 AND creator_id = $2",
 			chatID, userEmail,
 		).Scan(&chatName)
 		
@@ -940,7 +940,7 @@ func getCourseLessonNames(w http.ResponseWriter, r *http.Request) {
 		SELECT l.id, c.name 
 		FROM lessons l 
 		JOIN chats c ON l.chat_id = c.id 
-		WHERE l.course_id = ? 
+		WHERE l.course_id = $1 
 		ORDER BY l.order_index`,
 		courseID,
 	)

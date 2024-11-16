@@ -21,6 +21,7 @@ echo "export GOOGLE_API_SECRET='$GOOGLE_API_SECRET'" >> "$env_file"
 echo "export SQUARE_ACCESS_TOKEN='$SQUARE_ACCESS_TOKEN'" >> "$env_file"
 echo "export SQUARE_APP_ID='$SQUARE_APP_ID'" >> "$env_file"
 echo "export SQUARE_LOCATION_ID='$SQUARE_LOCATION_ID'" >> "$env_file"
+echo "export PATH="/usr/lib/postgresql/16/bin:${PATH}"" >> "$env_file"
 
 # Set correct permissions for the env_file
 chown $HOST_UID:$HOST_GID "$env_file"
