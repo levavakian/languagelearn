@@ -26,9 +26,9 @@ func main() {
 		log.Fatal("Failed to initialize database:", err)
 	}
 
-	// Create course tables
-	if err := course.CreateTables(db.DB); err != nil {
-		log.Fatal("Failed to create course tables:", err)
+	course.PopulateMigrations()
+	if err := db.ApplyMigrations(db.DB); err != nil {
+		log.Fatal("Failed to apply migrations:", err)
 	}
 
 	r := mux.NewRouter()
