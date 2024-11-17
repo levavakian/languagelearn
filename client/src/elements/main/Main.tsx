@@ -1,6 +1,8 @@
 import React from 'react';
 import { State, getStateValue, useSetStateValue } from '../../state/state';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { toast } from 'react-hot-toast';
+import { ToasterWithMax } from '../Toast/Toast';
 
 const Main: React.FC = () => {
   const jwt = getStateValue((state: State) => state.auth.token);
@@ -10,6 +12,7 @@ const Main: React.FC = () => {
     console.log('Login Success:', response);
     const newJwt = response.credential;
     setState(draft => { draft.auth.token = newJwt });
+    toast.success('Successfully logged in!');
   };
 
   const handleLoginFailure = () => {
@@ -23,6 +26,19 @@ const Main: React.FC = () => {
         display: 'flex',
         flexDirection: 'column'
       }}>
+        <ToasterWithMax 
+          position="top-center"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              cursor: 'pointer',
+            },
+          }}
+          containerStyle={{
+            top: 50,
+          }}
+          max={3}
+        />
         <header style={{
           padding: '10px',
           display: 'flex',
