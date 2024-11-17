@@ -23,4 +23,5 @@ const baseAtom = atom(
 
 const stateAtom = createPersistedAtom(baseAtom, persistedPaths)
 
-export const { useAtomGetter: getStateValue, useSetAtomValue: useSetStateValue } = createAtomHooks(stateAtom)
+const selectorAtomMap: Record<string, any> = {}
+export const { useAtomGetter: getStateValue, useSetAtomValue: useSetStateValue } = createAtomHooks(stateAtom, selectorAtomMap)

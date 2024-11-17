@@ -45,7 +45,7 @@ const Sidebar = () => {
     return (
         <div className="sidebar">
             <div className="sidebar-title">
-                <h1 className="text-2xl font-bold text-indigo-dye ancorli-fonts">ARATTA</h1>
+                <span className="sidebar-title-text">ARATTA</span>
             </div>
             
             <div className="p-6">

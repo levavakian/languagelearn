@@ -1,17 +1,17 @@
 import { useAtomValue, useSetAtom } from 'jotai'
 import { selectAtom } from 'jotai/utils'
-import { useMemo, useCallback } from 'react'
+import { useCallback } from 'react'
 import { WritableAtom } from 'jotai'
 
-export function createAtomHooks<T, Update, Result>(atom: WritableAtom<T, Update[], Result>) {
-  function useAtomGetter<Selected>(
-    selector: (state: T) => Selected
-  ) {
-    const selectorAtom = useMemo(
-        () => selectAtom(atom, selector),
-        [selector]
-    )
-    return useAtomValue(selectorAtom)
+export function createAtomHooks<T, Update, Result>(atom: WritableAtom<T, Update[], Result>, selectorMap: Record<string, any>) {
+  function useAtomGetter<Selected>(selector: (state: T) => Selected) {
+    const selectorKey = selector.toString()
+    
+    if (!(selectorKey in selectorMap)) {
+      selectorMap[selectorKey] = selectAtom(atom, selector)
+    }
+
+    return useAtomValue(selectorMap[selectorKey])
   }
 
   function useSetAtomValue() {

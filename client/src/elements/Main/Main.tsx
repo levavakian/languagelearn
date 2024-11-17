@@ -23,7 +23,7 @@ const Main: React.FC = () => {
   return (
     <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
       <div className="main-container">
-        <div className="main-content">
+        <div >
           <ToasterWithMax 
             position="top-center"
             toastOptions={{
@@ -39,7 +39,7 @@ const Main: React.FC = () => {
           />
           {!jwt ? (
             <header style={{
-              padding: '10px',
+              padding: '0px',
               display: 'flex',
               justifyContent: 'flex-end'
             }}>
@@ -49,7 +49,9 @@ const Main: React.FC = () => {
               />
             </header>
           ) : (
+          <div>
             <Workspace />
+          </div>
           )}
         </div>
       </div>

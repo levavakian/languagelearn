@@ -29,6 +29,13 @@
   padding: 0 0;
   margin: 0;
   color: var(--indigo-dye);
+  padding: 30px 0;
+}
+
+.sidebar-title-text {
+  font-family: 'Ancorli', sans-serif !important;
+  font-weight: bold;
+  font-size: 30pt;
 }
 
 .courses-title {
