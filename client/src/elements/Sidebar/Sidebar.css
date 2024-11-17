@@ -1,0 +1,56 @@
+.course-box {
+  background-color: var(--alice-dark);
+  border-radius: 0.75rem;
+  padding: 0.25rem 1rem;
+  font-family: 'Nobel Uno', sans-serif !important;
+  margin: 1rem 12.5%;
+}
+
+.ancorli-fonts {
+    font-family: 'Ancorli', sans-serif !important;
+}
+
+.nobeluno-fonts {
+    font-family: 'Nobel Uno', sans-serif !important;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: var(--alice-blue) !important;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  z-index: 10;
+  top: 0;
+}
+
+.sidebar-title {
+  text-align: center;
+  padding: 0 0;
+  margin: 0;
+  color: var(--indigo-dye);
+}
+
+.courses-title {
+  font-family: 'Nobel Uno', sans-serif !important;
+  color: var(--half-grey);
+  margin: 0 12.5%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.course-header {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+}
+
+.course-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--indigo-dye);
+    flex: 1;
+}

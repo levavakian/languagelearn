@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import './styles/fonts.css';
+import './styles/palette.css';
+
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import Sidepanel from './components/Sidepanel/Sidepanel';
 import Chat from './components/Chat';
 import Courses from './components/Courses/Courses';
 import CreateChatModal from './components/ChatModals/CreateChatModal';
 import PaymentModal from './components/PaymentModal/PaymentModal';
-import Main from './elements/main/Main';
+import Main from './elements/Main/Main';
 
 // Add tab type and colors
 type Tab = 'chats' | 'courses' | 'lesson';
