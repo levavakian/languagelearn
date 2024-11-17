@@ -6,6 +6,7 @@ import Chat from './components/Chat';
 import Courses from './components/Courses/Courses';
 import CreateChatModal from './components/ChatModals/CreateChatModal';
 import PaymentModal from './components/PaymentModal/PaymentModal';
+import Main from './elements/main/Main';
 
 // Add tab type and colors
 type Tab = 'chats' | 'courses' | 'lesson';
@@ -111,6 +112,9 @@ interface LessonState {
 }
 
 function App() {
+  // Early return if refactor is true
+  return <Main />;
+
   const [jwt, setJwt] = useState<string | null>(null);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(() => {
     const storedId = localStorage.getItem('selectedChatId');
@@ -452,7 +456,7 @@ function App() {
               <div style={styles.chatContainer}>
                 <Chat 
                   key={selectedChatId || 'empty'} 
-                  token={jwt} 
+                  token={jwt!} 
                   selectedChatId={selectedChatId} 
                   onUnauthorized={handleUnauthorized}
                 />
@@ -466,7 +470,7 @@ function App() {
           )}
           {jwt && activeTab === 'courses' && (
             <Courses 
-              token={jwt} 
+              token={jwt!} 
               onUnauthorized={handleUnauthorized}
               onLessonSelect={handleLessonSelect}
               onCourseSelect={handleCourseSelect}
@@ -475,12 +479,12 @@ function App() {
           )}
           {jwt && activeTab === 'lesson' && lessonState && (
             <Courses 
-              token={jwt} 
+              token={jwt!} 
               onUnauthorized={handleUnauthorized}
               onLessonSelect={handleLessonSelect}
               onCourseSelect={handleCourseSelect}
-              selectedCourseId={lessonState.courseId}
-              forcedChatId={lessonState.chatId}
+              selectedCourseId={lessonState!.courseId}
+              forcedChatId={lessonState!.chatId}
             />
           )}
         </div>
@@ -488,7 +492,7 @@ function App() {
           <PaymentModal
             isOpen={isPaymentModalOpen}
             onClose={() => setIsPaymentModalOpen(false)}
-            token={jwt}
+            token={jwt!}
             onUnauthorized={handleUnauthorized}
           />
         )}
