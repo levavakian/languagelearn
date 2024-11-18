@@ -14,17 +14,28 @@ export type Course = {
     name: string
 }
 
+export type Lesson = {
+    id: string
+    name: string
+    chat_id: string
+    updated_at: string
+    free_practice: boolean
+}
+
 export type WrappedState = {
     auth: {
         token: Persistable<string>
-        onRequestError: (response: any) => void
+        onRequestError: (response: any, msg?: string) => void
     }
     pageChoice: Persistable<{
         workPage: WorkPage
         selectedCourse: string | null
         selectedLesson: string | null
     }>
-    currentCourse: Course | null
+    currentCourse: {
+        content: Course | null,
+        lessons: Lesson[],
+    }
     toggleRefactor: () => void
     courses: Course[]
 }
@@ -32,14 +43,17 @@ export type WrappedState = {
 const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     auth: {
         token: persisted('login-token', ''),
-        onRequestError: (response: any) => {},
+        onRequestError: (response: any, msg?: string) => {},
     },
     pageChoice: {
         workPage: WorkPage.Intro,
         selectedCourse: null,
         selectedLesson: null,
     },
-    currentCourse: null,
+    currentCourse: {
+        content: null,
+        lessons: [],
+    },
     toggleRefactor: () => {},
     courses: [],
 })

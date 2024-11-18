@@ -13,3 +13,27 @@
     font-style: normal;
     font-display: swap;
 }
+
+@font-face {
+    font-family: "Nobel Uno";
+    src: url('/public/fonts/NobelUno-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Nobel Uno";
+    src: url('/public/fonts/NobelUno-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Nobel Uno";
+    src: url('/public/fonts/NobelUno-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}

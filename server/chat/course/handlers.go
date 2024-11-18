@@ -16,6 +16,7 @@ import (
 type CreateLessonRequest struct {
 	Title             string `json:"title"`
 	LessonPlanContent string `json:"lesson_plan_content"`
+	FreePractice      bool   `json:"free_practice"`
 }
 
 // Database helper functions
@@ -317,7 +318,9 @@ func createLesson(w http.ResponseWriter, r *http.Request) {
 		ID:         lessonID,  // Use the pre-generated lesson ID
 		CourseID:   courseID,
 		ChatID:     chatID,
+		Name:       request.Title,
 		LessonPlan: request.LessonPlanContent,
+		FreePractice: request.FreePractice,
 		OrderIndex: orderIndex,
 		CreatedAt:  time.Now(),
 	}
@@ -325,6 +328,7 @@ func createLesson(w http.ResponseWriter, r *http.Request) {
 	if err := insertLesson(lesson); err != nil {
 		// Clean up the created chat if we fail
 		DeleteChat(chatID)
+		fmt.Printf("Failed to create lesson: %v\n", err)
 		http.Error(w, "Failed to create lesson", http.StatusInternalServerError)
 		return
 	}
@@ -548,6 +552,7 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 		ID:         lessonID,  // Use the pre-generated lesson ID
 		CourseID:   courseID,
 		ChatID:     chatID,
+		Name:      fmt.Sprintf("Initial %s Assessment", req.TargetLanguage),
 		LessonPlan: initialPlan.Content,
 		OrderIndex: 0,
 		CreatedAt:  time.Now(),

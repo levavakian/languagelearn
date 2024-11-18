@@ -412,7 +412,7 @@ const Courses: React.FC<CoursesProps> = ({
         },
         body: JSON.stringify({
           title: title,
-          lesson_plan_content: content
+          lesson_plan_content: content,
         })
       });
 

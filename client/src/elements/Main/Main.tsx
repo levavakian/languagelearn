@@ -17,11 +17,14 @@ const Main: React.FC<MainProps> = ({ onToggleRefactor }) => {
     useEffect(() => {
         setState(draft => {
             draft.auth.onRequestError = (response: any, msg?: string) => {
+                console.log("Got response error",response);
                 if (msg) {
                     toast.error(msg);
                 }
 
+                console.log("Checking status",response.status);
                 if (response.status === 401) {
+                    console.log("Expiring token");
                     toast.error('Your session has expired. Please login again.');
                     setState(draft => { draft.auth.token = "" });
                 }

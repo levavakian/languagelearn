@@ -25,6 +25,7 @@ type Lesson struct {
 	ChatID      string    `json:"chat_id"`
 	LessonPlan  string    `json:"lesson_plan"`
 	FreePractice bool     `json:"free_practice"`
+	Name        string    `json:"name"`
 	Summary     string    `json:"summary"`
 	OrderIndex  int       `json:"order_index"`
 	CreatedAt   time.Time `json:"created_at"`

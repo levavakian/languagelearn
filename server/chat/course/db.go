@@ -151,15 +151,15 @@ func getNextLessonOrderIndex(courseID string) (int, error) {
 
 func insertLesson(lesson Lesson) error {
 	_, err := db.DB.Exec(
-		"INSERT INTO lessons (id, course_id, chat_id, lesson_plan, summary, order_index, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-		lesson.ID, lesson.CourseID, lesson.ChatID, lesson.LessonPlan, lesson.Summary, lesson.OrderIndex, lesson.CreatedAt,
+		"INSERT INTO lessons (id, course_id, chat_id, lesson_plan, summary, order_index, created_at, name, free_practice) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+		lesson.ID, lesson.CourseID, lesson.ChatID, lesson.LessonPlan, lesson.Summary, lesson.OrderIndex, lesson.CreatedAt, lesson.Name, lesson.FreePractice,
 	)
 	return err
 }
 
 func getCourseLessonsFromDB(courseID string) ([]Lesson, error) {
 	rows, err := db.DB.Query(
-		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at FROM lessons WHERE course_id = $1 ORDER BY order_index",
+		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at, name, free_practice FROM lessons WHERE course_id = $1 ORDER BY order_index",
 		courseID,
 	)
 	if err != nil {
@@ -170,7 +170,7 @@ func getCourseLessonsFromDB(courseID string) ([]Lesson, error) {
 	var lessons []Lesson
 	for rows.Next() {
 		var lesson Lesson
-		if err := rows.Scan(&lesson.ID, &lesson.CourseID, &lesson.ChatID, &lesson.LessonPlan, &lesson.Summary, &lesson.OrderIndex, &lesson.CreatedAt); err != nil {
+		if err := rows.Scan(&lesson.ID, &lesson.CourseID, &lesson.ChatID, &lesson.LessonPlan, &lesson.Summary, &lesson.OrderIndex, &lesson.CreatedAt, &lesson.Name, &lesson.FreePractice); err != nil {
 			return nil, err
 		}
 		lessons = append(lessons, lesson)
@@ -180,8 +180,8 @@ func getCourseLessonsFromDB(courseID string) ([]Lesson, error) {
 
 func updateLessonInDB(lesson Lesson) error {
 	result, err := db.DB.Exec(
-		"UPDATE lessons SET lesson_plan = $1, summary = $2, order_index = $3 WHERE id = $4 AND course_id = $5",
-		lesson.LessonPlan, lesson.Summary, lesson.OrderIndex, lesson.ID, lesson.CourseID,
+		"UPDATE lessons SET lesson_plan = $1, summary = $2, order_index = $3, name = $4 WHERE id = $5 AND course_id = $6",
+		lesson.LessonPlan, lesson.Summary, lesson.OrderIndex, lesson.Name, lesson.ID, lesson.CourseID,
 	)
 	if err != nil {
 		return err
@@ -267,9 +267,9 @@ func getLessonPlanFromDB(planID string, courseID string) (*LessonPlan, error) {
 func getLessonFromDB(lessonID string) (*Lesson, error) {
 	var lesson Lesson
 	err := db.DB.QueryRow(
-		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, free_practice, created_at, updated_at FROM lessons WHERE id = $1",
+		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, name, free_practice, created_at, updated_at FROM lessons WHERE id = $1",
 		lessonID,
-	).Scan(&lesson.ID, &lesson.CourseID, &lesson.ChatID, &lesson.LessonPlan, &lesson.Summary, &lesson.OrderIndex, &lesson.FreePractice, &lesson.CreatedAt, &lesson.UpdatedAt)
+	).Scan(&lesson.ID, &lesson.CourseID, &lesson.ChatID, &lesson.LessonPlan, &lesson.Summary, &lesson.OrderIndex, &lesson.Name, &lesson.FreePractice, &lesson.CreatedAt, &lesson.UpdatedAt)
 	
 	if err != nil {
 		return nil, err
