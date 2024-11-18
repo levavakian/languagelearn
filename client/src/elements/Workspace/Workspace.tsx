@@ -1,14 +1,7 @@
 import React from 'react';
 import Sidebar from '../Sidebar/Sidebar';
+import { Topbar } from '../Topbar/Topbar';
 import './Workspace.css';
-
-const Topbar = () => {
-    return (
-        <div >
-            {/* Topbar content will go here */}
-        </div>
-    );
-};
 
 const Workspace = () => {
     return (

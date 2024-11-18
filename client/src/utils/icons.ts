@@ -3,6 +3,8 @@ export const IconPaths = {
     back: '/icons/back.svg',
     next: '/icons/next.svg',
     mic: '/icons/mic.svg',
+    user: '/icons/user.svg',
+    profit: '/icons/profit.svg',
     learning: '/icons/learning.svg',
     plusCircleOutline: '/icons/plus-circle.svg',
     color: '/icons/color-swatch-theme.svg',
