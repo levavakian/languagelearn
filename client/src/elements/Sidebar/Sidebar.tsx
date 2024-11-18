@@ -1,12 +1,7 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Icon } from '../Icon/Icon';
 import './Sidebar.css';
-import { State, getStateValue } from '../../state/state';
-
-// Add this interface before the CourseBox component
-interface Course {
-    name: string;
-}
+import { Course, State, useSetStateValue, useStateValue } from '../../state/state';
 
 const CourseBox = ({ course }: { course: Course }) => {
     const standardItems = [
@@ -63,12 +58,36 @@ const NewCourseButton = () => {
 };
 
 const Sidebar = () => {
-    const courses = [
-        { name: 'Spanish' },
-        { name: 'French' }
-    ];
+    const setState = useSetStateValue();
 
-    const toggleRefactor = getStateValue((state: State) => state.toggleRefactor);
+    const jwt = useStateValue((state: State) => state.auth.token);
+    const toggleRefactor = useStateValue((state: State) => state.toggleRefactor);
+    const onRequestError = useStateValue((state: State) => state.auth.onRequestError);
+    const courses = useStateValue((state: State) => state.courses);
+
+    const fetchCourses = useCallback(async () => {
+        try {
+            const response = await fetch('/api/courses', {
+                headers: {
+                    'Authorization': `Bearer ${jwt}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Error fetching courses:', response);
+                onRequestError(response);
+                return;
+            }
+            const data = await response.json();
+            setState(draft => { draft.courses = data || [] });
+        } catch (error) {
+            console.error('Error fetching courses:', error);
+        }
+    }, [jwt, setState]);
+
+    useEffect(() => {
+        fetchCourses();
+    }, [fetchCourses]);
     
     return (
         <div className="sidebar">
@@ -79,7 +98,7 @@ const Sidebar = () => {
             <div className="p-6">
                 <div className="overflow-y-auto scrollbar-hide h-[calc(100vh-120px)]">
                     <div className="mb-4">
-                        <h2 className="text-slate-600 text-sm mb-2 flex items-center justify-between courses-title">
+                        <h2 className="courses-title courses-header">
                             My Courses
                         </h2>
                         

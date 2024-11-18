@@ -2,12 +2,18 @@ import { atom } from 'jotai'
 import { persisted, unwrapState, createPersistedAtom, Persistable } from './storage'
 import { createAtomHooks } from './statehooks'
 
+export type Course = {
+    id: string
+    name: string
+}
+
 export type State = {
     auth: {
         token: Persistable<string>
         onRequestError: (response: any) => void
     }
     toggleRefactor: () => void
+    courses: Course[]
 }
 
 const { value: initialState, persistedPaths } = unwrapState<State>({
@@ -16,6 +22,7 @@ const { value: initialState, persistedPaths } = unwrapState<State>({
         onRequestError: (response: any) => {},
     },
     toggleRefactor: () => {},
+    courses: [],
 })
 
 const baseAtom = atom(
@@ -28,4 +35,4 @@ const baseAtom = atom(
 const stateAtom = createPersistedAtom(baseAtom, persistedPaths)
 
 const selectorAtomMap: Record<string, any> = {}
-export const { useAtomGetter: getStateValue, useSetAtomValue: useSetStateValue } = createAtomHooks(stateAtom, selectorAtomMap)
+export const { useAtomGetter: useStateValue, useSetAtomValue: useSetStateValue } = createAtomHooks(stateAtom, selectorAtomMap)

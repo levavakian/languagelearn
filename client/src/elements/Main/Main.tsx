@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import './Main.css';
-import { State, getStateValue, useSetStateValue } from '../../state/state';
+import { State, useStateValue, useSetStateValue } from '../../state/state';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { toast } from 'react-hot-toast';
 import { ToasterWithMax } from '../Toast/Toast';
@@ -11,7 +11,7 @@ interface MainProps {
 }
 
 const Main: React.FC<MainProps> = ({ onToggleRefactor }) => {
-    const jwt = getStateValue((state: State) => state.auth.token);
+    const jwt = useStateValue((state: State) => state.auth.token);
     const setState = useSetStateValue();
 
     useEffect(() => {

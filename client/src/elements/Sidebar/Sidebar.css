@@ -92,3 +92,9 @@
     white-space: nowrap;
     display: inline-block;
 }
+
+.courses-header {
+    font-family: 'Nobel Uno', sans-serif !important;
+    font-weight: 600;
+    color: var(--half-grey);
+}
