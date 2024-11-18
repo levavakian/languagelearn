@@ -31,7 +31,7 @@ const LessonList: React.FC<LessonListProps> = ({ lessons }) => {
 const PracticeList: React.FC<LessonListProps> = ({ lessons }) => {
     return (
         <div className="practice-lesson-list">
-            <div className="practice-lesson-list-title">Free Practice</div>
+            <div className="practice-lesson-list-title">Quick Practice</div>
             <div className="practice-lesson-list-add-lesson">
                 + New Practice
             </div>
@@ -71,7 +71,7 @@ const CourseView: React.FC = () => {
                     draft.currentCourse.content = null;
                     draft.pageChoice.workPage = WorkPage.AllCourses;
                 });
-                if (response.status === 401 || response.status === 404) {
+                if (response.status === 404) {
                     setState(draft => { draft.pageChoice.selectedCourse = null });
                 }
                 onRequestError(response, "Error fetching course");
