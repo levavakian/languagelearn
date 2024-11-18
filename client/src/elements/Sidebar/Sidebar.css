@@ -25,9 +25,9 @@
   overflow-y: auto;
 }
 
-.sidebar::-webkit-scrollbar { /* Chrome, Safari, Opera */
+.sidebar::-webkit-scrollbar {
     display: none;
-  }
+}
 
 .sidebar-title {
   text-align: center;
