@@ -11,7 +11,7 @@ export function createAtomHooks<T, Update, Result>(atom: WritableAtom<T, Update[
       selectorMap[selectorKey] = selectAtom(atom, selector)
     }
 
-    return useAtomValue(selectorMap[selectorKey])
+    return useAtomValue(selectorMap[selectorKey]) as Selected
   }
 
   function useSetAtomValue() {

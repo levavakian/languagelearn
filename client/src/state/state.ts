@@ -7,13 +7,15 @@ export type State = {
         token: Persistable<string>
         onRequestError: (response: any) => void
     }
+    toggleRefactor: () => void
 }
 
 const { value: initialState, persistedPaths } = unwrapState<State>({
     auth: {
         token: persisted('login-token', ''),
         onRequestError: (response: any) => {},
-    }
+    },
+    toggleRefactor: () => {},
 })
 
 const baseAtom = atom(

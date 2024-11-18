@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../Icon/Icon';
 import './Sidebar.css';
+import { State, getStateValue } from '../../state/state';
 
 // Add this interface before the CourseBox component
 interface Course {
@@ -66,10 +67,12 @@ const Sidebar = () => {
         { name: 'Spanish' },
         { name: 'French' }
     ];
+
+    const toggleRefactor = getStateValue((state: State) => state.toggleRefactor);
     
     return (
         <div className="sidebar">
-            <div className="sidebar-title">
+            <div className="sidebar-title" onClick={toggleRefactor}>
                 <span className="sidebar-title-text">ARATTA</span>
             </div>
             

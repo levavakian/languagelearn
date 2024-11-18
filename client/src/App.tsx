@@ -115,8 +115,8 @@ interface LessonState {
 }
 
 function App() {
-  // Early return if refactor is true
-  return <Main />;
+  // Add useRefactor state at the top of the component
+  const [useRefactor, setUseRefactor] = useState<boolean>(false);
 
   const [jwt, setJwt] = useState<string | null>(null);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(() => {
@@ -401,10 +401,21 @@ function App() {
     }
   }, [chats, selectedChatId]);
 
+  // Update the early return for refactor mode
+  if (useRefactor) {
+    return <Main onToggleRefactor={() => setUseRefactor(false)} />;
+  }
+
   return (
     <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
       <div style={styles.app}>
         <header style={styles.header}>
+          <button 
+            onClick={() => setUseRefactor(prev => !prev)} 
+            style={styles.button}
+          >
+            Toggle Refactor
+          </button>
           {jwt && (
             <div style={styles.tabsContainer}>
               <button

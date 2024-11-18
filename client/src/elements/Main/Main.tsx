@@ -6,7 +6,11 @@ import { toast } from 'react-hot-toast';
 import { ToasterWithMax } from '../Toast/Toast';
 import Workspace from '../Workspace/Workspace';
 
-const Main: React.FC = () => {
+interface MainProps {
+    onToggleRefactor?: () => void;
+}
+
+const Main: React.FC<MainProps> = ({ onToggleRefactor }) => {
     const jwt = getStateValue((state: State) => state.auth.token);
     const setState = useSetStateValue();
 
@@ -22,6 +26,12 @@ const Main: React.FC = () => {
                     setState(draft => { draft.auth.token = "" });
                 }
             };
+        });
+    }, [setState]);
+
+    useEffect(() => {
+        setState(draft => {
+            draft.toggleRefactor = () => { onToggleRefactor?.(); };
         });
     }, [setState]);
 
