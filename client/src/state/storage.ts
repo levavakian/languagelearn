@@ -31,6 +31,18 @@ type UnwrappedState<T> = {
     persistedPaths: { path: string[], key: string }[]
 }
 
+// Add this utility type
+type UnwrapPersistable<T> = T extends Persistable<infer U> ? U : T;
+
+// Add the unwrapped state type
+export type UnwrappedStrippedState<T> = {
+    [K in keyof T]: UnwrapPersistable<T[K]> extends object
+        ? {
+              [P in keyof UnwrapPersistable<T[K]>]: UnwrapPersistable<UnwrapPersistable<T[K]>[P]>
+          }
+        : UnwrapPersistable<T[K]>
+};
+
 export function unwrapState<T>(obj: T): UnwrappedState<T> {
     const persistedPaths: { path: string[], key: string }[] = []
     

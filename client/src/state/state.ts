@@ -2,6 +2,12 @@ import { atom } from 'jotai'
 import { persisted, unwrapState, createPersistedAtom, Persistable } from './storage'
 import { createAtomHooks } from './statehooks'
 
+export enum WorkPage {
+    Lesson = 'lesson',
+    Course = 'course',
+    Intro = 'intro'
+}
+
 export type Course = {
     id: string
     name: string
@@ -12,6 +18,11 @@ export type State = {
         token: Persistable<string>
         onRequestError: (response: any) => void
     }
+    pageChoice: Persistable<{
+        workPage: WorkPage
+        selectedCourse: string | null
+        selectedLesson: string | null
+    }>
     toggleRefactor: () => void
     courses: Course[]
 }
@@ -21,9 +32,15 @@ const { value: initialState, persistedPaths } = unwrapState<State>({
         token: persisted('login-token', ''),
         onRequestError: (response: any) => {},
     },
+    pageChoice: {
+        workPage: WorkPage.Intro,
+        selectedCourse: null,
+        selectedLesson: null,
+    },
     toggleRefactor: () => {},
     courses: [],
 })
+
 
 const baseAtom = atom(
     initialState,

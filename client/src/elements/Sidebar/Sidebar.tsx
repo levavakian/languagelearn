@@ -1,13 +1,27 @@
 import React, { useEffect, useCallback } from 'react';
 import { Icon } from '../Icon/Icon';
 import './Sidebar.css';
-import { Course, State, useSetStateValue, useStateValue } from '../../state/state';
+import { Course, State, useSetStateValue, useStateValue, WorkPage } from '../../state/state';
 
 const CourseBox = ({ course }: { course: Course }) => {
+    const setState = useSetStateValue();
+
     const standardItems = [
-        { icon: <Icon scale={12} name="next" />, label: 'Continue Lesson' },
-        { icon: <Icon scale={12} name="color" />, label: 'View Course' },
-        { icon: <Icon scale={12} name="mic" />, label: 'Free Practice' }
+        { 
+            icon: <Icon scale={12} name="next" />, 
+            label: 'Continue Lesson',
+            onClick: () => console.log('Continue Lesson for:', course.name)
+        },
+        { 
+            icon: <Icon scale={12} name="color" />, 
+            label: 'View Course',
+            onClick: () => setState(draft => { draft.pageChoice.workPage = WorkPage.Course; draft.pageChoice.selectedCourse = course.id })
+        },
+        { 
+            icon: <Icon scale={12} name="mic" />, 
+            label: 'Free Practice',
+            onClick: () => console.log('Free Practice for:', course.name)
+        }
     ];
     
     return (
@@ -24,6 +38,7 @@ const CourseBox = ({ course }: { course: Course }) => {
                     <button
                         key={itemIndex}
                         className="course-button"
+                        onClick={item.onClick}
                     >
                         {item.icon}
                         <span>{item.label}</span>
@@ -36,8 +51,16 @@ const CourseBox = ({ course }: { course: Course }) => {
 
 const NewCourseButton = () => {
     const newCourseItems = [
-        { icon: <Icon scale={12} name="shuttle" />, label: 'Start New Course' },
-        { icon: <Icon scale={12} name="writing" />, label: 'View All Courses' }
+        { 
+            icon: <Icon scale={12} name="shuttle" />, 
+            label: 'Start New Course',
+            onClick: () => console.log('Start New Course clicked')
+        },
+        { 
+            icon: <Icon scale={12} name="writing" />, 
+            label: 'View All Courses',
+            onClick: () => console.log('View All Courses clicked')
+        }
     ];
     
     return (
@@ -47,6 +70,7 @@ const NewCourseButton = () => {
                     <button
                         key={itemIndex}
                         className="course-button"
+                        onClick={item.onClick}
                     >
                         {item.icon}
                         <span>{item.label}</span>
