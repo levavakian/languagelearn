@@ -26,22 +26,25 @@ export function persisted<T>(key: string, defaultValue: T): PersistedValue<T> {
     }
 }
 
-type UnwrappedState<T> = {
-    value: T
-    persistedPaths: { path: string[], key: string }[]
-}
-
 // Add this utility type
 type UnwrapPersistable<T> = T extends Persistable<infer U> ? U : T;
 
-// Add the unwrapped state type
+// Modify the unwrapped state type
 export type UnwrappedStrippedState<T> = {
-    [K in keyof T]: UnwrapPersistable<T[K]> extends object
+  [K in keyof T]:
+    UnwrapPersistable<T[K]> extends (...args: any) => any
+      ? UnwrapPersistable<T[K]>
+      : UnwrapPersistable<T[K]> extends object
         ? {
-              [P in keyof UnwrapPersistable<T[K]>]: UnwrapPersistable<UnwrapPersistable<T[K]>[P]>
+            [P in keyof UnwrapPersistable<T[K]>]: UnwrapPersistable<UnwrapPersistable<T[K]>[P]>
           }
         : UnwrapPersistable<T[K]>
 };
+
+type UnwrappedState<T> = {
+    value: UnwrappedStrippedState<T>
+    persistedPaths: { path: string[], key: string }[]
+}
 
 export function unwrapState<T>(obj: T): UnwrappedState<T> {
     const persistedPaths: { path: string[], key: string }[] = []

@@ -4,6 +4,7 @@ import { createAtomHooks } from './statehooks'
 
 export enum WorkPage {
     Lesson = 'lesson',
+    AllCourses = 'all-courses',
     Course = 'course',
     Intro = 'intro'
 }
@@ -13,7 +14,7 @@ export type Course = {
     name: string
 }
 
-export type State = {
+export type WrappedState = {
     auth: {
         token: Persistable<string>
         onRequestError: (response: any) => void
@@ -23,11 +24,12 @@ export type State = {
         selectedCourse: string | null
         selectedLesson: string | null
     }>
+    currentCourse: Course | null
     toggleRefactor: () => void
     courses: Course[]
 }
 
-const { value: initialState, persistedPaths } = unwrapState<State>({
+const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     auth: {
         token: persisted('login-token', ''),
         onRequestError: (response: any) => {},
@@ -37,10 +39,12 @@ const { value: initialState, persistedPaths } = unwrapState<State>({
         selectedCourse: null,
         selectedLesson: null,
     },
+    currentCourse: null,
     toggleRefactor: () => {},
     courses: [],
 })
 
+export type State = typeof initialState
 
 const baseAtom = atom(
     initialState,

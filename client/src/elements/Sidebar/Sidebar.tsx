@@ -50,16 +50,18 @@ const CourseBox = ({ course }: { course: Course }) => {
 };
 
 const NewCourseButton = () => {
+    const setState = useSetStateValue();
+
     const newCourseItems = [
         { 
             icon: <Icon scale={12} name="shuttle" />, 
             label: 'Start New Course',
-            onClick: () => console.log('Start New Course clicked')
+            onClick: () => setState(draft => { draft.pageChoice.workPage = WorkPage.AllCourses })
         },
         { 
             icon: <Icon scale={12} name="writing" />, 
             label: 'View All Courses',
-            onClick: () => console.log('View All Courses clicked')
+            onClick: () => setState(draft => { draft.pageChoice.workPage = WorkPage.AllCourses })
         }
     ];
     
