@@ -9,28 +9,43 @@ interface Course {
 
 const CourseBox = ({ course }: { course: Course }) => {
     const standardItems = [
-        { icon: <Icon scale={12} name="chat" />, label: 'Continue Lesson' },
-        { icon: <Icon scale={12} name="chat" />, label: 'Topics' },
-        { icon: <Icon scale={12} name="chat" />, label: 'Free Practice' }
+        { icon: <Icon scale={12} name="next" />, label: 'Continue Lesson' },
+        { icon: <Icon scale={12} name="color" />, label: 'View Course' },
+        { icon: <Icon scale={12} name="mic" />, label: 'Free Practice' }
     ];
     
     return (
         <div className="course-box space-y-2">
             <div className="course-header">
-                <span className="course-name">{course.name}</span>
-                <Icon scale={12} name="back" flipX={true} />
+                <span className="course-name text-truncate" title={course.name}>
+                    {course.name}
+                </span>
+                <Icon scale={20} name="learning" />
             </div>
             
             <div className="space-y-1">
                 {standardItems.map((item, itemIndex) => (
                     <button
                         key={itemIndex}
-                        className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-white/50 text-slate-600 text-sm transition-colors"
+                        className="course-button"
                     >
                         {item.icon}
                         <span>{item.label}</span>
                     </button>
                 ))}
+            </div>
+        </div>
+    );
+};
+
+const NewCourseButton = () => {
+    return (
+        <div className="new-course-box">
+            <div className="new-course-header">
+                <span className="new-course-name" title="Start New Course">
+                    Start New Course
+                </span>
+                <Icon scale={20} name="plusCircleOutline" className="mt-3px" />
             </div>
         </div>
     );
@@ -63,6 +78,7 @@ const Sidebar = () => {
                                     course={course} 
                                 />
                             ))}
+                            <NewCourseButton />
                         </div>
                     </div>
                 </div>

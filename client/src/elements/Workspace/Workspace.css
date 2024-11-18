@@ -1,0 +1,15 @@
+.workspace-container {
+    display: flex;
+    height: 100vh;
+}
+
+.workspace-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--baby-powder);
+}
+
+.workspace-content {
+    flex: 1;
+}

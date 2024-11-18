@@ -13,12 +13,12 @@ const Topbar = () => {
 const Workspace = () => {
     return (
         <div>
-            <div className="flex h-screen">
-            <Sidebar />
-            <div className="flex-1 flex flex-col">
-                <Topbar />
-                <div className="flex-1 bg-white">
-                    {/* Main work area content will go here */}
+            <div className="workspace-container">
+                <Sidebar />
+                <div className="workspace-main">
+                    <Topbar />
+                    <div className="workspace-content">
+                        {/* Main work area content will go here */}
                     </div>
                 </div>
             </div>
