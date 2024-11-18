@@ -3,6 +3,8 @@ export const IconPaths = {
     back: '/icons/back.svg',
     next: '/icons/next.svg',
     mic: '/icons/mic.svg',
+    micOutline: '/icons/mic-outline.svg',
+    micFilled: '/icons/microphone-black-shape.svg',
     user: '/icons/user.svg',
     profit: '/icons/profit.svg',
     shuttle: '/icons/shuttle.svg',

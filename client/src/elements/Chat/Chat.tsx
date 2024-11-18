@@ -24,10 +24,16 @@ const ChatInput = () => {
     return (
         <div className="chat-input-container">
             <div className="chat-input-top">
-                <input 
-                    type="text"
+                <textarea 
                     placeholder="Type your message, or hold Alt or Option to speak"
                     className="chat-input-field"
+                    rows={1}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            // Handle send message here
+                        }
+                    }}
                 />
             </div>
             <div className="chat-input-bottom">
@@ -42,7 +48,7 @@ const ChatInput = () => {
                         <Icon scale={12} name="next" />
                     </div>
                     <div className="icon-with-background">
-                        <Icon scale={12} name="mic" />
+                        <Icon scale={12} name="micFilled" />
                     </div>
                 </div>
             </div>
