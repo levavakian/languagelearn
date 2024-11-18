@@ -16,6 +16,7 @@ const Main: React.FC<MainProps> = ({ onToggleRefactor }) => {
 
     useEffect(() => {
         setState(draft => {
+            console.log("Setting up response error handler");
             draft.auth.onRequestError = (response: any, msg?: string) => {
                 console.log("Got response error",response);
                 if (msg) {

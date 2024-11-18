@@ -5,9 +5,10 @@ interface IconProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   name: IconName;
   scale?: number;
   flipX?: boolean;
+  rotation?: number;
 }
 
-export const Icon: React.FC<IconProps> = ({ name, alt, scale, flipX, ...props }) => {
+export const Icon: React.FC<IconProps> = ({ name, alt, scale, flipX, rotation, ...props }) => {
   return (
     <div style={{ display: 'inline-block' }}>
       <img
@@ -16,7 +17,7 @@ export const Icon: React.FC<IconProps> = ({ name, alt, scale, flipX, ...props })
         width={scale}
         height={scale}
         style={{ 
-          transform: flipX ? 'scaleX(-1)' : undefined,
+          transform: `${flipX ? 'scaleX(-1)' : ''} ${rotation ? `rotate(${rotation}deg)` : ''}`.trim(),
           ...props.style 
         }}
         {...props}

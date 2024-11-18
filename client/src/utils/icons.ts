@@ -12,6 +12,12 @@ export const IconPaths = {
     learning: '/icons/learning.svg',
     plusCircleOutline: '/icons/plus-circle.svg',
     color: '/icons/color-swatch-theme.svg',
+    ear: '/icons/ear.svg',
+    eyebrow: '/icons/eyebrow.svg',
+    save: '/icons/save.svg',
+    speaker: '/icons/speaker.svg',
+    settings: '/icons/settings.svg',
+    arrow: '/icons/arrow.svg',
   } as const;
   
   export type IconName = keyof typeof IconPaths;

@@ -38,14 +38,25 @@ const ChatInput = () => {
             </div>
             <div className="chat-input-bottom">
                 <div className="left-icons">
-                    <Icon scale={12} name="next" />
-                    <Icon scale={12} name="next" />
-                    <Icon scale={12} name="next" />
-                    <Icon scale={12} name="next" />
+                    <div className="icon">
+                        <Icon scale={24} name="ear" />
+                    </div>
+                    <div className="icon">  
+                        <Icon scale={24} name="speaker" />
+                    </div>
+                    <div className="icon">
+                        <Icon scale={24} name="eyebrow" />
+                    </div>
+                    <div className="icon">
+                        <Icon scale={24} name="settings" />
+                    </div>
+                    <div className="icon">
+                        <Icon scale={24} name="save" />
+                    </div>
                 </div>
                 <div className="right-icons">
                     <div className="icon-with-background">
-                        <Icon scale={12} name="next" />
+                        <Icon scale={12} rotation={90} name="arrow" />
                     </div>
                     <div className="icon-with-background">
                         <Icon scale={12} name="micFilled" />

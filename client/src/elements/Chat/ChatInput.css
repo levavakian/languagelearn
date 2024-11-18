@@ -50,7 +50,17 @@
 
 .left-icons {
     display: flex;
-    gap: 1rem;
+}
+
+.left-icons .icon {
+    border-radius: 8px;
+    padding: 0.35rem;
+    transition: background-color 0.2s ease;
+}
+
+.left-icons .icon:hover {
+    background-color: var(--alice-blue);
+    cursor: pointer;
 }
 
 .right-icons {
@@ -73,4 +83,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.icon-with-background:hover {
+    background-color: var(--alice-blue);
+    cursor: pointer;
 }
