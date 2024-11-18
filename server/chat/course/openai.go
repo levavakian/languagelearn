@@ -582,7 +582,7 @@ func getInstructions(chatID string) (string, error) {
 
 	// If chat has an associated lesson, get the lesson plan
 	if chat.LessonID != "" {
-		lesson, err := getLessonFromDBRaw(chat.LessonID)
+		lesson, err := getLessonFromDB(chat.LessonID)
 		if err == nil && lesson.LessonPlan != "" {
 			instructions = instructions + "\nYou have a lesson plan for today, provided in the brackets <[" + lesson.LessonPlan + "]>"
 		}
@@ -692,7 +692,7 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 
 			// Get lesson plan and vocab list if available and add them to the chat just for openai
 			if chat.LessonID != "" {
-				lesson, err := getLessonFromDBRaw(chat.LessonID)
+				lesson, err := getLessonFromDB(chat.LessonID)
 				if err == nil && lesson.LessonPlan != "" {
 					lessonPlanMsg := Message{
 						ChatID:  chat.ID,

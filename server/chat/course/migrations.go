@@ -35,7 +35,9 @@ func PopulateMigrations() {
 			lesson_plan TEXT NOT NULL,
 			summary TEXT,
 			order_index INTEGER NOT NULL,
+			free_practice BOOLEAN NOT NULL DEFAULT FALSE,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
 			FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
 		)

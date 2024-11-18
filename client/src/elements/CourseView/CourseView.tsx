@@ -45,8 +45,13 @@ const CourseView: React.FC = () => {
     }, [fetchCourses]);
 
   return (
-    <div className="course-view">
-      <h1>{currentCourse?.name}</h1>
+    <div>
+      <div className="course-view">
+        <span className="course-title">{currentCourse?.name}</span>
+      </div>
+      <div className="course-view">
+        <span className="course-title">{currentCourse?.name}</span>
+      </div>
     </div>
   );
 };

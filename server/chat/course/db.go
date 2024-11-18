@@ -264,26 +264,12 @@ func getLessonPlanFromDB(planID string, courseID string) (*LessonPlan, error) {
 	return &plan, nil
 }
 
-func getLessonFromDB(lessonID string, courseID string) (*Lesson, error) {
+func getLessonFromDB(lessonID string) (*Lesson, error) {
 	var lesson Lesson
 	err := db.DB.QueryRow(
-		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at FROM lessons WHERE id = $1 AND course_id = $2",
-		lessonID, courseID,
-	).Scan(&lesson.ID, &lesson.CourseID, &lesson.ChatID, &lesson.LessonPlan, &lesson.Summary, &lesson.OrderIndex, &lesson.CreatedAt)
-	
-	if err != nil {
-		return nil, err
-	}
-	
-	return &lesson, nil
-}
-
-func getLessonFromDBRaw(lessonID string) (*Lesson, error) {
-	var lesson Lesson
-	err := db.DB.QueryRow(
-		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at FROM lessons WHERE id = $1",
+		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, free_practice, created_at, updated_at FROM lessons WHERE id = $1",
 		lessonID,
-	).Scan(&lesson.ID, &lesson.CourseID, &lesson.ChatID, &lesson.LessonPlan, &lesson.Summary, &lesson.OrderIndex, &lesson.CreatedAt)
+	).Scan(&lesson.ID, &lesson.CourseID, &lesson.ChatID, &lesson.LessonPlan, &lesson.Summary, &lesson.OrderIndex, &lesson.FreePractice, &lesson.CreatedAt, &lesson.UpdatedAt)
 	
 	if err != nil {
 		return nil, err

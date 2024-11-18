@@ -23,10 +23,14 @@
   z-index: 10;
   top: 0;
   overflow-y: auto;
+  -webkit-scrollbar: none;  /* Safari and Chrome */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
 }
 
-.sidebar::-webkit-scrollbar {
-    display: none;
+/* Hide webkit scrollbar */
+.course-view::-webkit-scrollbar {
+  display: none;
 }
 
 .sidebar-title {

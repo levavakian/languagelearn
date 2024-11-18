@@ -1,3 +1,22 @@
 .course-view {
   padding: 0px;
+  margin: 20px 30px 0 30px; /* top right bottom left */
+  overflow-y: auto;
+  -webkit-scrollbar: none;  /* Safari and Chrome */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Hide webkit scrollbar */
+.course-view::-webkit-scrollbar {
+  display: none;
+}
+
+.course-title {
+  font-size: 32px;
+  font-weight: 600;
+  font-family: 'Nobel Uno', sans-serif !important;
+  color: var(--indigo-dye);
+  display: block;
+  padding-top: 1.0rem;
 }

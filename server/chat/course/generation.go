@@ -74,7 +74,7 @@ func generateLessonSummary(w http.ResponseWriter, r *http.Request) {
 	userEmail := r.Header.Get("X-User-Email")
 
 	// Get the lesson
-	lesson, err := getLessonFromDBRaw(lessonID)
+	lesson, err := getLessonFromDB(lessonID)
 	if err != nil {
 		fmt.Printf("Error getting lesson: %v\n", err)
 		http.Error(w, "Lesson not found", http.StatusNotFound)
@@ -201,7 +201,7 @@ func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
 	userEmail := r.Header.Get("X-User-Email")
 
 	// Get the lesson
-	lesson, err := getLessonFromDBRaw(lessonID)
+	lesson, err := getLessonFromDB(lessonID)
 	if err != nil {
 		fmt.Printf("Error getting lesson: %v\n", err)
 		http.Error(w, "Lesson not found", http.StatusNotFound)
@@ -412,7 +412,7 @@ func generateNextLessonPlan(w http.ResponseWriter, r *http.Request) {
 	userEmail := r.Header.Get("X-User-Email")
 
 	for _, lessonID := range req.LessonIDs {
-		lesson, err := getLessonFromDBRaw(lessonID)
+		lesson, err := getLessonFromDB(lessonID)
 		if err != nil {
 			fmt.Printf("Error getting lesson %s: %v\n", lessonID, err)
 			http.Error(w, "Error retrieving lessons", http.StatusInternalServerError)

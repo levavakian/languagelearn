@@ -24,9 +24,11 @@ type Lesson struct {
 	CourseID    string    `json:"course_id"`
 	ChatID      string    `json:"chat_id"`
 	LessonPlan  string    `json:"lesson_plan"`
+	FreePractice bool     `json:"free_practice"`
 	Summary     string    `json:"summary"`
 	OrderIndex  int       `json:"order_index"`
 	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type VocabItem struct {

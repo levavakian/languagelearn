@@ -394,8 +394,8 @@ func deleteLesson(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the lesson to find its chat ID
-	lesson, err := getLessonFromDB(lessonID, courseID)
-	if err != nil {
+	lesson, err := getLessonFromDB(lessonID)
+	if err != nil || lesson.CourseID != courseID {
 		http.Error(w, "Lesson not found", http.StatusNotFound)
 		return
 	}
