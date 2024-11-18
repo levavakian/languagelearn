@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './Main.css';
 import { State, getStateValue, useSetStateValue } from '../../state/state';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
@@ -9,6 +9,21 @@ import Workspace from '../Workspace/Workspace';
 const Main: React.FC = () => {
     const jwt = getStateValue((state: State) => state.auth.token);
     const setState = useSetStateValue();
+
+    useEffect(() => {
+        setState(draft => {
+            draft.auth.onRequestError = (response: any, msg?: string) => {
+                if (msg) {
+                    toast.error(msg);
+                }
+
+                if (response.status === 401) {
+                    toast.error('Your session has expired. Please login again.');
+                    setState(draft => { draft.auth.token = "" });
+                }
+            };
+        });
+    }, [setState]);
 
     const handleLoginSuccess = (response: any) => {
         console.log('Login Success:', response);

@@ -5,12 +5,14 @@ import { createAtomHooks } from './statehooks'
 export type State = {
     auth: {
         token: Persistable<string>
+        onRequestError: (response: any) => void
     }
 }
 
 const { value: initialState, persistedPaths } = unwrapState<State>({
     auth: {
-        token: persisted('login-token', '')
+        token: persisted('login-token', ''),
+        onRequestError: (response: any) => {},
     }
 })
 

@@ -13,30 +13,30 @@
     position: relative;
     top: 0;
     margin: 0 8px;
-  }
+}
   
-  .buy-button:hover {
+.buy-button:hover {
     background-color: var(--alice-dark);
-  }
+}
 
-  .buy-button:active {
+.buy-button:active {
     transform: translateY(4px);
     box-shadow: 0 0px 0 var(--indigo-dye);
-  }
+}
 
-  .topbar-icon {
+.topbar-icon {
     margin-top: 8px;
-  }
+}
 
-  .credit-count {
+.credit-count {
     font-family: "Nobel Uno", Arial, sans-serif;
     color: var(--indigo-dye);
     font-size: 20px;
     font-weight: 800;
     margin: -4px 0 0 -4px;
     gap: 4px;
-  }
+}
 
-  .credit-count.low {
+.credit-count.low {
     color: var(--warn-red);
-  }
+}
