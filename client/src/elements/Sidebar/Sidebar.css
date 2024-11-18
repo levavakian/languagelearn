@@ -22,7 +22,12 @@
   padding: 0;
   z-index: 10;
   top: 0;
+  overflow-y: auto;
 }
+
+.sidebar::-webkit-scrollbar { /* Chrome, Safari, Opera */
+    display: none;
+  }
 
 .sidebar-title {
   text-align: center;
