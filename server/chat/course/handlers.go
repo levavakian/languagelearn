@@ -968,3 +968,32 @@ func getCourseLessonNames(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(lessons)
 }
+
+func getChatByLesson(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	lessonID := vars["lessonId"]
+	userEmail := r.Header.Get("X-User-Email")
+
+	// First get the lesson to verify ownership
+	lesson, err := getLessonFromDB(lessonID)
+	if err != nil {
+		http.Error(w, "Lesson not found", http.StatusNotFound)
+		return
+	}
+
+	// Verify course ownership
+	if err := verifyOwnership(lesson.CourseID, userEmail); err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	// Get the chat
+	chat, err := GetChatRaw(lesson.ChatID)
+	if err != nil {
+		http.Error(w, "Chat not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(chat)
+}

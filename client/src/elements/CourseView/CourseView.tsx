@@ -120,7 +120,6 @@ const CourseView: React.FC = () => {
                 return;
             }
             const data = await response.json();
-            console.log(data);
             setState(draft => { draft.currentCourse.lessons = data || [] });
         } catch (error) {
             toast.error(`Error fetching lessons`);

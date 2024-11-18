@@ -1,0 +1,23 @@
+.avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: #284B63; /* indigo-dye color */
+    color: white;
+    font-family: 'Ancorli', sans-serif;
+    font-weight: regular;
+}
+
+.chat-container {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.chat-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
