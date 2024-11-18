@@ -39,13 +39,23 @@ const CourseBox = ({ course }: { course: Course }) => {
 };
 
 const NewCourseButton = () => {
+    const newCourseItems = [
+        { icon: <Icon scale={12} name="shuttle" />, label: 'Start New Course' },
+        { icon: <Icon scale={12} name="writing" />, label: 'View All Courses' }
+    ];
+    
     return (
-        <div className="new-course-box">
-            <div className="new-course-header">
-                <span className="new-course-name" title="Start New Course">
-                    Start New Course
-                </span>
-                <Icon scale={20} name="plusCircleOutline" className="mt-3px" />
+        <div className="course-box">
+            <div className="space-y-1">
+                {newCourseItems.map((item, itemIndex) => (
+                    <button
+                        key={itemIndex}
+                        className="course-button"
+                    >
+                        {item.icon}
+                        <span>{item.label}</span>
+                    </button>
+                ))}
             </div>
         </div>
     );
@@ -68,7 +78,6 @@ const Sidebar = () => {
                     <div className="mb-4">
                         <h2 className="text-slate-600 text-sm mb-2 flex items-center justify-between courses-title">
                             My Courses
-                            <span className="text-xl font-medium">+</span>
                         </h2>
                         
                         <div className="space-y-4">

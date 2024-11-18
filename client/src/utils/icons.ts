@@ -5,6 +5,8 @@ export const IconPaths = {
     mic: '/icons/mic.svg',
     user: '/icons/user.svg',
     profit: '/icons/profit.svg',
+    shuttle: '/icons/shuttle.svg',
+    writing: '/icons/writing.svg',
     learning: '/icons/learning.svg',
     plusCircleOutline: '/icons/plus-circle.svg',
     color: '/icons/color-swatch-theme.svg',
