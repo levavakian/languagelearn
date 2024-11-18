@@ -18,6 +18,7 @@ const Workspace = () => {
                         {pageChoice.workPage === WorkPage.Course && <CourseView />}
                         {pageChoice.workPage === WorkPage.AllCourses && <span>All Courses</span>}
                         {pageChoice.workPage === WorkPage.Lesson && <span>Lesson</span>}
+                        {pageChoice.workPage === WorkPage.Chat && <span>Chat</span>}
                         {pageChoice.workPage === WorkPage.Intro && <span>Intro</span>}
                     </div>
                 </div>

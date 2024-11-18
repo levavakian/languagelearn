@@ -8,6 +8,15 @@ interface LessonListProps {
 }
 
 const LessonList: React.FC<LessonListProps> = ({ lessons }) => {
+    const setState = useSetStateValue();
+
+    const handleLessonChoice = (lesson: Lesson) => {
+        setState(draft => {
+            draft.pageChoice.workPage = WorkPage.Chat;
+            draft.pageChoice.selectedLesson = lesson.id;
+        });
+    }
+
     return (
         <div className="course-lesson-list">
             <div className="course-lesson-list-title">Lessons</div>
@@ -15,7 +24,7 @@ const LessonList: React.FC<LessonListProps> = ({ lessons }) => {
                 + New Lesson
             </div>
             {lessons.map(lesson => (
-                <div key={lesson.id} className="course-lesson-item">
+                <div key={lesson.id} className="course-lesson-item" onClick={() => handleLessonChoice(lesson)}>
                     <div>
                         {lesson.name}
                     </div>
@@ -29,6 +38,15 @@ const LessonList: React.FC<LessonListProps> = ({ lessons }) => {
 };
 
 const PracticeList: React.FC<LessonListProps> = ({ lessons }) => {
+    const setState = useSetStateValue();
+
+    const handleLessonChoice = (lesson: Lesson) => {
+        setState(draft => {
+            draft.pageChoice.workPage = WorkPage.Chat;
+            draft.pageChoice.selectedLesson = lesson.id;
+        });
+    }
+
     return (
         <div className="practice-lesson-list">
             <div className="practice-lesson-list-title">Quick Practice</div>
@@ -36,7 +54,7 @@ const PracticeList: React.FC<LessonListProps> = ({ lessons }) => {
                 + New Practice
             </div>
             {lessons.map(lesson => (
-                <div key={lesson.id} className="practice-lesson-item">
+                <div key={lesson.id} className="practice-lesson-item" onClick={() => handleLessonChoice(lesson)}>
                     <div>
                         {lesson.name}
                     </div>

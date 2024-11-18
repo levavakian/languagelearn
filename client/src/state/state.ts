@@ -4,9 +4,20 @@ import { createAtomHooks } from './statehooks'
 
 export enum WorkPage {
     Lesson = 'lesson',
+    Chat = 'chat',
     AllCourses = 'all-courses',
     Course = 'course',
     Intro = 'intro'
+}
+
+export enum MessageType {
+    Text = 'text',
+    Audio = 'audio',
+}
+
+export enum PreferredResponseType {
+    Text = 'text',
+    Audio = 'audio',
 }
 
 export type Course = {
@@ -20,6 +31,20 @@ export type Lesson = {
     chat_id: string
     updated_at: string
     free_practice: boolean
+}
+
+export type Chat = {
+    id: string
+    name: string
+    lesson_id: string
+}
+
+export type Message = {
+    sender: string;
+    content: string;
+    type: MessageType;
+    preferred_response_type: PreferredResponseType;
+    response_id: string;
 }
 
 export type WrappedState = {
@@ -36,6 +61,10 @@ export type WrappedState = {
         content: Course | null,
         lessons: Lesson[],
     }
+    currentChat: {
+        chat: Chat | null,
+        messages: Message[],
+    }
     toggleRefactor: () => void
     courses: Course[]
 }
@@ -43,7 +72,7 @@ export type WrappedState = {
 const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     auth: {
         token: persisted('login-token', ''),
-        onRequestError: (response: any, msg?: string) => {},
+        onRequestError: (response: any, msg?: string) => { console.log("Request error handler unset",response,msg) },
     },
     pageChoice: {
         workPage: WorkPage.Intro,
@@ -54,7 +83,11 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
         content: null,
         lessons: [],
     },
-    toggleRefactor: () => {},
+    currentChat: {
+        chat: null,
+        messages: [],
+    },
+    toggleRefactor: () => { console.log("Toggle refactor handler unset") },
     courses: [],
 })
 
