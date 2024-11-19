@@ -98,3 +98,13 @@
     background-color: var(--alice-blue);
     cursor: pointer;
 }
+
+.icon-with-background.glowing {
+    box-shadow: 0 0 10px #4CAF50;
+    background-color: rgba(76, 175, 80, 0.2);
+}
+
+.icon-with-background.disabled {
+    opacity: 0.5;
+}
+

@@ -70,9 +70,15 @@ export type WrappedState = {
             hiddenText: Persistable<boolean>
         }
         lastAudioInTime: number
+        latchedResponseId: string
         ws: {
             sendMessage: ((message: string | ArrayBufferLike | Blob | ArrayBufferView) => void) | null
             onMessageCallbacks: Record<string, (data: any) => void>
+        }
+        audioInput: {
+            triggerRecording: () => void,
+            triggerStopRecording: () => void,
+            hasPermission: boolean,
         }
     }
     toggleRefactor: () => void
@@ -102,9 +108,15 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
             hiddenText: persisted('chat-hidden-text', false),
         },
         lastAudioInTime: 0,
+        latchedResponseId: "",
         ws: {
             sendMessage: null,
             onMessageCallbacks: {},
+        },
+        audioInput: {
+            triggerRecording: () => { console.log("Trigger recording handler unset") },
+            triggerStopRecording: () => { console.log("Trigger stoprecording handler unset") },
+            hasPermission: false,
         }
     },
     toggleRefactor: () => { console.log("Toggle refactor handler unset") },

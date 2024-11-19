@@ -1,12 +1,11 @@
 import React from 'react';
 import { Icon } from '../Icon/Icon';
 import './Topbar.css';
-import { useStateValue, useSetStateValue } from '../../state/state';
+import { useSetStateValue } from '../../state/state';
 
 
 export const Topbar = () => {
     const setState = useSetStateValue();
-    const jwt = useStateValue(state => state.auth.token);
 
     const coins = 95;
     return (

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import './MessageWindow.css';
-import { Message, MessageType, useSetStateValue, useStateValue } from '../../state/state';
+import { Message, useSetStateValue, useStateValue } from '../../state/state';
 
 const Avatar = ({ size }: { size: number }) => {
     return (
