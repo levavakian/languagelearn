@@ -109,7 +109,7 @@ const Sidebar = () => {
         } catch (error) {
             console.error('Error fetching courses:', error);
         }
-    }, [jwt, setState]);
+    }, [jwt, setState, onRequestError]);
 
     useEffect(() => {
         fetchCourses();

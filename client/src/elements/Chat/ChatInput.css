@@ -63,6 +63,14 @@
     cursor: pointer;
 }
 
+.left-icons .icon.inactive {
+    opacity: 0.5;
+}
+
+.left-icons .icon.inactive:hover {
+    opacity: 1;
+}
+
 .right-icons {
     display: flex;
     gap: 0.5rem;

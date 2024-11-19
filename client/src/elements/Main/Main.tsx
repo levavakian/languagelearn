@@ -37,7 +37,7 @@ const Main: React.FC<MainProps> = ({ onToggleRefactor }) => {
         setState(draft => {
             draft.toggleRefactor = () => { onToggleRefactor?.(); };
         });
-    }, [setState]);
+    }, [setState, onToggleRefactor]);
 
     const handleLoginSuccess = (response: any) => {
         console.log('Login Success:', response);
