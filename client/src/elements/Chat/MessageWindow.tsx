@@ -65,9 +65,11 @@ export const MessageWindow: React.FC = () => {
     useEffect(() => {
         const uuid = crypto.randomUUID();
         setState(draft => { draft.currentChat.ws.onMessageCallbacks[uuid] = onMessage });
-
-        return () => {
+        const cleanup = () => {
             setState(draft => { delete draft.currentChat.ws.onMessageCallbacks[uuid]; });
+        }
+        return () => {
+            cleanup();
         };
     }, [onMessage, setState]);
 
