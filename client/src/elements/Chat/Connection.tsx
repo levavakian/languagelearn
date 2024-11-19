@@ -8,12 +8,15 @@ export const ForceProxy = (props: { selectedChatId?: string, jwt: string }) => {
     const { selectedChatId, jwt } = props;
     const proxyChat = useCallback(async () => {
         if (selectedChatId) {
-            const response = await fetch(`/api/chat/${selectedChatId}`, {
-                headers: {
-                    'Authorization': `Bearer ${jwt}`
-                }
-            });
-            console.log("Proxy chat response", response);
+            try {
+                await fetch(`/api/chat/${selectedChatId}/ws`, {
+                    headers: {
+                        'Authorization': `Bearer ${jwt}`
+                    }
+                });
+            } catch (error) {
+                console.error("Error proxying chat", error);
+            }
         }
     }, [selectedChatId, jwt]);
     
@@ -30,31 +33,47 @@ export const Connection = () => {
     const selectedChatId = useStateValue(state => state.currentChat.chat?.id);
     const onMessageCallbacks = useStateValue(state => state.currentChat.ws.onMessageCallbacks);
 
-    const { sendMessage, lastMessage, readyState } = useWebSocket(
+    const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(
         selectedChatId ? 
             `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/chat/${selectedChatId}/ws?token=${encodeURIComponent(jwt)}` 
             : null,
         {
-            shouldReconnect: () => true,
-            reconnectAttempts: 10,
-            reconnectInterval: 3000,
+            shouldReconnect: (closeEvent) => {
+                // Don't reconnect if the closure was intentional
+                return closeEvent.code !== 1000 && closeEvent.code !== 1001;
+            },
+            reconnectAttempts: 3,
+            reconnectInterval: (attemptNumber) => Math.min(1000 * Math.pow(2, attemptNumber), 10000),
             onOpen: () => {
                 console.log("WebSocket opened");
                 setState(draft => { draft.currentChat.messages = [] });
             },
-            onClose: () => {
-                console.log("WebSocket closed");
+            onClose: (event) => {
+                console.log("WebSocket closed", event.code, event.reason);
+                setState(draft => {
+                    draft.currentChat.ws.sendMessage = null;
+                });
             },
             onError: (error) => {
-                console.log("WebSocket error");
-                toast.error("There was an error with the WebSocket connection. Please refresh the page.", { id: "ws-error" });
-            }
+                console.log("WebSocket error", error);
+                setState(draft => {
+                    draft.currentChat.ws.sendMessage = null;
+                });
+            },
+            share: true // Share WebSocket instances between hooks with the same url
         }
     );
+
+    useEffect(() => {
+        console.log("spamming");
+    }, [onMessageCallbacks]);
 
     const sendWebSocketMessage = useCallback((message: string | Blob | ArrayBufferView | ArrayBufferLike) => {
         if (readyState === ReadyState.OPEN) {
             sendMessage(message);
+        } else {
+            console.error("WebSocket is not open");
+            toast.error("There was an error with the WebSocket connection. Please refresh the page.", { id: "ws-error" });
         }
     }, [sendMessage, readyState]);
 
@@ -74,9 +93,13 @@ export const Connection = () => {
         }
     }, [lastMessage, onMessageCallbacks]);
 
-    // Cleanup WebSocket state on unmount
+    // Clean up WebSocket connection when chat changes or component unmounts
     useEffect(() => {
+        const ws = getWebSocket();
         return () => {
+            if (ws && ws.readyState === ReadyState.OPEN) {
+                ws.close(1000, 'Intentional disconnect');
+            }
             setState(draft => {
                 draft.currentChat.ws = {
                     sendMessage: null,
@@ -84,7 +107,7 @@ export const Connection = () => {
                 };
             });
         };
-    }, [setState]);
+    }, [getWebSocket, setState, selectedChatId]);
 
     return <div><ForceProxy selectedChatId={selectedChatId} jwt={jwt} /></div>;
 };
