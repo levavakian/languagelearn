@@ -69,6 +69,7 @@ export type WrappedState = {
             alwaysOn: boolean
             hiddenText: Persistable<boolean>
         }
+        lastAudioInTime: number
         ws: {
             sendMessage: ((message: string | ArrayBufferLike | Blob | ArrayBufferView) => void) | null
             onMessageCallbacks: Record<string, (data: any) => void>
@@ -100,6 +101,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
             alwaysOn: false,
             hiddenText: persisted('chat-hidden-text', false),
         },
+        lastAudioInTime: 0,
         ws: {
             sendMessage: null,
             onMessageCallbacks: {},
