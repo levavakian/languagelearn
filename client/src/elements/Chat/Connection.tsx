@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import useWebSocket from 'react-use-websocket';
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useStateValue, useSetStateValue } from '../../state/state';
 import toast from 'react-hot-toast';
 
@@ -15,7 +15,7 @@ export const ForceProxy = (props: { selectedChatId?: string, jwt: string }) => {
             });
             console.log("Proxy chat response", response);
         }
-    }, [selectedChatId]);
+    }, [selectedChatId, jwt]);
     
     useEffect(() => {
         proxyChat();
@@ -30,7 +30,7 @@ export const Connection = () => {
     const selectedChatId = useStateValue(state => state.currentChat.chat?.id);
     const onMessageCallbacks = useStateValue(state => state.currentChat.ws.onMessageCallbacks);
 
-    const { sendMessage, lastMessage } = useWebSocket(
+    const { sendMessage, lastMessage, readyState } = useWebSocket(
         selectedChatId ? 
             `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/chat/${selectedChatId}/ws?token=${encodeURIComponent(jwt)}` 
             : null,
@@ -52,12 +52,17 @@ export const Connection = () => {
         }
     );
 
-    // Store WebSocket send function in state
+    const sendWebSocketMessage = useCallback((message: string | Blob | ArrayBufferView | ArrayBufferLike) => {
+        if (readyState === ReadyState.OPEN) {
+            sendMessage(message);
+        }
+    }, [sendMessage, readyState]);
+
     useEffect(() => {
         setState(draft => {
-            draft.currentChat.ws.sendMessage = sendMessage;
+            draft.currentChat.ws.sendMessage = sendWebSocketMessage;
         });
-    }, [sendMessage, setState]);
+    }, [sendWebSocketMessage, setState]);
 
     // Store WebSocket last message in state
     useEffect(() => {
