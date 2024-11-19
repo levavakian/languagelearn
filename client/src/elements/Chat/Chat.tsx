@@ -7,6 +7,7 @@ import { Connection } from './Connection';
 import { MessageWindow } from './MessageWindow';
 import { ChatInput } from './ChatInput';
 import { AudioInput } from './AudioInput';
+import { AudioOutput } from './AudioOutput';
 
 const Chat = () => {
     const setState = useSetStateValue();
@@ -57,6 +58,7 @@ const Chat = () => {
         <div className="chat-container">
             <Connection />
             <AudioInput />
+            <AudioOutput />
             <MessageWindow />
             <ChatInput />
         </div>

@@ -20,6 +20,22 @@ export const AudioInput = () => {
         audioService.requestPermissions().then(b => setState(draft => { draft.currentChat.audioInput.hasPermission = b }));
     }, [setState]);
 
+    const setLatchedResponseId = useCallback((data: any) => {
+        const message = data as Message
+        setState(draft => { draft.currentChat.latchedResponseId = message.response_id });
+    }, [setState]);
+
+    useEffect(() => {
+        const uuid = crypto.randomUUID();
+        setState(draft => { draft.currentChat.ws.onMessageCallbacks[uuid] = setLatchedResponseId });
+        const cleanup = () => {
+            setState(draft => { delete draft.currentChat.ws.onMessageCallbacks[uuid]; });
+        }
+        return () => {
+            cleanup();
+        };
+    }, [setLatchedResponseId, setState]);
+
     useEffect(() => {
         latchedResponseIdRef.current = latchedResponseId;
     }, [latchedResponseId]);

@@ -9,7 +9,7 @@ export const ForceProxy = (props: { selectedChatId?: string, jwt: string }) => {
     const proxyChat = useCallback(async () => {
         if (selectedChatId) {
             try {
-                await fetch(`/api/chat/${selectedChatId}/ws`, {
+                await fetch(`/api/chat/${selectedChatId}`, {
                     headers: {
                         'Authorization': `Bearer ${jwt}`
                     }
@@ -63,10 +63,6 @@ export const Connection = () => {
             share: true // Share WebSocket instances between hooks with the same url
         }
     );
-
-    useEffect(() => {
-        console.log("spamming");
-    }, [onMessageCallbacks]);
 
     const sendWebSocketMessage = useCallback((message: string | Blob | ArrayBufferView | ArrayBufferLike) => {
         if (readyState === ReadyState.OPEN) {
