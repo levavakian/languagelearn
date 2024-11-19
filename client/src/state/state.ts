@@ -58,21 +58,20 @@ export type WrappedState = {
         selectedLesson: string | null
     }>
     currentCourse: {
-        content: Course | null,
-        lessons: Lesson[],
+        content: Course | null
+        lessons: Lesson[]
     }
     currentChat: {
         chat: Chat | null,
-        messages: Message[],
+        messages: Message[]
         chatOpts: {
-            preferAudio: Persistable<boolean>,
-            alwaysOn: boolean,
-            hiddenText: Persistable<boolean>,
+            preferAudio: Persistable<boolean>
+            alwaysOn: boolean
+            hiddenText: Persistable<boolean>
         }
         ws: {
-            sendMessage: ((message: string | ArrayBufferLike | Blob | ArrayBufferView) => void) | null,
-            lastMessage: { data: any } | null,
-            readyState: number | null,
+            sendMessage: ((message: string | ArrayBufferLike | Blob | ArrayBufferView) => void) | null
+            onMessageCallbacks: Record<string, (data: any) => void>
         }
     }
     toggleRefactor: () => void
@@ -84,11 +83,11 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
         token: persisted('login-token', ''),
         onRequestError: (response: any, msg?: string) => { console.log("Request error handler unset",response,msg) },
     },
-    pageChoice: {
+    pageChoice: persisted('page-choice', {
         workPage: WorkPage.Intro,
         selectedCourse: null,
         selectedLesson: null,
-    },
+    }),
     currentCourse: {
         content: null,
         lessons: [],
@@ -103,8 +102,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
         },
         ws: {
             sendMessage: null,
-            lastMessage: null,
-            readyState: null,
+            onMessageCallbacks: {},
         }
     },
     toggleRefactor: () => { console.log("Toggle refactor handler unset") },

@@ -6,6 +6,7 @@ export const Connection = () => {
     const setState = useSetStateValue();
     const jwt = useStateValue(state => state.auth.token);
     const selectedChatId = useStateValue(state => state.currentChat.chat?.id);
+    const onMessageCallbacks = useStateValue(state => state.currentChat.ws.onMessageCallbacks);
 
     const { sendMessage, lastMessage, readyState } = useWebSocket(
         selectedChatId ? 
@@ -16,6 +17,7 @@ export const Connection = () => {
             reconnectAttempts: 10,
             reconnectInterval: 3000,
             onOpen: () => {
+                console.log("WebSocket opened");
                 setState(draft => { draft.currentChat.messages = [] });
             },
             onError: (error) => {
@@ -33,30 +35,27 @@ export const Connection = () => {
 
     // Store WebSocket last message in state
     useEffect(() => {
-        setState(draft => {
-            draft.currentChat.ws.lastMessage = lastMessage ? { data: lastMessage.data } : null;
-        });
-    }, [lastMessage, setState]);
-
-    // Store WebSocket ready state in state
-    useEffect(() => {
-        setState(draft => {
-            draft.currentChat.ws.readyState = readyState;
-        });
-    }, [readyState, setState]);
+        if (lastMessage) {
+            const data = JSON.parse(lastMessage.data);
+            for (const callback of Object.values(onMessageCallbacks)) {
+                callback(data);
+            }
+        }
+    }, [lastMessage, onMessageCallbacks]);
 
     // Cleanup WebSocket state on unmount
     useEffect(() => {
+        console.log("mounting");
         return () => {
+            console.log("unmounting");
             setState(draft => {
                 draft.currentChat.ws = {
                     sendMessage: null,
-                    lastMessage: null,
-                    readyState: null
+                    onMessageCallbacks: {},
                 };
             });
         };
-    }, []);
+    }, [setState]);
 
     return null;
 };

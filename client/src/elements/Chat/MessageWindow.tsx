@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import './MessageWindow.css';
-import { MessageType, PreferredResponseType, useStateValue } from '../../state/state';
+import { Message, MessageType, useSetStateValue, useStateValue } from '../../state/state';
 
 const Avatar = ({ size }: { size: number }) => {
     return (
@@ -49,156 +49,23 @@ const AssistantMessage = ({ messages }: { messages: string[] }) => {
 };
 
 export const MessageWindow: React.FC = () => {
-    //   const messages = useStateValue(state => state.currentChat.messages);
-    const messages = [
-        {
-            sender: 'user',
-            content: 'Hello! Can you help me practice my Spanish?',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '1'
-        },
-        {
-            sender: 'assistant',
-            content: '¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '2'
-        },
-        {
-            sender: 'user',
-            content: '¿Cómo se dice "I love learning languages"?',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '3'
-        },
-        {
-            sender: 'user',
-            content: 'Hello! Can you help me practice my Spanish?',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '6'
-        },
-        {
-            sender: 'user',
-            content: 'Hello! Can you help me practice my Spanish?',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '7'
-        },
-        {
-            sender: 'assistant',
-            content: '¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '4'
-        },
-        {
-            sender: 'assistant',
-            content: '¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '5'
-        },
-        {
-            sender: 'user',
-            content: 'Hello! Can you help me practice my Spanish?',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '1'
-        },
-        {
-            sender: 'assistant',
-            content: '¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '2'
-        },
-        {
-            sender: 'user',
-            content: '¿Cómo se dice "I love learning languages"?',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '3'
-        },
-        {
-            sender: 'user',
-            content: 'Hello! Can you help me practice my Spanish?',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '6'
-        },
-        {
-            sender: 'user',
-            content: 'Hello! Can you help me practice my Spanish?',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '7'
-        },
-        {
-            sender: 'assistant',
-            content: '¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '4'
-        },
-        {
-            sender: 'assistant',
-            content: '¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '5'
-        },
-        {
-            sender: 'user',
-            content: 'Hello! Can you help me practice my Spanish?',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '1'
-        },
-        {
-            sender: 'assistant',
-            content: '¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '2'
-        },
-        {
-            sender: 'user',
-            content: '¿Cómo se dice "I love learning languages"?',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '3'
-        },
-        {
-            sender: 'user',
-            content: 'Hello! Can you help me practice my Spanish?',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '6'
-        },
-        {
-            sender: 'user',
-            content: 'Hello! Can you help me practice my Spanish?Hello! Can you help me practice my Spanish?Hello! Can you help me practice my Spanish?Hello! Can you help me practice my Spanish?Hello! Can you help me practice my Spanish?Hello! Can you help me practice my Spanish?Hello! Can you help me practice my Spanish?Hello! Can you help me practice my Spanish?Hello! Can you help me practice my Spanish?Hello! Can you help me practice my Spanish?',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '7'
-        },
-        {
-            sender: 'assistant',
-            content: '¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '4'
-        },
-        {
-            sender: 'assistant',
-            content: '¡Hola! Por supuesto, estaré encantado de ayudarte a practicar español.',
-            type: MessageType.Text,
-            preferred_response_type: PreferredResponseType.Text,
-            response_id: '5'
-        },
-    ];
+    const setState = useSetStateValue();
+
+    const messages = useStateValue(state => state.currentChat.messages);
+
+    const onMessage = useCallback((data: any) => {
+        const message = data as Message
+        if (message.type !== 'audio') {
+            setState(draft => {
+                draft.currentChat.messages = [...draft.currentChat.messages, message];
+            });
+        }
+    }, [setState]);
+
+    useEffect(() => {
+        const uuid = crypto.randomUUID();
+        setState(draft => { draft.currentChat.ws.onMessageCallbacks[uuid] = onMessage });
+    }, [onMessage, setState]);
 
     // Group messages by sender
     const groupedMessages = messages.reduce((acc: { sender: string; messages: string[] }[], message) => {
