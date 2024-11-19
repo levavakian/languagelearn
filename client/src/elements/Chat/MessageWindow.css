@@ -1,0 +1,70 @@
+.avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: #284B63; /* indigo-dye color */
+    color: white;
+    font-family: 'Ancorli', sans-serif;
+    font-weight: regular;
+}
+
+.avatar-container {
+    margin-top: 10px;
+}
+
+.message-container {
+    display: flex;
+    align-items: flex-start;
+    margin-left: 12px;
+    padding: 8px 16px;
+    font-family: 'Nobel Uno', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 150%;
+}
+
+.user-message {
+    align-self: flex-start;
+}
+
+.message-bubble {
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-left: 8px;
+    word-wrap: break-word;
+    align-self: flex-start;
+    justify-content: flex-start;
+    max-width: 60%;
+}
+
+.assistant-message .message-bubble {
+    align-self: flex-end;
+    justify-content: flex-end;
+}
+
+.message-window {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 7.25rem;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.messages-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.assistant-message {
+    align-self: flex-end;
+    justify-content: flex-end;
+}
+
+.assistant-message .message-bubble {
+    background-color: var(--coral);
+    color: white;
+}

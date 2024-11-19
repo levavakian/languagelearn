@@ -4,21 +4,8 @@ import { useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useStateValue, useSetStateValue, WorkPage } from '../../state/state';
 import { Icon } from '../Icon/Icon';
-
-const Avatar = ({ size }: { size: number }) => {
-    return (
-        <div 
-            className="avatar"
-            style={{
-                width: `${size}px`,
-                height: `${size}px`,
-                fontSize: `${size * 0.625}px`,
-            }}
-        >
-            A
-        </div>
-    );
-};
+import { Connection } from './Connection';
+import { MessageWindow } from './MessageWindow';
 
 const ChatInput = () => {
     const chatOpts = useStateValue(state => state.currentChat.chatOpts);
@@ -127,7 +114,8 @@ const Chat = () => {
 
     return (
         <div className="chat-container">
-            <Avatar size={32} />
+            <Connection />
+            <MessageWindow />
             <ChatInput />
         </div>
     );

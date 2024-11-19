@@ -69,6 +69,11 @@ export type WrappedState = {
             alwaysOn: boolean,
             hiddenText: Persistable<boolean>,
         }
+        ws: {
+            sendMessage: ((message: string | ArrayBufferLike | Blob | ArrayBufferView) => void) | null,
+            lastMessage: { data: any } | null,
+            readyState: number | null,
+        }
     }
     toggleRefactor: () => void
     courses: Course[]
@@ -95,6 +100,11 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
             preferAudio: persisted('chat-prefer-audio', false),
             alwaysOn: false,
             hiddenText: persisted('chat-hidden-text', false),
+        },
+        ws: {
+            sendMessage: null,
+            lastMessage: null,
+            readyState: null,
         }
     },
     toggleRefactor: () => { console.log("Toggle refactor handler unset") },
