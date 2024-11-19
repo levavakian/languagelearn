@@ -20,9 +20,6 @@ const Avatar = ({ size }: { size: number }) => {
 const UserMessage = ({ messages }: { messages: string[] }) => {
     return (
         <div className="message-container user-message">
-            <div className="avatar-container">
-                <Avatar size={32} />
-            </div>
             <div className="messages-group">
                 {messages.map((text, index) => (
                     <div key={index} className="message-bubble">
@@ -37,6 +34,9 @@ const UserMessage = ({ messages }: { messages: string[] }) => {
 const AssistantMessage = ({ messages }: { messages: string[] }) => {
     return (
         <div className="message-container assistant-message">
+            <div className="avatar-container">
+                <Avatar size={32} />
+            </div>
             <div className="messages-group">
                 {messages.map((text, index) => (
                     <div key={index} className="message-bubble">

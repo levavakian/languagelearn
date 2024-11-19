@@ -24,7 +24,7 @@
     line-height: 150%;
 }
 
-.user-message {
+.assistant-message {
     align-self: flex-start;
 }
 
@@ -46,7 +46,7 @@
     filter: blur(0);
 }
 
-.assistant-message .message-bubble {
+.user-message .message-bubble {
     align-self: flex-end;
     justify-content: flex-end;
 }
@@ -69,12 +69,12 @@
     flex: 1;
 }
 
-.assistant-message {
+.user-message {
     align-self: flex-end;
     justify-content: flex-end;
 }
 
-.assistant-message .message-bubble {
+.user-message .message-bubble {
     background-color: var(--coral);
     color: white;
 }
