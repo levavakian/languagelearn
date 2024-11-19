@@ -1,3 +1,5 @@
+import { toast } from 'react-hot-toast';
+
 type AudioCallback = (chunk: Blob) => void;
 
 class AudioService {
@@ -83,8 +85,17 @@ class AudioService {
       this.isRecording = true;
       console.log('Audio recording started successfully');
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error starting recording:', err);
+      // https://github.com/mdn/browser-compat-data/issues/16213
+      const userAgentString =  navigator.userAgent; 
+      const firefoxAgent = userAgentString.indexOf("Firefox") > -1; 
+      const isSampleError = err.message.includes("AudioContext.createMediaStreamSource: Connecting AudioNodes from AudioContexts with different sample-rate is currently not supported.");
+      if (firefoxAgent && isSampleError) {
+        toast.error(`Error starting audio input, if you are using Firefox please try a different browser`, { id: "audio-input-start"});
+      } else {
+        toast.error(`Error starting audio input`, { id: "audio-input-start"});
+      }
       throw err;
     }
   }
