@@ -9,25 +9,26 @@
 
 /* Apply custom scrollbar styles */
 ::-webkit-scrollbar {
-  width: 12px; /* Scrollbar width */
+  width: 6px; /* Scrollbar width */
 }
 
 /* Scrollbar track */
 ::-webkit-scrollbar-track {
-  background: #333; /* Track color */
+  background: #EEE; /* Track color */
 }
 
 /* Scrollbar thumb */
 ::-webkit-scrollbar-thumb {
-  background: #666; /* Thumb color */
+  background: #AAA; /* Thumb color */
   border-radius: 10px; /* Thumb border-radius */
 }
 
 /* Scrollbar thumb states */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555; /* Hover thumb color */
+  background: #999; /* Hover thumb color */
 }
 
 ::-webkit-scrollbar-thumb:active {
-  background: #444; /* Active thumb color */
+  background: #777; /* Active thumb color */
 }
+

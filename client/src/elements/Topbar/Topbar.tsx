@@ -1,8 +1,13 @@
 import React from 'react';
 import { Icon } from '../Icon/Icon';
 import './Topbar.css';
+import { useStateValue, useSetStateValue } from '../../state/state';
+
 
 export const Topbar = () => {
+    const setState = useSetStateValue();
+    const jwt = useStateValue(state => state.auth.token);
+
     const coins = 95;
     return (
         <div style={{
@@ -20,7 +25,7 @@ export const Topbar = () => {
         </div>
         <button className="buy-button">Buy Coins</button>
         <div className="topbar-icon">
-            <Icon name="user" scale={24} />
+            <Icon name="user" scale={24} onClick={() => setState(draft => { draft.auth.token = "" })}/>
         </div>
         </div>
     );
