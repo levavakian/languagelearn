@@ -52,6 +52,36 @@ export const MessageWindow: React.FC = () => {
     const setState = useSetStateValue();
 
     const messages = useStateValue(state => state.currentChat.messages);
+    const hiddenText = useStateValue(state => state.currentChat.chatOpts.hiddenText);
+
+    // Add ref for the message window container
+    const messageWindowRef = React.useRef<HTMLDivElement>(null);
+    const [isAtBottom, setIsAtBottom] = React.useState(true);
+
+    // Handle scroll events to track if we're at bottom
+    const handleScroll = useCallback(() => {
+        if (messageWindowRef.current) {
+            const { scrollHeight, scrollTop, clientHeight } = messageWindowRef.current;
+            const atBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 10;
+            setIsAtBottom(atBottom);
+        }
+    }, []);
+
+    // Scroll to bottom effect when messages change
+    useEffect(() => {
+        if (messageWindowRef.current && isAtBottom) {
+            messageWindowRef.current.scrollTop = messageWindowRef.current.scrollHeight;
+        }
+    }, [messages, isAtBottom]);
+
+    // Add scroll event listener
+    useEffect(() => {
+        const messageWindow = messageWindowRef.current;
+        if (messageWindow) {
+            messageWindow.addEventListener('scroll', handleScroll);
+            return () => messageWindow.removeEventListener('scroll', handleScroll);
+        }
+    }, [handleScroll]);
 
     const onMessage = useCallback((data: any) => {
         const message = data as Message
@@ -90,7 +120,7 @@ export const MessageWindow: React.FC = () => {
     }, []);
 
     return (
-        <div className="message-window">
+        <div className={`message-window ${hiddenText ? 'hidden-text' : ''}`} ref={messageWindowRef}>
             {groupedMessages.map((group, index) => (
                 group.sender === 'user' ? (
                     <UserMessage key={index} messages={group.messages} />

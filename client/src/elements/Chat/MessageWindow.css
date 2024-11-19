@@ -10,7 +10,7 @@
 }
 
 .avatar-container {
-    margin-top: 10px;
+    margin-top: 5px;
 }
 
 .message-container {
@@ -35,6 +35,15 @@
     word-wrap: break-word;
     max-width: 60%;
     width: max-content;
+    transition: filter 0.2s ease-in-out;
+}
+
+.hidden-text .message-bubble {
+    filter: blur(5px);
+}
+
+.hidden-text .message-bubble:hover {
+    filter: blur(0);
 }
 
 .assistant-message .message-bubble {

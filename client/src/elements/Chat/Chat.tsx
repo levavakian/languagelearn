@@ -1,14 +1,39 @@
 import './Chat.css';
 import './ChatInput.css';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useStateValue, useSetStateValue, WorkPage } from '../../state/state';
+import { useStateValue, useSetStateValue, WorkPage, Message, MessageType, PreferredResponseType } from '../../state/state';
 import { Icon } from '../Icon/Icon';
 import { Connection } from './Connection';
 import { MessageWindow } from './MessageWindow';
 
 const ChatInput = () => {
+    const setState = useSetStateValue();
     const chatOpts = useStateValue(state => state.currentChat.chatOpts);
+
+    const sendMessage = useStateValue(state => state.currentChat.ws.sendMessage);
+    const [inputMessage, setInputMessage] = useState('');
+
+    const sendText = useCallback((text: string) => {
+        if (sendMessage) {
+            let msg: Message = {
+                type: MessageType.Text,
+                content: text.trim(),
+                sender: 'user',
+                preferred_response_type: chatOpts.preferAudio ? PreferredResponseType.Audio : PreferredResponseType.Text,
+                response_id: ""
+            };
+            sendMessage(JSON.stringify(msg));
+        }
+    }, [sendMessage, chatOpts.preferAudio]);
+
+    const submitText = useCallback(() => {
+        if (inputMessage.trim() === '') {
+            return;
+        }
+        sendText(inputMessage);
+        setInputMessage('');
+    }, [inputMessage, setInputMessage, sendText]);
 
     return (
         <div className="chat-input-container">
@@ -17,10 +42,12 @@ const ChatInput = () => {
                     placeholder="Type your message, or hold Alt or Option to speak"
                     className="chat-input-field"
                     rows={1}
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
-                            // Handle send message here
+                            submitText();
                         }
                     }}
                 />
@@ -42,6 +69,7 @@ const ChatInput = () => {
                     <div 
                         className={`icon ${chatOpts.hiddenText ? '' : 'inactive'}`}
                         title={`${chatOpts.hiddenText ? 'Click to disable hidden text mode' : 'Click to enable hidden text mode, which will blur the chat text to help with listening practice'}`}
+                        onClick={() => setState(draft => { draft.currentChat.chatOpts.hiddenText = !draft.currentChat.chatOpts.hiddenText })}
                     >
                         <Icon scale={24} name="eyebrow" />
                     </div>
@@ -53,7 +81,7 @@ const ChatInput = () => {
                     </div>
                 </div>
                 <div className="right-icons">
-                    <div className="icon-with-background">
+                    <div className="icon-with-background" onClick={submitText}>
                         <Icon scale={12} rotation={90} name="arrow" />
                     </div>
                     <div className="icon-with-background">
