@@ -66,12 +66,7 @@ export const AudioInput = () => {
         }
     }, [sendMessage, micAlwaysOn]);
 
-    useEffect(() => {
-        console.log("onAudioChunk", onAudioChunk);
-    }, [onAudioChunk]);
-
     const startRecording = useCallback(async () => {
-        console.log("Start recording");
         if (!recordingRef.current) {
             try {
                 await audioService.startRecording((chunk: Blob) => {
@@ -85,7 +80,6 @@ export const AudioInput = () => {
     }, [onAudioChunk, setRecording, setState]);
 
     const stopRecording = useCallback(async () => {
-        console.log("Stop recording");
         if (recordingRef.current) {
             audioService.stopRecording();
             onAudioChunk(new Blob(), true, false); // Pass stoppedAlwaysOn to callback

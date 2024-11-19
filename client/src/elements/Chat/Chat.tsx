@@ -1,6 +1,6 @@
 import './Chat.css';
 import './ChatInput.css';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useStateValue, useSetStateValue, WorkPage } from '../../state/state';
 import { Connection } from './Connection';

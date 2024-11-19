@@ -1,6 +1,28 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import useWebSocket from 'react-use-websocket';
 import { useStateValue, useSetStateValue } from '../../state/state';
+import toast from 'react-hot-toast';
+
+// Do this just for the chat proxy to trigger
+export const ForceProxy = (props: { selectedChatId?: string, jwt: string }) => {
+    const { selectedChatId, jwt } = props;
+    const proxyChat = useCallback(async () => {
+        if (selectedChatId) {
+            const response = await fetch(`/api/chat/${selectedChatId}`, {
+                headers: {
+                    'Authorization': `Bearer ${jwt}`
+                }
+            });
+            console.log("Proxy chat response", response);
+        }
+    }, [selectedChatId]);
+    
+    useEffect(() => {
+        proxyChat();
+    }, [proxyChat]);
+
+    return null;
+}
 
 export const Connection = () => {
     const setState = useSetStateValue();
@@ -20,8 +42,12 @@ export const Connection = () => {
                 console.log("WebSocket opened");
                 setState(draft => { draft.currentChat.messages = [] });
             },
+            onClose: () => {
+                console.log("WebSocket closed");
+            },
             onError: (error) => {
-                console.error("WebSocket error:", error);
+                console.log("WebSocket error");
+                toast.error("There was an error with the WebSocket connection. Please refresh the page.", { id: "ws-error" });
             }
         }
     );
@@ -45,9 +71,7 @@ export const Connection = () => {
 
     // Cleanup WebSocket state on unmount
     useEffect(() => {
-        console.log("mounting");
         return () => {
-            console.log("unmounting");
             setState(draft => {
                 draft.currentChat.ws = {
                     sendMessage: null,
@@ -57,5 +81,5 @@ export const Connection = () => {
         };
     }, [setState]);
 
-    return null;
+    return <div><ForceProxy selectedChatId={selectedChatId} jwt={jwt} /></div>;
 };
