@@ -4,6 +4,10 @@ import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan } from '.
 import toast from 'react-hot-toast';
 import { Icon } from '../Icon/Icon';
 
+const QuickPrompts = () => {
+    return <div>QuickPrompts</div>;
+}
+
 const CustomInstructions = () => {
     const settings = useStateValue(state => state.currentCourse.settings);
     const [editing, setEditing] = useState(false);
