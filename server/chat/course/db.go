@@ -598,3 +598,43 @@ func DeductCredits(email string, amount int64) error {
 
 	return nil
 }
+
+// CheckCourseOwnership verifies if a course exists and if it is owned by a given user ID.
+// It returns two boolean values: whether the course exists and whether the user is the owner.
+func CheckCourseOwnership(courseID string, userID string) (bool, bool, error) {
+	var ownerID string
+	err := db.DB.QueryRow(
+		"SELECT creator_id FROM courses WHERE id = $1",
+		courseID,
+	).Scan(&ownerID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, false, nil // Course does not exist
+		}
+		return false, false, fmt.Errorf("failed to query course ownership: %v", err)
+	}
+
+	if ownerID != userID {
+		return true, false, nil // Course exists but user is not the owner
+	}
+
+	return true, true, nil // Course exists and user is the owner
+}
+
+func updateCourseCustomInstructions(courseID string, customInstructions string) error {
+	// Get current settings
+	settings, err := getCourseSettingsFromDB(courseID)
+	if err != nil {
+		return fmt.Errorf("failed to get current settings: %v", err)
+	}
+
+	// Update custom instructions
+	settings.CustomInstructions = customInstructions
+
+	// Save updated settings
+	if err := saveCourseSettingsToDB(*settings); err != nil {
+		return fmt.Errorf("failed to save settings: %v", err)
+	}
+
+	return nil
+}

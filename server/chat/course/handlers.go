@@ -19,6 +19,10 @@ type CreateLessonRequest struct {
 	FreePractice      bool   `json:"free_practice"`
 }
 
+type CustomInstructionsRequest struct {
+	CustomInstructions string `json:"customInstructions"`
+}
+
 // Database helper functions
 func getCourseCreator(courseID string) (string, error) {
 	var creatorID string
@@ -983,7 +987,7 @@ func getChatByLesson(w http.ResponseWriter, r *http.Request) {
 
 	// Verify course ownership
 	if err := verifyOwnership(lesson.CourseID, userEmail); err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 
@@ -996,4 +1000,55 @@ func getChatByLesson(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(chat)
+}
+
+func updateCustomInstructions(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	courseID := vars["id"]
+	userEmail := r.Header.Get("X-User-Email")
+
+	// Verify course ownership
+	exists, isOwner, err := CheckCourseOwnership(courseID, userEmail)
+	if err != nil {
+		fmt.Printf("Error checking course ownership: %v\n", err)
+		http.Error(w, "Failed to verify course ownership", http.StatusInternalServerError)
+		return
+	}
+	if !exists {
+		fmt.Printf("Course not found: %s\n", courseID)
+		http.Error(w, "Course not found", http.StatusNotFound)
+		return
+	}
+	if !isOwner {
+		fmt.Printf("Unauthorized access attempt by %s for course %s\n", userEmail, courseID)
+		http.Error(w, "Unauthorized", http.StatusForbidden)
+		return
+	}
+
+	// Parse request body
+	var req CustomInstructionsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		fmt.Printf("Error decoding request body: %v\n", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Update the custom instructions
+	if err := updateCourseCustomInstructions(courseID, req.CustomInstructions); err != nil {
+		fmt.Printf("Error updating custom instructions: %v\n", err)
+		http.Error(w, "Failed to update custom instructions", http.StatusInternalServerError)
+		return
+	}
+
+	// Get the updated settings to return
+	settings, err := getCourseSettingsFromDB(courseID)
+	if err != nil {
+		fmt.Printf("Error fetching updated settings: %v\n", err)
+		http.Error(w, "Failed to reload custom instructions", http.StatusInternalServerError)
+		return
+	}
+
+	// Return the updated settings
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(settings)
 }

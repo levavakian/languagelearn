@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import './Main.css';
 import { State, useStateValue, useSetStateValue } from '../../state/state';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
@@ -18,16 +18,17 @@ const Main: React.FC<MainProps> = ({ onToggleRefactor }) => {
         setState(draft => {
             console.log("Setting up response error handler");
             draft.auth.onRequestError = (response: any, msg?: string) => {
-                console.log("Got response error",response);
-                if (msg) {
-                    toast.error(msg);
-                }
-
                 console.log("Checking status",response.status);
                 if (response.status === 401) {
                     console.log("Expiring token");
-                    toast.error('Your session has expired. Please login again.');
+                    toast.error('Your session has expired. Please log in again.', {id: "session-expired"});
                     setState(draft => { draft.auth.token = "" });
+                    return;
+                }
+
+                console.log("Got response error", response);
+                if (msg) {
+                    toast.error(msg);
                 }
             };
         });
