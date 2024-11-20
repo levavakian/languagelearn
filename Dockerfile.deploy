@@ -50,6 +50,7 @@ RUN chmod +x /app/db.sh
 
 # Create a startup script
 RUN echo '#!/bin/bash\n\
+export PATH=$PATH:/usr/lib/postgresql/16/bin\n\
 trap "exit" TERM\n\
 /app/db.sh 2>&1 | sed "s/^/[DB] /" & DB_PID=$!\n\
 DB_PATH="postgresql://user@localhost:5432/postgres?sslmode=disable"./server 2>&1 | sed "s/^/[SERVER] /" & SERVER_PID=$!\n\
