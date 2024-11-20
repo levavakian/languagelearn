@@ -14,7 +14,21 @@ const VocabList = () => {
             <div>
                 Vocabulary
             </div>
-            <hr style={{ width: '100%', border: '1px solid var(--quarter-grey)', margin: '20px 0' }} />
+            <hr style={{ width: '98%', justifySelf: 'left', border: '1px solid var(--quarter-grey)', margin: '20px 0' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', gap: '10px' }}>
+                <input className="vocab-bubble input" placeholder="Word" />
+                <input className="vocab-bubble input" placeholder="Definition" />
+                <div className="vocab-bubble add">Add</div>
+            </div>
+            {Object.entries(settings.vocabItems).map(([key, value]) => (
+                <div key={key} className="vocab-item">
+                    <div className="vocab-word">{value.word}</div>
+                    <div className="vocab-definition">{value.definition}</div>
+                </div>
+            ))}
+            <div className="vocab-view-all">
+                View All
+            </div>
         </div>
     );
 }
@@ -45,7 +59,7 @@ const SettingsLoader = () => {
         return () => {
             setState(draft => { draft.currentCourse.settings = null });
         }
-    }, [fetchSettings]);
+    }, [fetchSettings, setState]);
 
     return null;
 }
@@ -236,6 +250,19 @@ const CourseView: React.FC = () => {
                     <PracticeList lessons={lessons.filter(lesson => lesson.free_practice)} />
                     <VocabList />
                 </div>
+            </div>
+            <hr style={{ width: '95%', justifySelf: 'left', border: '1px solid var(--quarter-grey)', margin: '20px 0' }} />
+            <div className="course-content-container">
+                {/* <div className="course-content-left">
+                    <LessonList lessons={lessons.filter(lesson => !lesson.free_practice)} />
+                    <div style={{marginTop: '20px'}}>
+                        <LessonPlanList />
+                    </div>
+                </div>
+                <div className="course-content-right">
+                    <PracticeList lessons={lessons.filter(lesson => lesson.free_practice)} />
+                    <VocabList />
+                </div> */}
             </div>
         </div>
     );
