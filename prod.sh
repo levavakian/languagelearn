@@ -4,7 +4,7 @@
 trap 'kill $(jobs -p); exit' INT
 
 # Start the first process
-sudo chown -R user:user ${DB_PATH}
+chown -R user:user ${DB_PATH}
 PATH="/usr/lib/postgresql/16/bin:${PATH}" ./db.sh &
 
 # Start the second process
