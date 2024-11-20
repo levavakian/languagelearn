@@ -7,7 +7,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Create a non-root user
 RUN useradd -m -s /bin/bash user && \
     mkdir -p /var/dbdata && \
-    echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     chown -R user:user /var/dbdata
 
 # Update and install necessary packages
@@ -18,6 +17,8 @@ RUN apt-get update && apt-get install -y \
     sudo \
     postgresql \
     postgresql-contrib
+
+RUN echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Install Node.js and npm using NodeSource
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
