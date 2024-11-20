@@ -1,41 +1,78 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import './CourseView.css';
 import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan } from '../../state/state';
 import toast from 'react-hot-toast';
 
+const VocabList = () => {
+    const settings = useStateValue(state => state.currentCourse.settings);
+    if (!settings) {
+        return <div className="vocab-list">Loading...</div>;
+    }
+
+    return (
+        <div className="vocab-list">
+            <div>
+                Vocabulary
+            </div>
+            <hr style={{ width: '100%', border: '1px solid var(--quarter-grey)', margin: '20px 0' }} />
+        </div>
+    );
+}
+
+const SettingsLoader = () => {
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
+    const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
+    const setState = useSetStateValue();
+
+    const fetchSettings = useCallback(async () => {
+        const response = await fetch(`/api/course/${selectedCourseId}/settings`, {
+            headers: {
+                'Authorization': `Bearer ${jwt}`
+            }
+        });
+        if (!response.ok) {
+            onRequestError(response, "Error fetching course settings");
+            return;
+        }
+        const data = await response.json();
+        setState(draft => { draft.currentCourse.settings = data });
+    }, [jwt, selectedCourseId, onRequestError, setState]);
+
+    useEffect(() => {
+        fetchSettings();
+
+        return () => {
+            setState(draft => { draft.currentCourse.settings = null });
+        }
+    }, [fetchSettings]);
+
+    return null;
+}
+
 const LessonPlanList = () => {
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
+    const [lessonPlans, setLessonPlans] = useState<LessonPlan[]>([]);
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
 
-    const exampleLessonPlans: LessonPlan[] = [
-        {
-            id: "lp1",
-            course_id: "c1",
-            title: "Introduction to Spanish Greetings",
-            content: "In this lesson, we'll cover basic Spanish greetings:\n- Hola (Hello)\n- Buenos días (Good morning)\n- Buenas tardes (Good afternoon)\n- Buenas noches (Good night)\n- ¿Cómo estás? (How are you?)",
-            created_at: "2024-03-20T10:00:00Z"
-        },
-        {
-            id: "lp2",
-            course_id: "c1",
-            title: "Basic Spanish Numbers 1-10",
-            content: "Learn to count in Spanish:\n1. uno\n2. dos\n3. tres\n4. cuatro\n5. cinco\n6. seis\n7. siete\n8. ocho\n9. nueve\n10. diez",
-            created_at: "2024-03-20T10:30:00Z"
-        },
-        {
-            id: "lp3",
-            course_id: "c2",
-            title: "Common French Phrases",
-            content: "Essential French phrases:\n- Bonjour (Hello)\n- S'il vous plaît (Please)\n- Merci (Thank you)\n- De rien (You're welcome)\n- Au revoir (Goodbye)",
-            created_at: "2024-03-20T11:00:00Z"
-        },
-        {
-            id: "lp4",
-            course_id: "c2",
-            title: "French Articles",
-            content: "Understanding French articles:\n- le (masculine)\n- la (feminine)\n- les (plural)\n- un (indefinite masculine)\n- une (indefinite feminine)",
-            created_at: "2024-03-20T11:30:00Z"
+    const fetchLessonPlans = useCallback(async () => {
+        const response  = await fetch(`/api/course/${selectedCourseId}/lesson-plans`, {
+            headers: {
+                'Authorization': `Bearer ${jwt}`
+            }
+        });
+        if (!response.ok) {
+            onRequestError(response, "Error fetching lesson plans");
+            return;
         }
-    ]
+        const data = await response.json();
+        setLessonPlans(data);
+    }, [jwt, selectedCourseId, onRequestError]);
+
+    useEffect(() => {
+        fetchLessonPlans();
+    }, [fetchLessonPlans]);
 
     return (
         <div>
@@ -46,7 +83,7 @@ const LessonPlanList = () => {
                 <div className="lesson-plan-item add-new-lesson-plan">
                     + New Lesson Plan
                 </div>
-                {exampleLessonPlans.map(lessonPlan => (
+                {lessonPlans.map(lessonPlan => (
                     <div className="lesson-plan-item" key={lessonPlan.id}>{lessonPlan.title}</div>
                 ))}
             </div>
@@ -186,6 +223,7 @@ const CourseView: React.FC = () => {
 
     return (
         <div className="course-view">
+            <SettingsLoader />
             <span className="course-title">{currentCourse?.name}</span>
             <div className="course-content-container">
                 <div className="course-content-left">
@@ -196,6 +234,7 @@ const CourseView: React.FC = () => {
                 </div>
                 <div className="course-content-right">
                     <PracticeList lessons={lessons.filter(lesson => lesson.free_practice)} />
+                    <VocabList />
                 </div>
             </div>
         </div>

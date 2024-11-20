@@ -65,7 +65,7 @@
 }
 
 .course-lesson-list-add-lesson {
-    padding: 10px 40px;
+    padding: 10px 20px;
     border-radius: 1rem;
     font-size: 14px;
     font-weight: 600;
@@ -128,7 +128,7 @@
 }
 
 .practice-lesson-list-add-lesson {
-    padding: 10px 40px;
+    padding: 10px 20px;
     border-radius: 1rem;
     font-size: 14px;
     font-weight: 600;
@@ -225,7 +225,19 @@
     font-size: 24px;
     font-weight: 800;
     font-family: 'Nobel Uno', sans-serif !important;
+    margin-top: 40px;
     color: var(--indigo-dye);
     margin-bottom: 10px;
 }
 
+.vocab-list {
+    font-size: 22px;
+    font-weight: 600;
+    font-family: 'Nobel Uno', sans-serif !important;
+    color: var(--indigo-dye);
+    border-radius: 0.5rem;
+    padding: 0px 30px;
+    border: none;
+    margin-top: 40px;
+    width: 100%;
+}

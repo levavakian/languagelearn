@@ -22,7 +22,7 @@ export interface NoteNode {
   name: string;
   type: 'folder' | 'note';
   children?: NoteNode[];
-  isExpanded?: boolean;
+  is_expanded?: boolean;
 }
 
 interface SettingsProps {
@@ -166,7 +166,7 @@ const SettingsPage: React.FC<SettingsProps> = ({
       name,
       type,
       children: type === 'folder' ? [] : undefined,
-      isExpanded: true
+      is_expanded: true
     };
 
     const newSettings = { ...settings };
@@ -202,7 +202,7 @@ const SettingsPage: React.FC<SettingsProps> = ({
     const updateNodes = (nodes: NoteNode[]): NoteNode[] => {
       return nodes.map(node => {
         if (node.id === nodeId) {
-          return { ...node, isExpanded: !node.isExpanded };
+          return { ...node, is_expanded: !node.is_expanded };
         }
         if (node.children) {
           return { ...node, children: updateNodes(node.children) };
@@ -275,7 +275,7 @@ const SettingsPage: React.FC<SettingsProps> = ({
               onClick={() => toggleExpand(node.id)}
               style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '4px' }}
             >
-              {node.isExpanded ? '▼' : '▶'}
+              {node.is_expanded ? '▼' : '▶'}
             </button>
           )}
           {node.type === 'folder' ? '📁' : ''}
@@ -369,7 +369,7 @@ const SettingsPage: React.FC<SettingsProps> = ({
           </div>
         )}
         
-        {node.children && node.isExpanded && node.children.map(child => renderNode(child, level + 1))}
+        {node.children && node.is_expanded && node.children.map(child => renderNode(child, level + 1))}
       </div>
     );
   };

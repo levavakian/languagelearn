@@ -25,6 +25,30 @@ export type Course = {
     name: string
 }
 
+export type CourseSettings = {
+    id: string
+    notes: NoteNode[]
+    customInstructions?: string
+    vocabItems: Record<string, VocabItem>
+}
+
+export type NoteNode = {
+    id: string
+    name: string
+    type: string
+    children?: NoteNode[]
+    is_expanded?: boolean
+}
+
+export type VocabItem = {
+    type: string
+    word: string
+    definition: string
+    notes?: string
+    lastUsed: string
+    usageCount: number
+}
+
 export type Lesson = {
     id: string
     name: string
@@ -69,6 +93,7 @@ export type WrappedState = {
     currentCourse: {
         content: Course | null
         lessons: Lesson[]
+        settings: CourseSettings | null
     }
     currentChat: {
         chat: Chat | null,
@@ -107,6 +132,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     currentCourse: {
         content: null,
         lessons: [],
+        settings: null,
     },
     currentChat: {
         chat: null,
