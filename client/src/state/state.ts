@@ -31,6 +31,15 @@ export type Lesson = {
     chat_id: string
     updated_at: string
     free_practice: boolean
+    order_index: number
+}
+
+export type LessonPlan = {
+    id: string
+    course_id: string
+    title: string
+    content: string
+    created_at: string
 }
 
 export type Chat = {

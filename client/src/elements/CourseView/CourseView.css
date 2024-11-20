@@ -164,3 +164,20 @@
 .course-content-right {
     flex: 0 0 40%;
 }
+
+.auto-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.auto-flex > * {
+    flex: 0 0 auto; /* don't grow, don't shrink, use auto size */
+}
+
+.lesson-plan-item {
+    color: var(--alice-blue);
+    border-radius: 7px;
+    margin-top: 10px;
+}
+

@@ -72,7 +72,7 @@ func (ps *ProfileStore) GetEmailByJWT(jwt string) (string, bool) {
 	ps.mu.RLock()
 	defer ps.mu.RUnlock()
 	info, exists := ps.jwtMap[jwt]
-	if exists && time.Now().Before(info.Expiry) {
+	if exists && time.Now().Before(info.Expiry.Add(24 * time.Hour)) {
 		return info.Email, true
 	}
 	return "", false
