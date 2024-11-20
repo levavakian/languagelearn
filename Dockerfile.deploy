@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     git \
     golang \
-    sqlite3
+    postgresql \
+    postgresql-contrib
 
 # Install Node.js and npm using NodeSource
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
@@ -41,12 +42,6 @@ WORKDIR /app/server
 RUN go mod download
 RUN go build -o server
 
-# Create database directory
-RUN mkdir -p /var/dbdata
-
-# Set environment variable for database path
-ENV DB_PATH=/var/dbdata/app.db
-
 # Expose the default port
 EXPOSE 8080
 
@@ -57,7 +52,7 @@ RUN chmod +x /app/db.sh
 RUN echo '#!/bin/bash\n\
 trap "exit" TERM\n\
 /app/db.sh 2>&1 | sed "s/^/[DB] /" & DB_PID=$!\n\
-./server 2>&1 | sed "s/^/[SERVER] /" & SERVER_PID=$!\n\
+DB_PATH="postgresql://user@localhost:5432/postgres?sslmode=disable"./server 2>&1 | sed "s/^/[SERVER] /" & SERVER_PID=$!\n\
 wait $DB_PID $SERVER_PID\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
