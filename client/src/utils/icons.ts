@@ -18,6 +18,8 @@ export const IconPaths = {
     speaker: '/icons/speaker.svg',
     settings: '/icons/settings.svg',
     arrow: '/icons/arrow.svg',
+    check: '/icons/check.svg',
+    x: '/icons/x.svg',
   } as const;
   
   export type IconName = keyof typeof IconPaths;

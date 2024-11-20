@@ -2,6 +2,7 @@ import React, { useEffect, useCallback, useState } from 'react';
 import './CourseView.css';
 import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan } from '../../state/state';
 import toast from 'react-hot-toast';
+import { Icon } from '../Icon/Icon';
 
 const VocabList = () => {
     const settings = useStateValue(state => state.currentCourse.settings);
@@ -239,19 +240,24 @@ const CourseView: React.FC = () => {
         <div className="course-view">
             <SettingsLoader />
             <span className="course-title">{currentCourse?.name}</span>
-            <div className="course-content-container">
-                <div className="course-content-left">
-                    <LessonList lessons={lessons.filter(lesson => !lesson.free_practice)} />
-                    <div style={{marginTop: '20px'}}>
-                        <LessonPlanList />
+            <div>
+                <div className="course-content-container">
+                    <div className="course-content-left">
+                        <LessonList lessons={lessons.filter(lesson => !lesson.free_practice)} />
+                        <div style={{marginTop: '20px'}}>
+                            <LessonPlanList />
+                        </div>
+                    </div>
+                    <div className="course-content-right">
+                        <PracticeList lessons={lessons.filter(lesson => lesson.free_practice)} />
+                        <VocabList />
+                        
                     </div>
                 </div>
-                <div className="course-content-right">
-                    <PracticeList lessons={lessons.filter(lesson => lesson.free_practice)} />
-                    <VocabList />
-                </div>
+                <hr style={{ width: '95%', justifySelf: 'left', border: '1px solid var(--quarter-grey)', margin: '20px 0' }} />
             </div>
-            <hr style={{ width: '95%', justifySelf: 'left', border: '1px solid var(--quarter-grey)', margin: '20px 0' }} />
+            <Icon scale={32} name="x" />
+            <Icon scale={32} name="check" />
             <div className="course-content-container">
                 {/* <div className="course-content-left">
                     <LessonList lessons={lessons.filter(lesson => !lesson.free_practice)} />
