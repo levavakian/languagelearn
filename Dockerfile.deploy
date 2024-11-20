@@ -50,8 +50,19 @@ ENV DB_PATH=/var/dbdata/app.db
 # Expose the default port
 EXPOSE 8080
 
-# Start the server
-CMD ["./server"]
+# Copy the database script and make it executable
+RUN chmod +x /app/db.sh
+
+# Create a startup script
+RUN echo '#!/bin/bash\n\
+trap "exit" TERM\n\
+/app/db.sh 2>&1 | sed "s/^/[DB] /" & DB_PID=$!\n\
+./server 2>&1 | sed "s/^/[SERVER] /" & SERVER_PID=$!\n\
+wait $DB_PID $SERVER_PID\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
+# Change the CMD to use the startup script
+CMD ["/app/start.sh"]
 
 # Docker build command to use:
 #    docker build \

@@ -6,7 +6,7 @@ set -e
 set -o pipefail
 
 # Initialize PostgreSQL data directory if it doesn't exist
-DATA_DIR="/app/dbdata/postgres"
+DATA_DIR="${DB_PATH:-/app/dbdata/postgres}"
 if [ ! -d "$DATA_DIR" ]; then
     mkdir -p "$DATA_DIR"
     pg_ctl initdb -D "$DATA_DIR" -U "$USER"
