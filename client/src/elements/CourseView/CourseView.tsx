@@ -38,10 +38,18 @@ const LessonPlanList = () => {
     ]
 
     return (
-        <div className="auto-flex">
-            {exampleLessonPlans.map(lessonPlan => (
-                <div className="lesson-plan-item" key={lessonPlan.id}>{lessonPlan.title}</div>
-            ))}
+        <div>
+            <div className="lesson-plan-list-title">
+                Lesson Templates
+            </div>
+            <div className="auto-flex">
+                <div className="lesson-plan-item add-new-lesson-plan">
+                    + New Lesson Plan
+                </div>
+                {exampleLessonPlans.map(lessonPlan => (
+                    <div className="lesson-plan-item" key={lessonPlan.id}>{lessonPlan.title}</div>
+                ))}
+            </div>
         </div>
     );
 }
@@ -62,7 +70,7 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
             <div className="course-lesson-list-add-lesson">
                 + Start New Lesson
             </div>
-            {lessons.map(lesson => (
+                {lessons.map(lesson => (
                 <div key={lesson.id} className="course-lesson-item" onClick={() => handleLessonChoice(lesson)}>
                     <div>
                         Lesson {lesson.order_index + 1}: {lesson.name}
@@ -72,6 +80,9 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
                     </div>
                 </div>
             ))}
+            <div className="lessons-view-all">
+                View All
+            </div>
         </div>
     );
 };
@@ -102,6 +113,9 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
                     </div>
                 </div>
             ))}
+            <div className="practice-view-all">
+                View All
+            </div>
         </div>
     );
 };
@@ -176,7 +190,9 @@ const CourseView: React.FC = () => {
             <div className="course-content-container">
                 <div className="course-content-left">
                     <LessonList lessons={lessons.filter(lesson => !lesson.free_practice)} />
-                    <LessonPlanList />
+                    <div style={{marginTop: '20px'}}>
+                        <LessonPlanList />
+                    </div>
                 </div>
                 <div className="course-content-right">
                     <PracticeList lessons={lessons.filter(lesson => lesson.free_practice)} />

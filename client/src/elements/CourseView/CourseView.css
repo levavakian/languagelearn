@@ -177,7 +177,55 @@
 
 .lesson-plan-item {
     color: var(--alice-blue);
-    border-radius: 7px;
+    height: 20px;
+    min-width: 100px;
+    padding: 5px 20px;
+    max-width: 300px;
+    font-weight: 600;
+    color: var(--indigo-dye);
+    background-color: var(--alice-blue);
+    white-space: nowrap;         /* Prevent text from wrapping */
+    overflow: hidden;            /* Hide overflow content */
+    text-overflow: ellipsis;     /* Show ellipsis for overflow text */
+    font-size: 17px;
+    border-radius: 15px;
+    border: 2px solid var(--quarter-grey);
+}
+
+.lesson-plan-item:hover {
+    background-color: var(--alice-dark);
+}
+
+.lessons-view-all {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--indigo-dye);
     margin-top: 10px;
+    margin-left: 5px;
+}
+
+.practice-view-all {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--indigo-dye);
+    margin-top: 15px;
+    margin-left: 5px;
+}
+
+.lesson-plan-item.add-new-lesson-plan {
+    color: var(--baby-powder);
+    background-color: var(--coral);
+}
+
+.lesson-plan-item.add-new-lesson-plan:hover {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05));
+}
+
+.lesson-plan-list-title {
+    font-size: 24px;
+    font-weight: 800;
+    font-family: 'Nobel Uno', sans-serif !important;
+    color: var(--indigo-dye);
+    margin-bottom: 10px;
 }
 
