@@ -5,6 +5,8 @@
   flex-direction: column;
   margin-left: sidebar-width;
   overflow-y: auto;
+  color: var(--indigo-dye);
+  font-family: 'Nobel Uno', sans-serif !important;
 }
 
 /* Apply custom scrollbar styles */

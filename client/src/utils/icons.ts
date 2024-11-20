@@ -20,6 +20,7 @@ export const IconPaths = {
     arrow: '/icons/arrow.svg',
     check: '/icons/check.svg',
     x: '/icons/x.svg',
+    pencil: '/icons/pencil.svg',
   } as const;
   
   export type IconName = keyof typeof IconPaths;

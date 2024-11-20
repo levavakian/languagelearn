@@ -154,8 +154,6 @@
 .course-content-container {
     display: flex;
     width: 100%;
-    /* margin-right: 10px; */
-    /* margin-left: -10px;  */
     padding: 0;
     gap: 75px;
     width: fit-content;
@@ -318,4 +316,24 @@
     color: var(--coral);
     margin-top: 15px;
     margin-left: 5px;
+}
+
+.custom-instructions-container {
+    padding: 0px 30px;
+    border: none;
+    margin-top: 40px;
+    width: 100%;
+}
+
+.custom-instructions {
+    border: none;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.custom-instructions-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--indigo-dye);
+    margin-top: 0px;
 }

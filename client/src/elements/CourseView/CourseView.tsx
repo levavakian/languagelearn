@@ -4,6 +4,26 @@ import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan } from '.
 import toast from 'react-hot-toast';
 import { Icon } from '../Icon/Icon';
 
+const CustomInstructions = () => {
+    const settings = useStateValue(state => state.currentCourse.settings);
+    const [editing, setEditing] = useState(false);
+    if (!settings) {
+        return null;
+    }
+    return (
+        <div className="custom-instructions-container">
+            <div
+                className="custom-instructions-title"
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
+                <div>Custom Instructions</div>
+                <Icon scale={12} name="pencil" />
+            </div>
+            <div className="custom-instructions">{settings.customInstructions}</div>
+        </div>
+    );
+}
+
 const VocabList = () => {
     const settings = useStateValue(state => state.currentCourse.settings);
     if (!settings) {
@@ -240,26 +260,8 @@ const CourseView: React.FC = () => {
         <div className="course-view">
             <SettingsLoader />
             <span className="course-title">{currentCourse?.name}</span>
-            <div>
-                <div className="course-content-container">
-                    <div className="course-content-left">
-                        <LessonList lessons={lessons.filter(lesson => !lesson.free_practice)} />
-                        <div style={{marginTop: '20px'}}>
-                            <LessonPlanList />
-                        </div>
-                    </div>
-                    <div className="course-content-right">
-                        <PracticeList lessons={lessons.filter(lesson => lesson.free_practice)} />
-                        <VocabList />
-                        
-                    </div>
-                </div>
-                <hr style={{ width: '95%', justifySelf: 'left', border: '1px solid var(--quarter-grey)', margin: '20px 0' }} />
-            </div>
-            <Icon scale={32} name="x" />
-            <Icon scale={32} name="check" />
             <div className="course-content-container">
-                {/* <div className="course-content-left">
+                <div className="course-content-left">
                     <LessonList lessons={lessons.filter(lesson => !lesson.free_practice)} />
                     <div style={{marginTop: '20px'}}>
                         <LessonPlanList />
@@ -268,8 +270,11 @@ const CourseView: React.FC = () => {
                 <div className="course-content-right">
                     <PracticeList lessons={lessons.filter(lesson => lesson.free_practice)} />
                     <VocabList />
-                </div> */}
+                    <CustomInstructions />
+                </div>
             </div>
+            <Icon scale={32} name="x" />
+            <Icon scale={32} name="check" />
         </div>
     );
 };
