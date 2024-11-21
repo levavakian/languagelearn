@@ -364,12 +364,20 @@
 
 .notes-editor {
     padding: 0px 0px;
-    border: 2px solid var(--indigo-dye);
+    border: 1.5px solid var(--indigo-dye);
     background-color: var(--white);
-    border-radius: 10px;
+    border-radius: 12px;
     margin-top: 40px;
     width: 100%;
     height: max-content;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 0 var(--indigo-dye);
+    position: relative;
+    padding: 5px;
+    overflow-y: auto;
+    max-height: 600px;
+    overflow-x: hidden;
+    min-width: 0px;
 }
 
 .folder-item {
@@ -411,4 +419,18 @@
     padding: 0px;
     opacity: 0.75;
     outline: none;
+}
+
+.item-actions {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    margin-left: 8px;
+}
+
+.folder-item:hover .item-actions,
+.note-item:hover .item-actions {
+    opacity: 1;
 }

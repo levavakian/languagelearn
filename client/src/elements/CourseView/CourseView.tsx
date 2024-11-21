@@ -50,49 +50,106 @@ const QuickPrompts = () => {
     const renderFolderItem = (item: NoteNode) => {
         const rotation = item.is_expanded ? 90 : 0;
         return (
-            <div key={item.id} className="folder-item" style={{display: 'flex'}}>
-                <div style={{ marginRight: '8px', marginBottom: '2px' }}>
-                    <Icon name="chevright" rotation={rotation} scale={8} />
+            <div key={item.id} className="folder-item" style={{
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%'
+            }}>
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    width: '100%'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                        <div style={{ marginRight: '8px', marginBottom: '2px', flexShrink: 0 }}>
+                            <Icon name="chevright" rotation={rotation} scale={8} />
+                        </div>
+                        {item.id === editingId ? (
+                            <input 
+                                ref={inputRef}
+                                className="folder-item input"
+                                type="text" 
+                                value={tmpText} 
+                                onChange={(e) => { setTmpText(e.target.value) }}
+                                onClick={(e) => { setEditingId('') }}
+                            />
+                        ) : (
+                            <div style={{ wordBreak: 'break-word' }}
+                                 onClick={() => { setEditingId(item.id); setTmpText(item.name) }}>
+                                {item.name}
+                            </div>
+                        )}
+                    </div>
+                    <div className="item-actions">
+                        {[1,2,3,4].map((_, i) => (
+                            <Icon 
+                                key={i}
+                                name="settings" 
+                                scale={12} 
+                                style={{ cursor: 'pointer', marginLeft: '8px' }}
+                            />
+                        ))}
+                    </div>
                 </div>
-                {item.id === editingId ? (
-                    <input 
-                        ref={inputRef}
-                        className="folder-item input"
-                        type="text" 
-                        value={tmpText} 
-                        onChange={(e) => { setTmpText(e.target.value) }}
-                        onClick={(e) => { setEditingId('') }}
-                    />
-                ) : (
-                    <div onClick={() => { setEditingId(item.id); setTmpText(item.name) }}>{item.name}</div>
-                )}
             </div>
         )
     }
 
     const renderNoteItem = (item: NoteNode) => {
         return (
-            <div key={item.id} className="note-item" >
-                {item.id === editingId ? (
-                    <input 
-                        ref={inputRef}
-                        className="note-item input"
-                        type="text" 
-                        value={tmpText} 
-                        onChange={(e) => { setTmpText(e.target.value) }}
-                        onClick={(e) => { setEditingId('') }}
-                    />
-                ) : (
-                    <span onClick={() => { setEditingId(item.id); setTmpText(item.name) }}>
-                        {highlight(item.name)}
-                    </span>
-                )}
+            <div key={item.id} className="note-item" style={{
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%'
+            }}>
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    width: '100%'
+                }}>
+                    <div style={{ minWidth: 0 }}>
+                        {item.id === editingId ? (
+                            <input 
+                                ref={inputRef}
+                                className="note-item input"
+                                type="text" 
+                                value={tmpText} 
+                                onChange={(e) => { setTmpText(e.target.value) }}
+                                onClick={(e) => { setEditingId('') }}
+                            />
+                        ) : (
+                            <span 
+                                style={{ wordBreak: 'break-word' }}
+                                onClick={() => { setEditingId(item.id); setTmpText(item.name) }}
+                            >
+                                {highlight(item.name)}
+                            </span>
+                        )}
+                    </div>
+                    <div className="item-actions">
+                        {[1,2,3,4].map((_, i) => (
+                            <Icon 
+                                key={i}
+                                name="settings" 
+                                scale={12} 
+                                style={{ cursor: 'pointer', marginLeft: '8px' }}
+                            />
+                        ))}
+                    </div>
+                </div>
             </div>
         )
     };
 
     return (
-        <div className="notes-editor">
+        <div className="notes-editor" style={{
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            width: '100%',
+            paddingRight: '20px'
+        }}>
             {/* Top level actions */}
             <div>
                 {/* <button onClick={() => handleAddFolder()}>Add Folder</button> */}
@@ -100,7 +157,7 @@ const QuickPrompts = () => {
             </div>
 
             {/* Notes list */}
-            <div className="notes-list">
+            <div className="notes-list" style={{ width: '100%' }}>
                 {notes?.map(note => note.type === 'folder' ? renderFolderItem(note) : renderNoteItem(note))}
             </div>
         </div>
