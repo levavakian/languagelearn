@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import './MessageWindow.css';
 import { Message, useSetStateValue, useStateValue } from '../../state/state';
+import { Connection } from './Connection';
 
 const Avatar = ({ size }: { size: number }) => {
     return (
@@ -57,6 +58,9 @@ export const MessageWindow: React.FC = () => {
     // Add ref for the message window container
     const messageWindowRef = React.useRef<HTMLDivElement>(null);
     const [isAtBottom, setIsAtBottom] = React.useState(true);
+    const onMessageCallbacks = useStateValue(state => state.currentChat.ws.onMessageCallbacks);
+
+    const uuid = useMemo(() => crypto.randomUUID(), []);
 
     // Handle scroll events to track if we're at bottom
     const handleScroll = useCallback(() => {
@@ -93,7 +97,6 @@ export const MessageWindow: React.FC = () => {
     }, [setState]);
 
     useEffect(() => {
-        const uuid = crypto.randomUUID();
         setState(draft => { draft.currentChat.ws.onMessageCallbacks[uuid] = onMessage });
         const cleanup = () => {
             setState(draft => { delete draft.currentChat.ws.onMessageCallbacks[uuid]; });
@@ -101,7 +104,7 @@ export const MessageWindow: React.FC = () => {
         return () => {
             cleanup();
         };
-    }, [onMessage, setState]);
+    }, [onMessage, setState, uuid]);
 
     // Group messages by sender
     const groupedMessages = messages.reduce((acc: { sender: string; messages: string[] }[], message) => {
@@ -121,6 +124,7 @@ export const MessageWindow: React.FC = () => {
 
     return (
         <div className={`message-window ${hiddenText ? 'hidden-text' : ''}`} ref={messageWindowRef}>
+            {uuid in onMessageCallbacks && <Connection />}
             {groupedMessages.map((group, index) => (
                 group.sender === 'user' ? (
                     <UserMessage key={index} messages={group.messages} />

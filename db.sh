@@ -14,7 +14,11 @@ if [ ! -f "$DATA_DIR/postgresql.conf" ]; then
     # Configure PostgreSQL to listen on all interfaces
     pg_ctl initdb -D "$DATA_DIR" -U "$USER"
     mkdir -p "$DATA_DIR/postgres"
+    # First remove any existing port configuration that initdb might have created
+    sed -i '/^port = /d' "$DATA_DIR/postgresql.conf"
+    # Now add our configurations
     echo "listen_addresses = '*'" >> "$DATA_DIR/postgresql.conf"
+    echo "port = 5394" >> "$DATA_DIR/postgresql.conf"
     echo "unix_socket_directories = '$DATA_DIR/postgres'" >> "$DATA_DIR/postgresql.conf"
     echo "host all all 0.0.0.0/0 md5" >> "$DATA_DIR/pg_hba.conf"
 fi

@@ -3,7 +3,6 @@ import './ChatInput.css';
 import { useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useStateValue, useSetStateValue, WorkPage } from '../../state/state';
-import { Connection } from './Connection';
 import { MessageWindow } from './MessageWindow';
 import { ChatInput } from './ChatInput';
 import { AudioInput } from './AudioInput';
@@ -56,7 +55,6 @@ const Chat = () => {
 
     return (
         <div className="chat-container">
-            <Connection />
             <AudioInput />
             <AudioOutput />
             <MessageWindow />
