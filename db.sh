@@ -7,13 +7,15 @@ set -o pipefail
 
 # Initialize PostgreSQL data directory if it doesn't exist
 DATA_DIR="${DB_PATH:-/app/dbdata/postgres}"
-if [ ! -d "$DATA_DIR" ]; then
-    mkdir -p "$DATA_DIR"
-    pg_ctl initdb -D "$DATA_DIR" -U "$USER"
-    
+mkdir -p "$DATA_DIR"
+
+# Configure PostgreSQL if postgresql.conf doesn't exist
+if [ ! -f "$DATA_DIR/postgresql.conf" ]; then
     # Configure PostgreSQL to listen on all interfaces
+    pg_ctl initdb -D "$DATA_DIR" -U "$USER"
+    mkdir -p "$DATA_DIR/postgres"
     echo "listen_addresses = '*'" >> "$DATA_DIR/postgresql.conf"
-    echo "unix_socket_directories = '/app/dbdata/postgres'" >> "$DATA_DIR/postgresql.conf"
+    echo "unix_socket_directories = '$DATA_DIR/postgres'" >> "$DATA_DIR/postgresql.conf"
     echo "host all all 0.0.0.0/0 md5" >> "$DATA_DIR/pg_hba.conf"
 fi
 
@@ -22,4 +24,4 @@ rm -f "$DATA_DIR/postmaster.pid"
 
 # Start postgres in foreground
 echo "Starting PostgreSQL in foreground. Press Ctrl+C to stop."
-exec postgres -D "$DATA_DIR" -k /app/dbdata/postgres 
+exec postgres -D "$DATA_DIR" -k "$DATA_DIR/postgres" 

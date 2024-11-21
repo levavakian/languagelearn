@@ -9,7 +9,7 @@ services:
       sizeGB: 1
     envVars:
       - key: DB_PATH
-        value: /var/dbdata/app.db
+        value: /var/dbdata/
       - key: OPENAI_SECRET_KEY
         sync: false
       - key: GOOGLE_API_SECRET
