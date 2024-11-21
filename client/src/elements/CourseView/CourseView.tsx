@@ -1,12 +1,111 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import './CourseView.css';
-import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan } from '../../state/state';
+import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan, NoteNode } from '../../state/state';
 import toast from 'react-hot-toast';
 import { Icon } from '../Icon/Icon';
 
 const QuickPrompts = () => {
-    return <div>QuickPrompts</div>;
-}
+    const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
+    const notes = useStateValue(state => state.currentCourse.settings?.notes);
+    const jwt = useStateValue(state => state.auth.token);
+    const [tmpText, setTmpText] = useState('');
+    const [editingId, setEditingId] = useState<string>('');
+    const inputRef = useRef<HTMLInputElement>(null);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
+    const setState = useSetStateValue();
+
+    useEffect(() => {
+        if (editingId && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [editingId]);
+
+    const sendNotes = useCallback(async (newNotes: NoteNode[]) => {
+        const response = await fetch(`/api/course/${selectedCourseId}/settings/notes`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${jwt}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ notes: newNotes }),
+        });
+        if (!response.ok) {
+            onRequestError(response, "Error updating notes");
+            return;
+        }
+        const data = await response.json();
+        setState(draft => { draft.currentCourse.settings = data });
+    }, [jwt, selectedCourseId, onRequestError, setState]);
+
+    const highlight = (text: string) => {
+        const parts = text.split(/(@(?:word|sentence)\b)/g);
+        return parts.map((part, i) => {
+            if (part.match(/@(?:word|sentence)\b/)) {
+                return <span key={i} style={{ color: 'var(--coral)' }}>{part}</span>;
+            }
+            return <span key={i}>{part}</span>;
+        });
+    };
+
+    const renderFolderItem = (item: NoteNode) => {
+        const rotation = item.is_expanded ? 90 : 0;
+        return (
+            <div key={item.id} className="folder-item" style={{display: 'flex'}}>
+                <div style={{ marginRight: '8px', marginBottom: '2px' }}>
+                    <Icon name="chevright" rotation={rotation} scale={8} />
+                </div>
+                {item.id === editingId ? (
+                    <input 
+                        ref={inputRef}
+                        className="folder-item input"
+                        type="text" 
+                        value={tmpText} 
+                        onChange={(e) => { setTmpText(e.target.value) }}
+                        onClick={(e) => { setEditingId('') }}
+                    />
+                ) : (
+                    <div onClick={() => { setEditingId(item.id); setTmpText(item.name) }}>{item.name}</div>
+                )}
+            </div>
+        )
+    }
+
+    const renderNoteItem = (item: NoteNode) => {
+        return (
+            <div key={item.id} className="note-item" >
+                {item.id === editingId ? (
+                    <input 
+                        ref={inputRef}
+                        className="note-item input"
+                        type="text" 
+                        value={tmpText} 
+                        onChange={(e) => { setTmpText(e.target.value) }}
+                        onClick={(e) => { setEditingId('') }}
+                    />
+                ) : (
+                    <span onClick={() => { setEditingId(item.id); setTmpText(item.name) }}>
+                        {highlight(item.name)}
+                    </span>
+                )}
+            </div>
+        )
+    };
+
+    return (
+        <div className="notes-editor">
+            {/* Top level actions */}
+            <div>
+                {/* <button onClick={() => handleAddFolder()}>Add Folder</button> */}
+                {/* <button onClick={() => handleAddNote()}>Add Note</button> */}
+            </div>
+
+            {/* Notes list */}
+            <div className="notes-list">
+                {notes?.map(note => note.type === 'folder' ? renderFolderItem(note) : renderNoteItem(note))}
+            </div>
+        </div>
+    );
+};
 
 const CustomInstructions = () => {
     const settings = useStateValue(state => state.currentCourse.settings);
@@ -332,6 +431,7 @@ const CourseView: React.FC = () => {
                     <div style={{marginTop: '20px'}}>
                         <LessonPlanList />
                     </div>
+                    <QuickPrompts />
                 </div>
                 <div className="course-content-right">
                     <PracticeList lessons={lessons.filter(lesson => lesson.free_practice)} />

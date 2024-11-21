@@ -38,6 +38,7 @@ export type NoteNode = {
     type: string
     children?: NoteNode[]
     is_expanded?: boolean
+    is_editing?: boolean
 }
 
 export type VocabItem = {

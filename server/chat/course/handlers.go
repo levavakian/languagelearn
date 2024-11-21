@@ -638,7 +638,6 @@ func getDefaultSettings(ID string) *Settings {
 				ID:         "welcome-folder",
 				Name:       "Getting Started",
 				Type:       "folder",
-				IsExpanded: true,
 				Children: []NoteNode{
 					{
 						ID:   "welcome-note",
@@ -651,7 +650,6 @@ func getDefaultSettings(ID string) *Settings {
 				ID:         "common-phrases",
 				Name:       "Common Phrases",
 				Type:       "folder",
-				IsExpanded: true,
 				Children: []NoteNode{
 					{
 						ID:   "translate",
@@ -674,7 +672,6 @@ func getDefaultSettings(ID string) *Settings {
 				ID:         "grammar-practice",
 				Name:       "Grammar Practice",
 				Type:       "folder",
-				IsExpanded: true,
 				Children: []NoteNode{
 					{
 						ID:   "past-tense",
@@ -702,7 +699,6 @@ func getDefaultSettings(ID string) *Settings {
 				ID:         "vocabulary",
 				Name:       "Vocabulary Help",
 				Type:       "folder",
-				IsExpanded: true,
 				Children: []NoteNode{
 					{
 						ID:   "synonyms",

@@ -361,3 +361,54 @@
     outline: none;
     border-color: var(--coral);
 }
+
+.notes-editor {
+    padding: 0px 0px;
+    border: 2px solid var(--indigo-dye);
+    background-color: var(--white);
+    border-radius: 10px;
+    margin-top: 40px;
+    width: 100%;
+    height: max-content;
+}
+
+.folder-item {
+    background: var(--baby-powder);
+    border: none;
+    font-family: 'Nobel Uno';
+    color: var(--indigo-dye);
+    font-size: 16px;
+    font-weight: 600;
+    outline: none;
+    margin-left: 10px;
+    align-items: center;
+    padding: 2px;
+}
+
+.folder-item.input {
+    margin: 0;
+    padding: 0px;
+    opacity: 0.75;
+    outline: none;
+}
+
+.note-item {
+    background: var(--baby-powder);
+    border: none;
+    font-family: 'Nobel Uno';
+    color: var(--indigo-dye);
+    font-size: 14px;
+    font-weight: 400;
+    outline: none;
+    margin-left: 10px;
+    align-items: 'center';
+    padding: 2px;
+
+}
+
+.note-item.input {
+    margin: 0;
+    padding: 0px;
+    opacity: 0.75;
+    outline: none;
+}

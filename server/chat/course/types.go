@@ -86,7 +86,6 @@ type NoteNode struct {
 	Name       string     `json:"name"`
 	Type       string     `json:"type"`
 	Children   []NoteNode `json:"children,omitempty"`
-	IsExpanded bool       `json:"is_expanded,omitempty"`
 }
 
 type SettingsUpdate struct {
