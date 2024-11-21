@@ -32,7 +32,7 @@ trap 'kill $(jobs -p); exit' INT
 PATH="/usr/lib/postgresql/16/bin:${PATH}" ./db.sh &
 
 # Start the second process
-(cd server && DB_PATH="postgresql://postgres@localhost:5432/postgres?sslmode=disable" ./server) &
+(cd server && DB_PATH="postgresql://postgres@0.0.0.0:5432/postgres?sslmode=disable" ./server) &
 
 # Wait for all processes to complete
 wait -n
