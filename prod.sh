@@ -4,6 +4,7 @@ mkdir -p ${DB_PATH}
 chown -R postgres:postgres ${DB_PATH}
 chown -R postgres:postgres /app/server/server
 chown -R postgres:postgres /app/client/build
+chmod -R 700 ${DB_PATH}
 
 env_file="/home/postgres/.env_vars"
 echo "export OPENAI_SECRET_KEY='$OPENAI_SECRET_KEY'" > "$env_file"
