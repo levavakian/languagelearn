@@ -434,6 +434,42 @@ const VocabList = () => {
         return <div className="vocab-list">Loading...</div>;
     }
 
+    const doRequest = async (vocabItems: Record<string, VocabItem>) => {
+        try {
+            const response = await fetch(`/api/course/${selectedCourseId}/settings/vocab-items`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${jwt}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ vocabItems: vocabItems }),
+            });
+
+            if (!response.ok) {
+                onRequestError(response, "Error saving vocabulary");
+                return;
+            }
+
+            const data = await response.json();
+            setState(draft => {
+                draft.currentCourse.settings = data;
+            });
+            setEditingKey('');
+            setTempAddWord('');
+            setTempAddDefinition('');
+        } catch (error) {
+            toast.error('Error saving vocabulary');
+        }
+    }
+
+    const handleDelete = async (key: string) => {
+        const newVocabItems = produce(settings?.vocabItems || {}, draft => {
+            delete draft[key];
+        });
+
+        await doRequest(newVocabItems);
+    }
+
     const handleAddNew = async () => {
         if (!tempAddWord || !tempAddDefinition) {
             toast.error('Please enter a word and definition', {id: 'vocab-add-error'});
@@ -449,36 +485,32 @@ const VocabList = () => {
             };
         });
 
-        try {
-            const response = await fetch(`/api/course/${selectedCourseId}/settings/vocab-items`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${jwt}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ vocabItems: newVocabItems }),
-            });
+        await doRequest(newVocabItems);
+    }
 
-            if (!response.ok) {
-                onRequestError(response, "Error saving vocabulary");
-                return;
-            }
-    
-            const data = await response.json();
-            setState(draft => {
-                draft.currentCourse.settings = data;
-            });
-            setEditingKey('');
-            setTempAddWord('');
-            setTempAddDefinition('');
-        } catch (error) {
-            toast.error('Error saving vocabulary');
+    const handleEdit = async () => {
+        if (!tempEditWord || !tempEditDefinition) {
+            toast.error('Please enter a word and definition', {id: 'vocab-add-error'});
+            return;
         }
+        const newVocabItems = produce(settings?.vocabItems || {}, draft => {
+            if (editingKey !== tempEditWord) {
+                draft[tempEditWord] = draft[editingKey];
+                draft[editingKey].definition = tempEditDefinition;
+                delete draft[editingKey];
+            } else {
+                draft[editingKey].definition = tempEditDefinition;
+            }
+            draft[editingKey].last_used = new Date().toISOString();
+        });
+        await doRequest(newVocabItems);
     }
 
     const actionItems = (key: string, value: VocabItem) => {
         return <div className="vocab-item-actions">
-                <Icon name="bin" scale={12} style={{ cursor: 'pointer', marginTop: '1px', marginLeft: '8px' }} />
+                <Icon name="bin" scale={12} style={{ cursor: 'pointer', marginTop: '1px', marginLeft: '8px' }}
+                    onClick={() => handleDelete(key)}
+                />
                 <Icon name="pencil" scale={12} style={{ cursor: 'pointer', marginTop: '1px', marginLeft: '8px' }} 
                     onClick={() => {
                         setEditingKey(key);
@@ -491,16 +523,15 @@ const VocabList = () => {
 
     const editItems = (key: string, value: VocabItem) => {
         return <div className="vocab-item-actions">
-                <Icon name="x" scale={12} style={{ cursor: 'pointer', marginTop: '1px', marginLeft: '8px' }}
+                <Icon name="x" scale={12} style={{ cursor: 'pointer', marginTop: '15px', marginLeft: '8px', marginRight: '20px' }}
                     onClick={() => {
                         if (editingKey === key) {
-                            setEditingKey('null');
+                            setEditingKey('');
                             setTempEditWord('');
                             setTempEditDefinition('');
                         }
                     }}
                 />
-                <Icon name="check" scale={12} style={{ cursor: 'pointer', marginTop: '1px', marginLeft: '8px' }} />
         </div>
     }
 
@@ -508,9 +539,31 @@ const VocabList = () => {
         if (editingKey === key) {
             return <div style={{ display: 'flex', flexDirection: 'row' }}>
                 <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', flexDirection: 'row', gap: '10px', marginTop: '10px' }}>
-                    <input className="vocab-bubble input" placeholder="Word" value={tempAddWord} onChange={(e) => setTempAddWord(e.target.value)} />
-                    <input className="vocab-bubble input" placeholder="Definition" value={tempAddDefinition} onChange={(e) => setTempAddDefinition(e.target.value)} />
-                    <div className="vocab-bubble add" onClick={handleAddNew} style={{ cursor: 'pointer', marginRight: '0px' }}>Update</div>
+                    <input className="vocab-bubble input" placeholder="Word" value={tempEditWord} onChange={(e) => setTempEditWord(e.target.value)}
+                        onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === 'Enter' && tempEditWord && tempEditDefinition) {
+                                handleEdit();
+                            }
+                        }}
+                    />
+                    <input className="vocab-bubble input" placeholder="Definition" value={tempEditDefinition} onChange={(e) => setTempEditDefinition(e.target.value)}
+                        onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === 'Enter' && tempEditWord && tempEditDefinition) {
+                                handleEdit();
+                            }
+                        }}
+                    />
+                    <div className="vocab-bubble add" style={{ cursor: 'pointer', marginRight: '0px' }} 
+                        onClick={handleEdit}
+                        onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === 'Enter' && tempEditWord && tempEditDefinition) {
+                                handleEdit();
+                            }
+                        }}>
+                    Update</div>
                 </div>
                 <div style={{ whiteSpace: 'nowrap',justifyContent: 'flex-end' }}>
                     {editItems(key, value)}
@@ -534,8 +587,21 @@ const VocabList = () => {
             </div>
             <hr style={{ width: '98%', justifySelf: 'left', border: '1px solid var(--quarter-grey)', margin: '20px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', gap: '10px' }}>
-                <input className="vocab-bubble input" placeholder="Word" value={tempAddWord} onChange={(e) => setTempAddWord(e.target.value)} />
-                <input className="vocab-bubble input" placeholder="Definition" value={tempAddDefinition} onChange={(e) => setTempAddDefinition(e.target.value)} />
+                <input className="vocab-bubble input" placeholder="Word" value={tempAddWord} onChange={(e) => setTempAddWord(e.target.value)}
+                    onKeyDown={(e) => {
+                        e.stopPropagation();
+                        if (e.key === 'Enter' && tempAddWord && tempAddDefinition) {
+                            handleAddNew();
+                        }
+                    }}/>
+                <input className="vocab-bubble input" placeholder="Definition" value={tempAddDefinition} onChange={(e) => setTempAddDefinition(e.target.value)}
+                    onKeyDown={(e) => {
+                        e.stopPropagation();
+                        if (e.key === 'Enter' && tempAddWord && tempAddDefinition) {
+                            handleAddNew();
+                        }
+                    }}
+                />
                 <div className="vocab-bubble add" onClick={handleAddNew} style={{ cursor: 'pointer' }}>Add</div>
             </div>
             {Object.entries(settings.vocabItems || {})
