@@ -38,6 +38,7 @@ func SetupRoutes(api *mux.Router) {
 	api.HandleFunc("/course/{id}/settings", auth.AuthMiddleware(getCourseSettings)).Methods("GET")
 	api.HandleFunc("/course/{id}/settings", auth.AuthMiddleware(updateCourseSettings)).Methods("POST")
 	api.HandleFunc("/course/{id}/settings/custom-instructions", auth.AuthMiddleware(updateCustomInstructions)).Methods("PUT")
+	api.HandleFunc("/course/{id}/settings/notes", auth.AuthMiddleware(updateNoteNodes)).Methods("PUT")
 
 	// Chat routes
 	api.HandleFunc("/chat", auth.AuthMiddleware(createChat)).Methods("POST")

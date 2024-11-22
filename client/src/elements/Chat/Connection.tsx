@@ -9,7 +9,7 @@ export const Connection = () => {
     const selectedChatId = useStateValue(state => state.currentChat.chat?.id);
     const onMessageCallbacks = useStateValue(state => state.currentChat.ws.onMessageCallbacks);
 
-    const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(
+    const { sendMessage, lastMessage, readyState } = useWebSocket(
         selectedChatId ? 
             `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/chat/${selectedChatId}/ws?token=${encodeURIComponent(jwt)}` 
             : null,

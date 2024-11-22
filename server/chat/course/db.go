@@ -638,3 +638,21 @@ func updateCourseCustomInstructions(courseID string, customInstructions string) 
 
 	return nil
 }
+
+func updateCourseNoteNodes(courseID string, notes []NoteNode) error {
+	// Get current settings
+	settings, err := getCourseSettingsFromDB(courseID)
+	if err != nil {
+		return fmt.Errorf("failed to get current settings: %v", err)
+	}
+
+	// Update note nodes
+	settings.Notes = notes
+
+	// Save updated settings
+	if err := saveCourseSettingsToDB(*settings); err != nil {
+		return fmt.Errorf("failed to save settings: %v", err)
+	}
+
+	return nil
+}

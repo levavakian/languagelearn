@@ -22,6 +22,11 @@ export const IconPaths = {
     x: '/icons/x.svg',
     pencil: '/icons/pencil.svg',
     chevright: '/icons/chevright.svg',
+    bin: '/icons/bin.svg',
+    plus: '/icons/plus.svg',
+    folder: '/icons/folder.svg',
+    folderDown: '/icons/folder-down.svg',
+    addfolder: '/icons/addfolder.svg',
   } as const;
   
   export type IconName = keyof typeof IconPaths;

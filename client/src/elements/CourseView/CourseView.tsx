@@ -1,8 +1,9 @@
-import React, { useEffect, useCallback, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import './CourseView.css';
 import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan, NoteNode } from '../../state/state';
 import toast from 'react-hot-toast';
 import { Icon } from '../Icon/Icon';
+import { produce } from 'immer';
 
 const QuickPrompts = () => {
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
@@ -10,32 +11,150 @@ const QuickPrompts = () => {
     const jwt = useStateValue(state => state.auth.token);
     const [tmpText, setTmpText] = useState('');
     const [editingId, setEditingId] = useState<string>('');
+    const [deleteOnCancel, setDeleteOnCancel] = useState<string>('');
+    const [tempNotes, setTempNotes] = useState<NoteNode[]>([]);
+    const [notExpandedList, setNotExpandedList] = useState<Set<string>>(new Set());
     const inputRef = useRef<HTMLInputElement>(null);
     const onRequestError = useStateValue(state => state.auth.onRequestError);
     const setState = useSetStateValue();
 
     useEffect(() => {
+        setTempNotes(notes || []);
+    }, [notes]);
+
+    useEffect(() => {
         if (editingId && inputRef.current) {
             inputRef.current.focus();
         }
-    }, [editingId]);
+    }, [editingId, notes]);
 
-    const sendNotes = useCallback(async (newNotes: NoteNode[]) => {
-        const response = await fetch(`/api/course/${selectedCourseId}/settings/notes`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${jwt}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ notes: newNotes }),
+    const addNote = (folder: boolean, id?: string) => {
+        const newId = crypto.randomUUID();
+        const newNote: NoteNode = {
+            id: newId,
+            name: '',
+            type: folder ? 'folder' : 'note',
+            children: folder ? [] : undefined,
+        };
+
+        const outNotes = produce(tempNotes, draft => {
+            if (!id) {
+                draft.push(newNote);
+                return
+            }
+            const findAndAddNote = (nodes: NoteNode[]) => {
+                for (let i = 0; i < nodes.length; i++) {
+                    const node = nodes[i];
+                    if (node.id === id) {
+                        if (node.type === 'folder' && newNote.type === 'note') {
+                            if (!node.children) {
+                                node.children = [];
+                            }
+                            node.children.push(newNote);
+                            return true;
+                        }
+
+                        nodes.splice(i + 1, 0, newNote);
+                        return true;
+                    }
+                    if (node.children) {
+                        if (findAndAddNote(node.children)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
+            findAndAddNote(draft);
         });
-        if (!response.ok) {
-            onRequestError(response, "Error updating notes");
-            return;
+        setDeleteOnCancel(newNote.id);
+        return [outNotes, newNote.id, newNote.name] as [NoteNode[], string, string];
+    };
+
+    const deleteNote = (id: string) => {
+        const outNotes = produce(tempNotes, draft => {
+            const findAndDelete = (nodes: NoteNode[]) => {
+                for (let i = 0; i < nodes.length; i++) {
+                    const node = nodes[i];
+                    if (node.id === id) {
+                        nodes.splice(i, 1);
+                        return true;
+                        }
+                    if (node.children) {
+                        if (findAndDelete(node.children)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            findAndDelete(draft);
+        });
+        return [outNotes, '', ''] as [NoteNode[], string, string];
+    };
+
+    const editNote = () => {
+        const outNotes = produce(tempNotes, draft => {
+            const findAndReplace = (nodes: NoteNode[]) => {
+                for (let node of nodes) {
+                    if (node.id === editingId) {
+                        node.name = tmpText;
+                        if (!node.name.trim()) {
+                            node.name = node.type === 'folder' ? 'New Folder' : 'New Note';
+                        }
+                        return true;
+                    }
+                    if (node.children) {
+                        if (findAndReplace(node.children)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
+
+            findAndReplace(draft);
+        });
+        return [outNotes, '', ''] as [NoteNode[], string, string];
+    };
+
+    const sendNotes = useCallback(async (func: () => [NoteNode[], string, string]) => {
+        const [outNotes, idToSet, textToSet] = func();
+        const previousNotes = tempNotes;
+        const previousEditingId = editingId;
+        const previousTmpText = tmpText;
+        
+        setTempNotes(outNotes);
+        setEditingId(idToSet);
+        setTmpText(textToSet);
+
+        try {
+            const response = await fetch(`/api/course/${selectedCourseId}/settings/notes`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${jwt}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ notes: outNotes }),
+            });
+            
+            if (!response.ok) {
+                setTempNotes(previousNotes);
+                setEditingId(previousEditingId);
+                setTmpText(previousTmpText);
+                onRequestError(response, "Error updating settings");
+                return;
+            }
+            
+            const data = await response.json();
+            setState(draft => { draft.currentCourse.settings = data });
+        } catch (error) {
+            setTempNotes(previousNotes);
+            setEditingId(previousEditingId);
+            setTmpText(previousTmpText);
+            toast.error('Error updating notes');
         }
-        const data = await response.json();
-        setState(draft => { draft.currentCourse.settings = data });
-    }, [jwt, selectedCourseId, onRequestError, setState]);
+    }, [jwt, selectedCourseId, onRequestError, editingId, tmpText, tempNotes]);
 
     const highlight = (text: string) => {
         const parts = text.split(/(@(?:word|sentence)\b)/g);
@@ -47,119 +166,159 @@ const QuickPrompts = () => {
         });
     };
 
-    const renderFolderItem = (item: NoteNode) => {
-        const rotation = item.is_expanded ? 90 : 0;
+    const itemActions = (item: NoteNode) => {
+        return  <div className="item-actions">
+                        <Icon 
+                            name="bin" 
+                            scale={10} 
+                            style={{ cursor: 'pointer', marginLeft: '8px' }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                sendNotes(() => deleteNote(item.id));
+                            }}
+                        />
+                        <Icon 
+                            name="pencil" 
+                            scale={10} 
+                            style={{ cursor: 'pointer', marginLeft: '8px' }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingId(item.id);
+                                setTmpText(item.name);
+                            }}
+                        />
+                        <Icon 
+                            name="plus" 
+                            scale={10} 
+                            style={{ cursor: 'pointer', marginLeft: '8px' }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                sendNotes(() => addNote(false, item.id));
+                            }}
+                        />
+                        <Icon 
+                            name="addfolder" 
+                            scale={10} 
+                            style={{ cursor: 'pointer', marginLeft: '8px' }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                sendNotes(() => addNote(true, item.id));
+                            }}
+                        />
+        </div>
+    }
+
+    const editActions = (item: NoteNode) => {
+        return <div className="item-actions always-on">
+            <div className="individual-item-actions">
+                <Icon name="x" scale={12} style={{ cursor: 'pointer', marginTop: '1px', marginLeft: '8px' }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (deleteOnCancel === editingId) {
+                            sendNotes(() => deleteNote(editingId));
+                        }
+                        setEditingId('');
+                        setTmpText('');
+                        setDeleteOnCancel('');
+                    }}
+                    />
+            </div>
+            
+            <div className="individual-item-actions">
+                <Icon name="check" scale={12} style={{ cursor: 'pointer', marginTop: '1px', marginLeft: '8px' }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        sendNotes(editNote);
+                    }}
+                />  
+            </div>
+        </div>
+    }
+
+    const topActions = () => {
+        return <div className="item-actions always-on" style={{ marginTop: '10px', marginLeft: 'auto', display: 'flex', justifyContent: 'flex-end', }}>
+            <Icon name="plus" scale={10} style={{ cursor: 'pointer', marginTop: '1px', marginLeft: '8px' }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    sendNotes(() => addNote(false));
+                }}
+            />
+            <Icon name="addfolder" scale={10} style={{ cursor: 'pointer', marginTop: '1px', marginLeft: '8px' }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    sendNotes(() => addNote(true));
+                }}
+            />
+        </div>
+    }
+
+    const actions = (item: NoteNode) => {
+        return item.id === editingId ? editActions(item) : itemActions(item);
+    }
+
+    const renderNotes = (notesList: NoteNode[], isRoot?: boolean) => {
+        return <div className="notes-list">
+            {notesList?.map(note => renderItem(note, isRoot))}
+        </div>
+    }
+
+    const renderTitle = (item: NoteNode) => {
+        const icon = !notExpandedList.has(item.id) ? 'folder' : 'folderDown';
+        const prefix = item.type === 'folder' ? "folder" : "note";
+        const textClass = `${prefix}-item`;
+        const text = item.id === editingId ? <input 
+            ref={inputRef}
+            className={textClass + ' input'}
+            type="text"
+            placeholder={item.type === 'folder' ? 'New Folder' : 'New Note'}
+            value={tmpText} 
+            onChange={(e) => { setTmpText(e.target.value) }}
+            onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter' && tmpText.trim()) {
+                    sendNotes(editNote);
+                }
+            }}
+            /> : <div style={{ wordBreak: 'break-word' }}>
+                {highlight(item.name)}
+            </div>;
+
+        return <div className="folder-title">
+            {prefix === 'folder' &&
+                <Icon style={{ cursor: 'pointer', marginTop: '1px', marginRight: '8px'}} name={icon} scale={16}
+                    onClick={() => {
+                        setNotExpandedList(prevList => {
+                            const newSet = new Set(prevList);
+                            if (newSet.has(item.id)) {
+                                newSet.delete(item.id);
+                            } else {
+                                newSet.add(item.id);
+                            }
+                            return newSet;
+                        });
+                    }}
+                />}
+            {text}
+            {actions(item)}
+        </div>
+    }
+
+    const renderItem = (item: NoteNode, isRoot?: boolean) => {
+        const prefix = item.type === 'folder' ? "folder" : "note";
+        const itemClass = `${prefix}-item` + (isRoot ? ' root-note-item' : '');
+
         return (
-            <div key={item.id} className="folder-item" style={{
-                display: 'flex',
-                flexDirection: 'column',
-                width: '100%'
-            }}>
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    width: '100%'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
-                        <div style={{ marginRight: '8px', marginBottom: '2px', flexShrink: 0 }}>
-                            <Icon name="chevright" rotation={rotation} scale={8} />
-                        </div>
-                        {item.id === editingId ? (
-                            <input 
-                                ref={inputRef}
-                                className="folder-item input"
-                                type="text" 
-                                value={tmpText} 
-                                onChange={(e) => { setTmpText(e.target.value) }}
-                                onClick={(e) => { setEditingId('') }}
-                            />
-                        ) : (
-                            <div style={{ wordBreak: 'break-word' }}
-                                 onClick={() => { setEditingId(item.id); setTmpText(item.name) }}>
-                                {item.name}
-                            </div>
-                        )}
-                    </div>
-                    <div className="item-actions">
-                        {[1,2,3,4].map((_, i) => (
-                            <Icon 
-                                key={i}
-                                name="settings" 
-                                scale={12} 
-                                style={{ cursor: 'pointer', marginLeft: '8px' }}
-                            />
-                        ))}
-                    </div>
-                </div>
+            <div id={item.id} key={item.id} className={itemClass}>
+                {renderTitle(item)}
+                {item.children && !notExpandedList.has(item.id) && renderNotes(item.children)}
             </div>
         )
     }
 
-    const renderNoteItem = (item: NoteNode) => {
-        return (
-            <div key={item.id} className="note-item" style={{
-                display: 'flex',
-                flexDirection: 'column',
-                width: '100%'
-            }}>
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    width: '100%'
-                }}>
-                    <div style={{ minWidth: 0 }}>
-                        {item.id === editingId ? (
-                            <input 
-                                ref={inputRef}
-                                className="note-item input"
-                                type="text" 
-                                value={tmpText} 
-                                onChange={(e) => { setTmpText(e.target.value) }}
-                                onClick={(e) => { setEditingId('') }}
-                            />
-                        ) : (
-                            <span 
-                                style={{ wordBreak: 'break-word' }}
-                                onClick={() => { setEditingId(item.id); setTmpText(item.name) }}
-                            >
-                                {highlight(item.name)}
-                            </span>
-                        )}
-                    </div>
-                    <div className="item-actions">
-                        {[1,2,3,4].map((_, i) => (
-                            <Icon 
-                                key={i}
-                                name="settings" 
-                                scale={12} 
-                                style={{ cursor: 'pointer', marginLeft: '8px' }}
-                            />
-                        ))}
-                    </div>
-                </div>
-            </div>
-        )
-    };
-
     return (
-        <div className="notes-editor" style={{
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            width: '100%',
-            paddingRight: '20px'
-        }}>
-            {/* Top level actions */}
-            <div>
-                {/* <button onClick={() => handleAddFolder()}>Add Folder</button> */}
-                {/* <button onClick={() => handleAddNote()}>Add Note</button> */}
-            </div>
-
-            {/* Notes list */}
-            <div className="notes-list" style={{ width: '100%' }}>
-                {notes?.map(note => note.type === 'folder' ? renderFolderItem(note) : renderNoteItem(note))}
-            </div>
+        <div className="notes-editor">
+            {topActions()}
+            {notes && renderNotes(tempNotes, true)}
         </div>
     );
 };

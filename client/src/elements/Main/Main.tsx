@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import './Main.css';
 import { State, useStateValue, useSetStateValue } from '../../state/state';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
