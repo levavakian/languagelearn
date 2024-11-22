@@ -251,6 +251,15 @@
     width: 100%;
     text-align: center;
     max-width: 150px;
+    margin-bottom: 8px;
+}
+
+.vocab-bubble-edit {
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+    max-width: 150px;
 }
 
 .vocab-bubble.input {
@@ -259,6 +268,39 @@
     border: none;
     min-width: 50px;
     text-align: left;
+    outline: none;
+}
+.vocab-bubble-edit.input {
+    background-color: white;
+    color: var(--pink-faded);
+    border: none;
+    min-width: 50px;
+    text-align: left;
+    outline: none;
+}
+
+.vocab-bubble.add {
+    background-color: var(--pink);
+    color: var(--indigo-dye);
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    margin-right: 40px;
+}
+
+.vocab-bubble-edit.add {
+    padding: 8px 60px;
+    background-color: var(--pink);
+    color: var(--indigo-dye);
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.vocab-bubble.input:focus {
+    outline: 1px solid var(--pink-faded);
+}
+
+.vocab-bubble-edit.input:focus {
+    outline: 1px solid var(--pink-faded);
 }
 
 .vocab-bubble.input::placeholder {
@@ -267,24 +309,77 @@
     text-align: center;
 }
 
-.vocab-bubble.add {
-    background-color: var(--pink);
-    color: var(--indigo-dye);
-    font-weight: 600;
-    transition: background-color 0.3s ease;
+.vocab-bubble-edit.input:focus {
+    outline: 1px solid var(--pink-faded);
+}
+
+.vocab-bubble-edit.input:focus {
+    outline: 1px solid var(--pink-faded);
+}
+
+.vocab-bubble-edit.input::placeholder {
+    color: var(--pink-faded);
+    opacity: 0.7;
+    text-align: center;
 }
 
 .vocab-bubble.add:hover {
     background-color: var(--coral);
 }
 
+.vocab-item-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0px;
+    margin: 0px;
+}
+
+.vocab-item-container-edit {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0px;
+    margin: 0px 0px;
+}
+
+.vocab-item-container-edit .vocab-item-actions {
+    display: flex;
+    flex-direction: row;
+}
+
+.vocab-item-container .vocab-item-actions {
+    margin-top: 5px;
+    display: flex;
+    flex-direction: row;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.vocab-item-container:hover .vocab-item-actions {
+    opacity: 1;
+}
+
 .vocab-item {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    margin: 10px 0;
+    margin: 5px 0;
     border-radius: 10px;
     background-color: var(--pink);
+    font-size: 14px;
+    width: 100%;
+    padding: 8px 0px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.vocab-item-edit {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin: 5px 0;
+    border-radius: 10px;
     font-size: 14px;
     width: 100%;
     padding: 8px 0px;
