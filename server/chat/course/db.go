@@ -656,3 +656,21 @@ func updateCourseNoteNodes(courseID string, notes []NoteNode) error {
 
 	return nil
 }
+
+func updateCourseVocabItems(courseID string, vocabItems map[string]VocabItem) error {
+	// Get current settings
+	settings, err := getCourseSettingsFromDB(courseID)
+	if err != nil {
+		return fmt.Errorf("failed to get current settings: %v", err)
+	}
+
+	// Update vocab items
+	settings.VocabItems = vocabItems
+
+	// Save updated settings
+	if err := saveCourseSettingsToDB(*settings); err != nil {
+		return fmt.Errorf("failed to save settings: %v", err)
+	}
+
+	return nil
+}

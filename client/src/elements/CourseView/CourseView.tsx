@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useState, useRef } from 'react';
 import './CourseView.css';
-import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan, NoteNode } from '../../state/state';
+import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan, NoteNode, VocabItem } from '../../state/state';
 import toast from 'react-hot-toast';
 import { Icon } from '../Icon/Icon';
 import { produce } from 'immer';
@@ -417,8 +417,60 @@ const CustomInstructions = () => {
 
 const VocabList = () => {
     const settings = useStateValue(state => state.currentCourse.settings);
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
+    const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
+    const setState = useSetStateValue();
+    const [viewAll, setViewAll] = useState(false);
+    const [editingKey, setEditingKey] = useState<string>('');
+    const [tempAddWord, setTempAddWord] = useState('');
+    const [tempAddDefinition, setTempAddDefinition] = useState('');
+    const [tempVocabItems, setTempVocabItems] = useState<Record<string, VocabItem>>({});
+
+    useEffect(() => {
+        setTempVocabItems(settings?.vocabItems || {});
+    }, [settings]);
+
     if (!settings) {
         return <div className="vocab-list">Loading...</div>;
+    }
+
+    const handleAddNew = async () => {
+        const newVocabItems = produce(tempVocabItems, draft => {
+            draft[tempAddWord] = {
+                word: tempAddWord,
+                definition: tempAddDefinition,
+                last_used: new Date().toISOString(),
+                usageCount: 0,
+                type: 'user-provided'
+            };
+        });
+
+        try {
+            const response = await fetch(`/api/course/${selectedCourseId}/settings/vocab-items`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${jwt}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ vocabItems: newVocabItems }),
+            });
+
+            if (!response.ok) {
+                onRequestError(response, "Error saving vocabulary");
+                return;
+            }
+    
+            const data = await response.json();
+            setState(draft => {
+                draft.currentCourse.settings = data;
+            });
+            setEditingKey('');
+            setTempAddWord('');
+            setTempAddDefinition('');
+        } catch (error) {
+            toast.error('Error saving vocabulary');
+        }
     }
 
     return (
@@ -428,19 +480,24 @@ const VocabList = () => {
             </div>
             <hr style={{ width: '98%', justifySelf: 'left', border: '1px solid var(--quarter-grey)', margin: '20px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', gap: '10px' }}>
-                <input className="vocab-bubble input" placeholder="Word" />
-                <input className="vocab-bubble input" placeholder="Definition" />
-                <div className="vocab-bubble add">Add</div>
+                <input className="vocab-bubble input" placeholder="Word" value={tempAddWord} onChange={(e) => setTempAddWord(e.target.value)} />
+                <input className="vocab-bubble input" placeholder="Definition" value={tempAddDefinition} onChange={(e) => setTempAddDefinition(e.target.value)} />
+                <div className="vocab-bubble add" onClick={handleAddNew} style={{ cursor: 'pointer' }}>Add</div>
             </div>
-            {Object.entries(settings.vocabItems).map(([key, value]) => (
-                <div key={key} className="vocab-item">
-                    <div className="vocab-word" title={value.word}>{value.word}</div>
-                    <div className="vocab-definition" title={value.definition}>{value.definition}</div>
+            {Object.entries(tempVocabItems)
+                .sort(([, a], [, b]) => new Date(b.last_used).getTime() - new Date(a.last_used).getTime())
+                .slice(0, viewAll ? undefined : 4)
+                .map(([key, value]) => (
+                    <div key={key} className="vocab-item">
+                        <div className="vocab-word" title={value.word}>{value.word}</div>
+                        <div className="vocab-definition" title={value.definition}>{value.definition}</div>
+                    </div>
+                ))}
+            {!viewAll && Object.keys(tempVocabItems).length > 4 && (
+                <div className="vocab-view-all" style={{ cursor: 'pointer' }} onClick={() => setViewAll(true)}>
+                    View All
                 </div>
-            ))}
-            <div className="vocab-view-all">
-                View All
-            </div>
+            )}
         </div>
     );
 }
@@ -519,6 +576,7 @@ const LessonPlanList = () => {
 
 const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
     const setState = useSetStateValue();
+    const [viewAll, setViewAll] = useState(false);
 
     const handleLessonChoice = (lesson: Lesson) => {
         setState(draft => {
@@ -533,7 +591,7 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
             <div className="course-lesson-list-add-lesson">
                 + Start New Lesson
             </div>
-                {lessons.map(lesson => (
+                {lessons.slice(0, viewAll ? lessons.length : 4).map(lesson => (
                 <div key={lesson.id} className="course-lesson-item" onClick={() => handleLessonChoice(lesson)}>
                     <div>
                         Lesson {lesson.order_index + 1}: {lesson.name}
@@ -543,15 +601,16 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
                     </div>
                 </div>
             ))}
-            <div className="lessons-view-all">
+            {!viewAll && lessons.length > 4 && <div className="lessons-view-all" style={{ cursor: 'pointer' }} onClick={() => setViewAll(true)}>
                 View All
-            </div>
+            </div>}
         </div>
     );
 };
 
 const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
     const setState = useSetStateValue();
+    const [viewAll, setViewAll] = useState(false);
 
     const handleLessonChoice = (lesson: Lesson) => {
         setState(draft => {
@@ -566,7 +625,7 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
             <div className="practice-lesson-list-add-lesson">
                 + Start New Practice
             </div>
-            {lessons.map(lesson => (
+            {lessons.slice(0, viewAll ? lessons.length : 4).map(lesson => (
                 <div key={lesson.id} className="practice-lesson-item" onClick={() => handleLessonChoice(lesson)}>
                     <div>
                         {lesson.name}
@@ -576,9 +635,9 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
                     </div>
                 </div>
             ))}
-            <div className="practice-view-all">
+            {!viewAll && lessons.length > 4 && <div className="practice-view-all" style={{ cursor: 'pointer' }} onClick={() => setViewAll(true)}>
                 View All
-            </div>
+            </div>}
         </div>
     );
 };

@@ -46,7 +46,7 @@ export type VocabItem = {
     word: string
     definition: string
     notes?: string
-    lastUsed: string
+    last_used: string
     usageCount: number
 }
 

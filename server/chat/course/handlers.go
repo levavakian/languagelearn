@@ -1101,3 +1101,57 @@ func updateNoteNodes(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(settings)
 }
+
+// Add this new handler
+func updateVocabItems(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	courseID := vars["id"]
+	userEmail := r.Header.Get("X-User-Email")
+
+	// Verify course ownership
+	exists, isOwner, err := CheckCourseOwnership(courseID, userEmail)
+	if err != nil {
+		fmt.Printf("Error checking course ownership: %v\n", err)
+		http.Error(w, "Failed to verify course ownership", http.StatusInternalServerError)
+		return
+	}
+	if !exists {
+		fmt.Printf("Course not found: %s\n", courseID)
+		http.Error(w, "Course not found", http.StatusNotFound)
+		return
+	}
+	if !isOwner {
+		fmt.Printf("Unauthorized access attempt by %s for course %s\n", userEmail, courseID)
+		http.Error(w, "Unauthorized", http.StatusForbidden)
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		VocabItems map[string]VocabItem `json:"vocabItems"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		fmt.Printf("Error decoding request body: %v\n", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Update the vocab items
+	if err := updateCourseVocabItems(courseID, req.VocabItems); err != nil {
+		fmt.Printf("Error updating vocab items: %v\n", err)
+		http.Error(w, "Failed to update vocab items", http.StatusInternalServerError)
+		return
+	}
+
+	// Get the updated settings to return
+	settings, err := getCourseSettingsFromDB(courseID)
+	if err != nil {
+		fmt.Printf("Error fetching updated settings: %v\n", err)
+		http.Error(w, "Failed to reload vocab items", http.StatusInternalServerError)
+		return
+	}
+
+	// Return the updated settings
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(settings)
+}
