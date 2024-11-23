@@ -2,6 +2,11 @@ import { atom } from 'jotai'
 import { persisted, unwrapState, createPersistedAtom, Persistable } from './storage'
 import { createAtomHooks } from './statehooks'
 
+export enum ModalSelector {
+    None = 'none',
+    BuyCoins = 'buy-coins',
+}
+
 export enum WorkPage {
     Lesson = 'lesson',
     Chat = 'chat',
@@ -118,6 +123,7 @@ export type WrappedState = {
     }
     toggleRefactor: () => void
     courses: Course[]
+    modalSelector: ModalSelector
 }
 
 const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
@@ -157,6 +163,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     },
     toggleRefactor: () => { console.log("Toggle refactor handler unset") },
     courses: [],
+    modalSelector: ModalSelector.None,
 })
 
 export type State = typeof initialState

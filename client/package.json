@@ -17,6 +17,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
+    "react-modal": "^3.16.1",
     "react-scripts": "^5.0.1",
     "react-square-web-payments-sdk": "^3.2.1",
     "react-use-websocket": "^4.10.0",
@@ -47,6 +48,7 @@
     ]
   },
   "devDependencies": {
-    "@types/body-parser": "^1.19.5"
+    "@types/body-parser": "^1.19.5",
+    "@types/react-modal": "^3.16.3"
   }
 }
