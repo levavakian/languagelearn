@@ -25,7 +25,7 @@ const CourseBox = ({ course }: { course: Course }) => {
     ];
     
     return (
-        <div className="course-box space-y-2">
+        <div className="course-box">
             <div className="course-header">
                 <span className="course-name text-truncate" title={course.name}>
                     {course.name}
@@ -33,7 +33,7 @@ const CourseBox = ({ course }: { course: Course }) => {
                 <Icon scale={20} name="learning" />
             </div>
             
-            <div className="space-y-1">
+            <div>
                 {standardItems.map((item, itemIndex) => (
                     <button
                         key={itemIndex}
@@ -41,7 +41,7 @@ const CourseBox = ({ course }: { course: Course }) => {
                         onClick={item.onClick}
                     >
                         {item.icon}
-                        <span>{item.label}</span>
+                        <div className="whitespace-nowrap">{item.label}</div>
                     </button>
                 ))}
             </div>
@@ -67,7 +67,7 @@ const NewCourseButton = () => {
     
     return (
         <div className="course-box">
-            <div className="space-y-1">
+            <div>
                 {newCourseItems.map((item, itemIndex) => (
                     <button
                         key={itemIndex}
@@ -75,7 +75,7 @@ const NewCourseButton = () => {
                         onClick={item.onClick}
                     >
                         {item.icon}
-                        <span>{item.label}</span>
+                        <div className="whitespace-nowrap">{item.label}</div>
                     </button>
                 ))}
             </div>
@@ -121,14 +121,14 @@ const Sidebar = () => {
                 <span className="sidebar-title-text">ARATTA</span>
             </div>
             
-            <div className="p-6">
-                <div className="overflow-y-auto scrollbar-hide h-[calc(100vh-120px)]">
-                    <div className="mb-4">
+            <div>
+                <div>
+                    <div>
                         <h2 className="courses-title courses-header">
                             My Courses
                         </h2>
                         
-                        <div className="space-y-4">
+                        <div>
                             {courses.map((course, index) => (
                                 <CourseBox
                                     key={index}

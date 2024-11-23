@@ -10,7 +10,7 @@ export const closeModal = (setState: ReturnType<typeof useSetStateValue>) => {
     setState(draft => { draft.modalSelector = ModalSelector.None });
 }
 
-export const ShowModal = (selector: ModalSelector, children: React.ReactNode, onClose?: () => void) => {
+export const ShowModal = (selector: ModalSelector, children: React.ReactNode, onClose?: (iconPressed: boolean) => boolean) => {
     const modalSelector = useStateValue(state => state.modalSelector);
     const setState = useSetStateValue();
 
@@ -18,24 +18,38 @@ export const ShowModal = (selector: ModalSelector, children: React.ReactNode, on
         setState(draft => { draft.modalSelector = ModalSelector.None });
     }
 
+    const handleClose = (iconPressed: boolean = false) => {
+        if (!onClose) {
+            closeModal();
+        } else {
+            if (onClose(iconPressed)) {
+                closeModal();
+            }
+        }
+    }
+
     return <Modal
         isOpen={modalSelector === selector}
-        onRequestClose={() => { onClose?.(); closeModal() }}
+        onRequestClose={() => { handleClose(false) }}
         className="Modal"
         overlayClassName="Overlay"
     >
-        <div 
-            className="modal-close-button"
-            onClick={() => { onClose?.(); closeModal() }}
-            role="button"
-            tabIndex={0}
-        >
-            <Icon 
-                name="x" 
-                scale={24} 
-                style={{ filter: 'brightness(0) saturate(100%) invert(95%) sepia(2%) saturate(150%) hue-rotate(182deg) brightness(97%) contrast(85%)' }}
-            />
+        <div className="relative flex flex-col min-h-full">
+            <div 
+                className="absolute -top-[25px] -right-[25px]"
+                onClick={() => { handleClose(true); }}
+                role="button"
+                tabIndex={0}
+            >
+                <Icon 
+                    name="x" 
+                    scale={30} 
+                    style={{ filter: 'brightness(0) saturate(100%) invert(95%) sepia(2%) saturate(150%) hue-rotate(182deg) brightness(97%) contrast(85%)' }}
+                />
+            </div>
+            <div>
+                {children}
+            </div>
         </div>
-        {children}
     </Modal>;
 }

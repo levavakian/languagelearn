@@ -1,0 +1,36 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        'black': '#000000ff',
+        'indigo-dye': '#274268ff',
+        'coral-light': '#ff8969aa',
+        'coral': '#ff8969ff',
+        'pink': '#f8ece4ff',
+        'pink-faded': '#cc2c0077',
+        'alice-blue': '#dfe9f6ff',
+        'alice-dark': '#d3dff5ff',
+        'baby-powder': '#f7f7f2ff',
+        'lavender': '#d3dff5ff',
+        'half-grey': '#a2a2a2ff',
+        'quarter-grey': '#a2a2a2aa',
+        'warn-red': '#ac3636',
+        'porcelain': '#f0f1f2ff',
+        'transparent-grey': '#a2a2a233',
+      }
+    },
+    fontFamily: {
+      'sans': ['Nobel Uno', 'sans-serif'],
+      'ancorli': ['Ancorli', 'sans-serif'],
+      'nobel': ['Nobel Uno', 'sans-serif'],
+    }
+  },
+  plugins: [],
+  corePlugins: {
+    preflight: false,
+  }
+}

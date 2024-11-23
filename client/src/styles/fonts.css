@@ -37,3 +37,11 @@
     font-style: normal;
     font-display: swap;
 }
+
+@font-face {
+    font-family: "Nobel Uno";
+    src: url('/public/fonts/NobelUno-Black.woff2') format('woff2');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
