@@ -1,16 +1,67 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import './Topbar.css';
 import { useSetStateValue, ModalSelector, useStateValue } from '../../state/state';
 import { closeModal, ShowModal } from '../Modal/Modal';
+import { PaymentForm, CreditCard, GooglePay } from 'react-square-web-payments-sdk';
+import toast from 'react-hot-toast';
+
 export const GetBuyModal = () => {
     const setState = useSetStateValue();
-    const [customAmount, setCustomAmount] = useState(0);
+    const [customAmount, setCustomAmount] = useState(NaN);
     const [selectedAmount, setSelectedAmount] = useState(-1);
     const [selectedId, setSelectedId] = useState(-1);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [onSecondPage, setOnSecondPage] = useState(false);
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
     const contentRef = useRef(null);
+
+    useEffect(() => {
+        setSelectedAmount(isNaN(customAmount) ? 0 : customAmount);
+    }, [customAmount]);
+
+    const createPaymentRequest = useCallback(() => {
+        const amount = selectedAmount / 100.0;
+        
+        return {
+            countryCode: "US",
+            currencyCode: "USD",
+            total: {
+                amount: String(amount),
+                label: `$${String(amount)} Purchase`,
+            },
+        };
+    }, [selectedAmount]);
+
+    const handlePayment = async (paymentToken: any, verifiedBuyer: any) => {
+        try {
+            const response = await fetch('/api/user/credits/buy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${jwt}`,
+                },
+                body: JSON.stringify({
+                    sourceId: paymentToken.token,
+                    credits: selectedAmount,
+                }),
+            });
+            
+            if (response.status === 401) {
+                onRequestError(response, "Error processing payment");
+                return;
+            }
+            
+            const data = await response.json();
+            toast.success("Payment successful");
+            setState(draft => { draft.modalSelector = ModalSelector.None });
+        } catch (error) {
+            toast.error("Error processing payment");
+        } finally {
+            setOnSecondPage(false);
+        }
+    };
 
     const firstPage = () => {
         return <div ref={contentRef}><div className="text-3xl font-bold">Buy Coins</div>
@@ -66,10 +117,11 @@ export const GetBuyModal = () => {
                     <input 
                         type="number" 
                         placeholder="$" 
-                        className="mt-[75px] min-h-[25px] min-w-[75px] rounded-lg bg-white text-center w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none outline-none focus:outline-none focus:ring-0 border-none ring-0 ring-offset-0 focus:border-none focus:ring-offset-0"
+                        className="mt-[50px] min-h-[25px] min-w-[75px] rounded-lg bg-white text-center w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none outline-none focus:outline-none focus:ring-0 border-none ring-0 ring-offset-0 focus:border-none focus:ring-offset-0"
                         value={customAmount}
-                        onChange={(e) => setCustomAmount(parseInt(e.target.value))}
+                        onChange={(e) => {setCustomAmount(parseInt(e.target.value)); setSelectedId(3)}}
                     />
+                    <div className="text-xl font-semibold text-center">${(isNaN(customAmount) ? 0 : customAmount / 100.0).toFixed(2)}</div>
                 </div>
             </div>
         </div>
@@ -103,7 +155,33 @@ export const GetBuyModal = () => {
     }
 
     const secondPage = () => {
-        return <div style={{ width: dimensions.width, height: dimensions.height }}>Second Page</div>
+        return <div style={{ width: dimensions.width, height: dimensions.height }}>
+                <div>Pay with Stripe</div>
+                <div className = "h-[70%] flex flex-row items-center">
+
+                    <div className=" flex flex-row justify-center space-x-4 overflow-visible mt-4 mr-8">
+                        <div className={`w-14 flex flex-col items-center p-10 bg-[var(--alice-blue)] px-[60] rounded-lg shadow-[0_6px_0_var(--indigo-dye)] border-[2px] border-solid border-[--indigo-dye]`}>
+                            <Icon name="profit" scale={30} />
+                            <div className="text-2xl font-black text-center">{selectedAmount}</div>
+                            <div className="text-xl pt-[75px] font-semibold text-center">${(selectedAmount / 100.0).toFixed(2)}</div>
+                        </div>
+                    </div>
+
+                    <div >
+                        <div className="mt-5"></div>
+                        <PaymentForm
+                            applicationId={process.env.REACT_APP_SQUARE_APP_ID || ''}
+                            locationId={process.env.REACT_APP_SQUARE_LOCATION_ID || ''}
+                            cardTokenizeResponseReceived={handlePayment}
+                            createPaymentRequest={createPaymentRequest}
+                        >
+                            <GooglePay />
+                            <CreditCard />
+                            <div>Pay with Stripe</div>
+                        </PaymentForm>
+                    </div>
+            </div>
+        </div>
     }
 
     return ShowModal(
