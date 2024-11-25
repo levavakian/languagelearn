@@ -91,6 +91,9 @@ export type WrappedState = {
         token: Persistable<string>
         onRequestError: (response: any, msg?: string) => void
     }
+    triggers: {
+        timeLastPayment: number
+    }
     pageChoice: Persistable<{
         workPage: WorkPage
         selectedCourse: string | null
@@ -130,6 +133,9 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     auth: {
         token: persisted('login-token', ''),
         onRequestError: (response: any, msg?: string) => { console.log("Request error handler unset",response,msg) },
+    },
+    triggers: {
+        timeLastPayment: 0,
     },
     pageChoice: persisted('page-choice', {
         workPage: WorkPage.Intro,

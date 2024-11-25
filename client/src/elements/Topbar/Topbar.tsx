@@ -56,6 +56,7 @@ export const GetBuyModal = () => {
             const data = await response.json();
             toast.success("Payment successful");
             setState(draft => { draft.modalSelector = ModalSelector.None });
+            setState(draft => { draft.triggers.timeLastPayment = Date.now() });
         } catch (error) {
             toast.error("Error processing payment");
         } finally {
@@ -156,30 +157,36 @@ export const GetBuyModal = () => {
 
     const secondPage = () => {
         return <div style={{ width: dimensions.width, height: dimensions.height }}>
-                <div>Pay with Stripe</div>
-                <div className = "h-[70%] flex flex-row items-center">
+                <div className="text-3xl font-black">Buy More Coins</div>
+                <div className = "h-[80%] w-[100%] flex flex-col justify-center items-center mt-10">
+                    <div className="flex flex-row justify-center items-center">
+                        <div className=" flex flex-row items-center justify-center space-x-4 overflow-visible mt-4 mr-8">
+                            <div className={`w-14 flex flex-col items-center p-10 bg-[var(--alice-blue)] px-[60] rounded-lg shadow-[0_6px_0_var(--indigo-dye)] border-[2px] border-solid border-[--indigo-dye]`}>
+                                <Icon name="profit" scale={30} />
+                                <div className="text-2xl font-black text-center">{selectedAmount}</div>
+                                <div className="text-xl pt-[75px] font-semibold text-center">${(selectedAmount / 100.0).toFixed(2)}</div>
+                            </div>
+                        </div>
 
-                    <div className=" flex flex-row justify-center space-x-4 overflow-visible mt-4 mr-8">
-                        <div className={`w-14 flex flex-col items-center p-10 bg-[var(--alice-blue)] px-[60] rounded-lg shadow-[0_6px_0_var(--indigo-dye)] border-[2px] border-solid border-[--indigo-dye]`}>
-                            <Icon name="profit" scale={30} />
-                            <div className="text-2xl font-black text-center">{selectedAmount}</div>
-                            <div className="text-xl pt-[75px] font-semibold text-center">${(selectedAmount / 100.0).toFixed(2)}</div>
+                        <div >
+                            <div className="mt-5"></div>
+                            <PaymentForm
+                                applicationId={process.env.REACT_APP_SQUARE_APP_ID || ''}
+                                locationId={process.env.REACT_APP_SQUARE_LOCATION_ID || ''}
+                                cardTokenizeResponseReceived={handlePayment}
+                                createPaymentRequest={createPaymentRequest}
+                            >
+                                <GooglePay />
+                                <CreditCard />
+                                <div>Pay with Stripe</div>
+                            </PaymentForm>
                         </div>
                     </div>
-
-                    <div >
-                        <div className="mt-5"></div>
-                        <PaymentForm
-                            applicationId={process.env.REACT_APP_SQUARE_APP_ID || ''}
-                            locationId={process.env.REACT_APP_SQUARE_LOCATION_ID || ''}
-                            cardTokenizeResponseReceived={handlePayment}
-                            createPaymentRequest={createPaymentRequest}
-                        >
-                            <GooglePay />
-                            <CreditCard />
-                            <div>Pay with Stripe</div>
-                        </PaymentForm>
-                    </div>
+                    <div className="w-[40%] justify-center text-center items-center mt-10 bg-[var(--alice-blue)] border-[2px] border-solid border-[--indigo-dye] shadow-[0_6px_0_var(--indigo-dye)] text-xl font-semibold py-2 px-4 rounded-lg hover:bg-[var(--alice-dark)]"
+                        onClick={() => {
+                            setOnSecondPage(false);
+                        }}
+                    >Back</div>
             </div>
         </div>
     }
@@ -193,6 +200,38 @@ export const GetBuyModal = () => {
     );
 }
 
+export const CoinCount = () => {
+    const [coins, setCoins] = useState(0);
+    const timeLastPayment = useStateValue(state => state.triggers.timeLastPayment);
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
+
+    useEffect(() => {
+        const fetchCoins = async () => {
+            const response = await fetch('/api/user/credits', {
+                headers: {
+                    'Authorization': `Bearer ${jwt}`,
+                },
+            });
+            if (!response.ok) {
+                onRequestError(response, "Error fetching coins");
+                return;
+            }
+            const data = await response.json();
+            setCoins(data.credits);
+        };
+        fetchCoins();
+
+        const interval = setInterval(() => {
+            fetchCoins();
+        }, 30000);
+        return () => clearInterval(interval);
+    }, [timeLastPayment]);
+
+    return <div className="text-[var(--indigo-dye)] text-[20px] font-[800] font-['Nobel_Uno',Arial,sans-serif] -mt-1 -ml-1 gap-1">
+        {coins}
+    </div>
+}
 
 export const Topbar = () => {
     const setState = useSetStateValue();
@@ -210,9 +249,10 @@ export const Topbar = () => {
                 gap: '15px',
             }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="topbar-icon">
-                <div className={`credit-count ${coins < 100 ? 'low' : ''}`}>
+                {/* <div className={`credit-count ${coins < 100 ? 'low' : ''}`}>
                     {coins}
-                </div>
+                </div> */}
+                <CoinCount />
                 <Icon name="profit" scale={24} />
             </div>
             <button className="buy-button" onClick={() => setState(draft => { draft.modalSelector = ModalSelector.BuyCoins })}>Buy Coins</button>
