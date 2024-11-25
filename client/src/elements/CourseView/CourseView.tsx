@@ -681,7 +681,7 @@ const LessonPlanList = () => {
                 <div className="lesson-plan-item add-new-lesson-plan">
                     + New Lesson Plan
                 </div>
-                {lessonPlans.map(lessonPlan => (
+                {lessonPlans?.map(lessonPlan => (
                     <div className="lesson-plan-item" key={lessonPlan.id}>{lessonPlan.title}</div>
                 ))}
             </div>

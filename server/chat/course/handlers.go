@@ -23,6 +23,14 @@ type CustomInstructionsRequest struct {
 	CustomInstructions string `json:"customInstructions"`
 }
 
+type CourseDetails struct {
+	ID          string       `json:"id"`
+	Name        string       `json:"name"`
+	CreatedAt   time.Time    `json:"created_at"`
+	LessonPlans []LessonPlan `json:"lesson_plans"`
+	Lessons     []Lesson     `json:"lessons"`
+}
+
 // Database helper functions
 func getCourseCreator(courseID string) (string, error) {
 	var creatorID string
@@ -1155,3 +1163,54 @@ func updateVocabItems(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(settings)
 }
+
+func getUserCoursesDetails(w http.ResponseWriter, r *http.Request) {
+	userEmail := r.Header.Get("X-User-Email")
+
+	// Fetch courses for the user
+	courses, err := getUserCoursesFromDB(userEmail)
+	if err != nil {
+		http.Error(w, "Failed to fetch courses", http.StatusInternalServerError)
+		return
+	}
+
+	var courseDetailsList []CourseDetails
+
+	for _, course := range courses {
+		// Fetch lesson plans for each course
+		lessonPlans, err := getCourseLessonPlansFromDB(course.ID)
+		if err != nil {
+			fmt.Printf("Error fetching lesson plans: %v\n", err)
+			http.Error(w, "Failed to fetch lesson plans", http.StatusInternalServerError)
+			return
+		}
+
+		// Fetch lessons for each course
+		lessons, err := getCourseLessonsFromDB(course.ID)
+		if err != nil {
+			fmt.Printf("Error fetching lessons: %v\n", err)
+			http.Error(w, "Failed to fetch lessons", http.StatusInternalServerError)
+			return
+		}
+
+		// Create a CourseDetails object
+		courseDetails := CourseDetails{
+			ID:          course.ID,
+			Name:        course.Name,
+			CreatedAt:   course.CreatedAt,
+			LessonPlans: lessonPlans,
+			Lessons:     lessons,
+		}
+
+		courseDetailsList = append(courseDetailsList, courseDetails)
+	}
+
+	// Encode the response as JSON
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(courseDetailsList); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+}
+
+

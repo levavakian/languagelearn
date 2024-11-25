@@ -131,4 +131,14 @@ func PopulateMigrations() {
 
 		CREATE INDEX IF NOT EXISTS idx_payments_email ON payments(email);
 	`, "create_payments_table")
+
+	// Add updated_at column to courses table
+	db.RegisterMigration(`
+		ALTER TABLE courses ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+	`, "add_updated_at_column_to_courses_table")
+
+	// Add updated_at column to lesson plans table
+	db.RegisterMigration(`
+		ALTER TABLE lesson_plans ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+	`, "add_updated_at_column_to_lesson_plans_table")
 }

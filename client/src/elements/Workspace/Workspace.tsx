@@ -5,6 +5,7 @@ import './Workspace.css';
 import { useStateValue, WorkPage } from '../../state/state';
 import CourseView from '../CourseView/CourseView';
 import Chat from '../Chat/Chat';
+import { CourseList } from '../CourseList/CourseList';
 
 const Workspace = () => {
     const pageChoice = useStateValue(state => state.pageChoice);
@@ -16,13 +17,7 @@ const Workspace = () => {
                 <Topbar />
                 <div className="workspace-content">
                     {pageChoice.workPage === WorkPage.Course && <CourseView />}
-                    {pageChoice.workPage === WorkPage.AllCourses && (
-                        <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-                            {[...Array(100)].map((_, i) => (
-                                <div key={i}>All Courses</div>
-                            ))}
-                        </div>
-                    )}
+                    {pageChoice.workPage === WorkPage.AllCourses && <CourseList />}
                     {pageChoice.workPage === WorkPage.Lesson && <span>Lesson</span>}
                     {pageChoice.workPage === WorkPage.Chat && <Chat />}
                     {pageChoice.workPage === WorkPage.Intro && <span>Intro</span>}

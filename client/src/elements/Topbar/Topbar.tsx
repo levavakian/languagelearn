@@ -249,9 +249,6 @@ export const Topbar = () => {
                 gap: '15px',
             }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="topbar-icon">
-                {/* <div className={`credit-count ${coins < 100 ? 'low' : ''}`}>
-                    {coins}
-                </div> */}
                 <CoinCount />
                 <Icon name="profit" scale={24} />
             </div>

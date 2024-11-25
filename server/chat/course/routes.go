@@ -10,6 +10,7 @@ func SetupRoutes(api *mux.Router) {
 	// Course routes
 	api.HandleFunc("/course", auth.AuthMiddleware(createCourse)).Methods("POST")
 	api.HandleFunc("/courses", auth.AuthMiddleware(getUserCourses)).Methods("GET")
+	api.HandleFunc("/courses/details", auth.AuthMiddleware(getUserCoursesDetails)).Methods("GET")
 	api.HandleFunc("/course/{id}", auth.AuthMiddleware(getCourse)).Methods("GET")
 	api.HandleFunc("/course/{id}", auth.AuthMiddleware(updateCourse)).Methods("PUT")
 	api.HandleFunc("/course/{id}", auth.AuthMiddleware(deleteCourse)).Methods("DELETE")
