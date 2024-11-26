@@ -1,98 +1,91 @@
-import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
 import { useSetStateValue, useStateValue } from '../../state/state';
 import type { CourseSettings, NoteNode } from '../../state/state';
 
 interface DropdownMenuProps {
     nodes: NoteNode[];
     onSelect: (note: NoteNode) => void;
-    depth?: number;
-    hoveredFolders: string[];
-    setHoveredFolders: React.Dispatch<React.SetStateAction<string[]>>;
+    lastHoveredNode: string;
+    setLastHoveredNode: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export const DropdownMenu: React.FC<DropdownMenuProps> = ({ 
     nodes, 
     onSelect, 
-    depth = 0,
-    hoveredFolders,
-    setHoveredFolders
+    lastHoveredNode,
+    setLastHoveredNode,
 }) => {
-    const handleMouseEnter = (node: NoteNode, ancestorIds: string[]) => {
-        console.log('handleMouseEnter called', {
-            nodeId: node.id,
-            nodeName: node.name,
-            depth,
-            ancestorIds,
-            hoveredFolders,
-            hasChildren: !!node.children
-        });
 
-        // If we're hovering the currently open folder, do nothing
-        if (node.id === hoveredFolders[depth]) {
-            console.log('Same folder, returning');
-            return;
-        }
+    const descendents = useMemo(() => {
+        const getDescendents = (node: NoteNode): Set<string> => {
+            const descendentsSet = new Set<string>();
+            const stack = [node];
 
-        // Check if we're in the current path
-        const isInCurrentPath = ancestorIds.every((id, index) => 
-            hoveredFolders[index] === id
-        );
+            while (stack.length > 0) {
+                const currentNode = stack.pop();
+                if (currentNode) {
+                    descendentsSet.add(currentNode.id);
+                    if (currentNode.children) {
+                        stack.push(...currentNode.children);
+                    }
+                }
+            }
 
-        // If we're not in the current path and not at root level
-        if (!isInCurrentPath && depth > 0) {
-            console.log('Not in current path, clearing state');
-            setHoveredFolders([]);
-            return;
-        }
-
-        // If hovering a folder, set its path
-        if (node.children) {
-            console.log('Setting new folder path');
-            setHoveredFolders([...ancestorIds, node.id]);
-            return;
-        }
-
-        // If we're hovering a non-folder item in the current path, do nothing
-        if (isInCurrentPath) {
-            return;
-        }
-
-        // Clear hover state for anything else
-        console.log('Clearing hover state');
-        setHoveredFolders([]);
+        return descendentsSet;
     };
 
-    console.log('DropdownMenu render', { depth, hoveredFolders });
+    const descendentsMap = new Map<string, Set<string>>();
+
+    nodes.forEach(node => {
+        descendentsMap.set(node.id, getDescendents(node));
+    });
+
+    return descendentsMap;
+    }, [nodes]);
+
+    const handleMouseEnter = (node: NoteNode) => {
+        setLastHoveredNode(node.id);
+    };
+
+    const shouldFolderBeOpen = (node: NoteNode) => {
+        return descendents.get(node.id)?.has(lastHoveredNode) || false;
+    };
 
     return (
-        <div 
-            className={`
-                shadow-lg rounded-md min-w-[200px] bg-indigo-dye mb-5 text-indigo-dye text-xl 
-                ${depth > 0 ? 'mr-5' : ''} border-[1px] border-solid border-[--indigo-dye]
-                [&>*:first-child>div]:mt-0 [&>*:first-child>div]:rounded-t-md [&>*:last-child>div]:rounded-b-md
-            `}
-            onMouseEnter={() => console.log('div mouseenter')}
-        >
+        <div className={`
+            shadow-lg rounded-md min-w-[200px] bg-indigo-dye mb-5 text-indigo-dye text-xl 
+            mr-5 border-[1px] border-solid border-[--indigo-dye]
+            mt-0 rounded-t-md rounded-b-md
+        `}>
             {nodes.map((node) => {
-                const ancestorIds = hoveredFolders.slice(0, depth);
-                
                 return (
                     <div
                         key={node.id}
-                        className="relative group"
+                        data-node-id={node.id}
+                        className="relative isolate"
                         onMouseEnter={(e) => {
                             e.stopPropagation();
-                            console.log('node mouseenter', node.name);
-                            handleMouseEnter(node, ancestorIds);
+                            setLastHoveredNode(node.id);
+                        }}
+                        onMouseLeave={(e) => {
+                            const relatedTarget = e.relatedTarget as HTMLElement;
+                            // Walk up the DOM tree to find the closest parent with data-node-id
+                            const targetNode = relatedTarget?.closest('[data-node-id]');
+                            const targetNodeId = targetNode?.getAttribute('data-node-id');
+                            
+                            if (targetNodeId) {
+                                setLastHoveredNode(targetNodeId);
+                            }
                         }}
                     >
                         <div 
                             onClick={() => !node.children && onSelect(node)}
                             className={`
                                 px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between text-indigo-dye text-xl
-                                border-[2px] border-solid border-[--indigo-dye] -mt-[1px] relative rounded-md
+                                border-[2px] border-solid border-[--indigo-dye] relative rounded-md
+                                hover:bg-gray-100
                                 ${node.children 
-                                    ? hoveredFolders.includes(node.id)
+                                    ? shouldFolderBeOpen(node)
                                         ? 'bg-coral text-white'
                                         : 'bg-alice-blue font-medium' 
                                     : 'bg-baby-powder'}
@@ -104,14 +97,13 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
                             )}
                         </div>
                         
-                        {node.children && hoveredFolders.includes(node.id) && (
-                            <div className="absolute left-full top-0 -mt-[1px]">
+                        {node.children && shouldFolderBeOpen(node) && (
+                            <div className="absolute left-full top-0 -mt-[1px] z-[1]">
                                 <DropdownMenu 
                                     nodes={node.children} 
                                     onSelect={onSelect}
-                                    depth={depth + 1}
-                                    hoveredFolders={hoveredFolders}
-                                    setHoveredFolders={setHoveredFolders}
+                                    lastHoveredNode={lastHoveredNode}
+                                    setLastHoveredNode={setLastHoveredNode}
                                 />
                             </div>
                         )}
@@ -127,7 +119,9 @@ export const Tooltip = () => {
     const settings = useStateValue(state => state.currentCourse.settings);
     const tooltipInfo = useStateValue(state => state.currentChat.tooltipInfo);
     const tooltipRef = useRef<HTMLDivElement>(null);
-    const [hoveredFolders, setHoveredFolders] = useState<string[]>([]);
+    const [lastHoveredNode, setLastHoveredNode] = useState<string>('');
+
+    console.log('lastHoveredNode', lastHoveredNode);
 
     const onClose = useCallback(() => {
         setState(draft => { draft.currentChat.tooltipInfo = null; });
@@ -158,8 +152,8 @@ export const Tooltip = () => {
             <DropdownMenu 
                 nodes={settings.notes} 
                 onSelect={tooltipInfo.onSelect}
-                hoveredFolders={hoveredFolders}
-                setHoveredFolders={setHoveredFolders}
+                lastHoveredNode={lastHoveredNode}
+                setLastHoveredNode={setLastHoveredNode}
             />
         </div>
     );
