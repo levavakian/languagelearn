@@ -30,6 +30,12 @@ export type Course = {
     name: string
 }
 
+export type TooltipInfo = {
+    x: number
+    y: number
+    onSelect: (note: NoteNode) => void
+}
+
 export type CourseSettings = {
     id: string
     notes: NoteNode[]
@@ -124,6 +130,7 @@ export type WrappedState = {
             triggerStopRecording: () => void,
             hasPermission: boolean,
         }
+        tooltipInfo: TooltipInfo | null
     }
     toggleRefactor: () => void
     courses: Course[]
@@ -166,7 +173,8 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
             triggerRecording: () => { console.log("Trigger recording handler unset") },
             triggerStopRecording: () => { console.log("Trigger stoprecording handler unset") },
             hasPermission: false,
-        }
+        },
+        tooltipInfo: null,
     },
     toggleRefactor: () => { console.log("Toggle refactor handler unset") },
     courses: [],

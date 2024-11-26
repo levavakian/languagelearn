@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './MessageWindow.css';
-import { Message, useSetStateValue, useStateValue } from '../../state/state';
+import { Message, NoteNode, useSetStateValue, useStateValue } from '../../state/state';
 import { Connection } from './Connection';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -54,6 +54,7 @@ export const MessageWindow: React.FC = () => {
     const setState = useSetStateValue();
 
     const messages = useStateValue(state => state.currentChat.messages);
+    const tooltipInfo = useStateValue(state => state.currentChat.tooltipInfo);
     const hiddenText = useStateValue(state => state.currentChat.chatOpts.hiddenText);
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
     const jwt = useStateValue(state => state.auth.token);
@@ -65,8 +66,6 @@ export const MessageWindow: React.FC = () => {
     const onMessageCallbacks = useStateValue(state => state.currentChat.ws.onMessageCallbacks);
 
     const uuid = useMemo(() => crypto.randomUUID(), []);
-
-    const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
 
     const fetchSettings = useCallback(async () => {
         const response = await fetch(`/api/course/${selectedCourseId}/settings`, {
@@ -147,17 +146,16 @@ export const MessageWindow: React.FC = () => {
     }, []);
 
     const handleClick = useCallback((e: React.MouseEvent) => {
-        // Only set tooltip position if we're clicking directly on the message-window
         if (e.target === e.currentTarget) {
-            setTooltipPosition({
-                x: e.clientX,
-                y: e.clientY
-            });
+            const rect = messageWindowRef.current?.getBoundingClientRect();
+            if (rect) {
+                setState(draft => { draft.currentChat.tooltipInfo = {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top,
+                    onSelect: (note: NoteNode) => {}
+                } });
+            }
         }
-    }, []);
-
-    const handleCloseTooltip = useCallback(() => {
-        setTooltipPosition(null);
     }, []);
 
     return (
@@ -174,12 +172,7 @@ export const MessageWindow: React.FC = () => {
                     <AssistantMessage key={index} messages={group.messages} />
                 )
             ))}
-            {tooltipPosition && (
-                <Tooltip 
-                    triggerPosition={tooltipPosition}
-                    onClose={handleCloseTooltip}
-                />
-            )}
+            {tooltipInfo && <Tooltip />}
         </div>
     );
 };
