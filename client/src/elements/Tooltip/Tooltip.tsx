@@ -34,23 +34,8 @@ const Dropdown: React.FC<DropdownProps> = ({ notes, position, onSelect, onClose,
     }, [onClose]);
 
     const calculatePosition = () => {
-        const viewport = {
-            width: window.innerWidth,
-            height: window.innerHeight
-        };
-
         let left = position.x;
         let top = position.y;
-
-        // If dropdown would go off right edge, position it to the left
-        if (dropdownRef.current && left + dropdownRef.current.offsetWidth > viewport.width) {
-            left = position.x - dropdownRef.current.offsetWidth;
-        }
-
-        // If dropdown would go off bottom edge, position it above
-        if (dropdownRef.current && top + dropdownRef.current.offsetHeight > viewport.height) {
-            top = position.y - dropdownRef.current.offsetHeight;
-        }
 
         return {
             left: `${left}px`,
@@ -143,37 +128,13 @@ type TooltipProps = {
 };
 
 export const Tooltip: React.FC<TooltipProps> = ({ triggerPosition, onClose }) => {
-    const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
-    const jwt = useStateValue(state => state.auth.token);
+    const settings = useStateValue(state => state.currentCourse.settings);
     const onRequestError = useStateValue(state => state.auth.onRequestError);
-    const [settings, setSettings] = useState<CourseSettings | null>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
     const [activeFolder, setActiveFolder] = useState<string | null>(null);
     const [subPosition, setSubPosition] = useState<Position | null>(null);
     const tooltipRef = useRef<HTMLDivElement>(null);
-
-    const fetchSettings = useCallback(async () => {
-        const response = await fetch(`/api/course/${selectedCourseId}/settings`, {
-            headers: {
-                'Authorization': `Bearer ${jwt}`
-            }
-        });
-        if (!response.ok) {
-            onRequestError(response, "Error fetching course settings");
-            return;
-        }
-        const data = await response.json();
-        setSettings(data);
-    }, [jwt, selectedCourseId, onRequestError]);
-
-    useEffect(() => {
-        fetchSettings();
-
-        return () => {
-            setSettings(null);
-        }
-    }, [fetchSettings]);
 
     useEffect(() => {
         if (triggerPosition) {

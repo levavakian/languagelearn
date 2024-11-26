@@ -55,6 +55,9 @@ export const MessageWindow: React.FC = () => {
 
     const messages = useStateValue(state => state.currentChat.messages);
     const hiddenText = useStateValue(state => state.currentChat.chatOpts.hiddenText);
+    const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
 
     // Add ref for the message window container
     const messageWindowRef = React.useRef<HTMLDivElement>(null);
@@ -64,6 +67,24 @@ export const MessageWindow: React.FC = () => {
     const uuid = useMemo(() => crypto.randomUUID(), []);
 
     const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+
+    const fetchSettings = useCallback(async () => {
+        const response = await fetch(`/api/course/${selectedCourseId}/settings`, {
+            headers: {
+                'Authorization': `Bearer ${jwt}`
+            }
+        });
+        if (!response.ok) {
+            onRequestError(response, "Error fetching course settings");
+            return;
+        }
+        const data = await response.json();
+        setState(draft => { draft.currentCourse.settings = data; });
+    }, [jwt, selectedCourseId, onRequestError]);
+
+    useEffect(() => {
+        fetchSettings();
+    }, [fetchSettings]);
 
     // Handle scroll events to track if we're at bottom
     const handleScroll = useCallback(() => {
