@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './MessageWindow.css';
 import { Message, useSetStateValue, useStateValue } from '../../state/state';
 import { Connection } from './Connection';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 const Avatar = ({ size }: { size: number }) => {
     return (
@@ -61,6 +62,8 @@ export const MessageWindow: React.FC = () => {
     const onMessageCallbacks = useStateValue(state => state.currentChat.ws.onMessageCallbacks);
 
     const uuid = useMemo(() => crypto.randomUUID(), []);
+
+    const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
 
     // Handle scroll events to track if we're at bottom
     const handleScroll = useCallback(() => {
@@ -122,8 +125,26 @@ export const MessageWindow: React.FC = () => {
         return acc;
     }, []);
 
+    const handleClick = useCallback((e: React.MouseEvent) => {
+        // Only set tooltip position if we're clicking directly on the message-window
+        if (e.target === e.currentTarget) {
+            setTooltipPosition({
+                x: e.clientX,
+                y: e.clientY
+            });
+        }
+    }, []);
+
+    const handleCloseTooltip = useCallback(() => {
+        setTooltipPosition(null);
+    }, []);
+
     return (
-        <div className={`message-window ${hiddenText ? 'hidden-text' : ''}`} ref={messageWindowRef}>
+        <div 
+            className={`message-window ${hiddenText ? 'hidden-text' : ''} relative`} 
+            onClick={handleClick}
+            ref={messageWindowRef}
+        >
             {uuid in onMessageCallbacks && <Connection />}
             {groupedMessages.map((group, index) => (
                 group.sender === 'user' ? (
@@ -132,6 +153,12 @@ export const MessageWindow: React.FC = () => {
                     <AssistantMessage key={index} messages={group.messages} />
                 )
             ))}
+            {tooltipPosition && (
+                <Tooltip 
+                    triggerPosition={tooltipPosition}
+                    onClose={handleCloseTooltip}
+                />
+            )}
         </div>
     );
 };
