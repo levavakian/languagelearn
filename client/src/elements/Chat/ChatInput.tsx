@@ -1,6 +1,6 @@
 import './Chat.css';
 import './ChatInput.css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useStateValue, useSetStateValue, Message, MessageType, PreferredResponseType } from '../../state/state';
 import { Icon } from '../Icon/Icon';
 
@@ -33,6 +33,18 @@ const ChatInput = () => {
         sendText(inputMessage);
         setInputMessage('');
     }, [inputMessage, setInputMessage, sendText]);
+
+    const setChatInput = useCallback((msg: string) => {
+        setInputMessage(msg);
+    }, []);
+
+    useEffect(() => {
+        setState(draft => { draft.currentChat.setChatInput = setChatInput });
+
+        return () => {
+            setState(draft => { draft.currentChat.setChatInput = (msg: string) => { console.log("Set chat input handler unset", msg) } });
+        };
+    }, [setChatInput, setState]);
 
     const isRecentAudio = useMemo(() => {
         if (!lastAudioInTime) return false;

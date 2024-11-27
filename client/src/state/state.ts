@@ -113,6 +113,7 @@ export type WrappedState = {
     }
     currentChat: {
         chat: Chat | null,
+        setChatInput: (msg: string) => void,
         messages: Message[]
         chatOpts: {
             preferAudio: Persistable<boolean>
@@ -157,6 +158,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     },
     currentChat: {
         chat: null,
+        setChatInput: (msg: string) => { console.log("Set chat input handler unset", msg) },
         messages: [],
         chatOpts: {
             preferAudio: persisted('chat-prefer-audio', false),

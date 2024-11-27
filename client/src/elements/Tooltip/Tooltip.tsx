@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSetStateValue, useStateValue } from '../../state/state';
-import type { CourseSettings, NoteNode } from '../../state/state';
+import type { NoteNode } from '../../state/state';
 import { Icon } from '../Icon/Icon';
 
 interface DropdownMenuProps {
@@ -43,10 +43,6 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
 
     return descendentsMap;
     }, [nodes]);
-
-    const handleMouseEnter = (node: NoteNode) => {
-        setLastHoveredNode(node.id);
-    };
 
     const shouldFolderBeOpen = (node: NoteNode) => {
         return descendents.get(node.id)?.has(lastHoveredNode) || false;
@@ -138,7 +134,7 @@ export const Tooltip = () => {
 
     const onClose = useCallback(() => {
         setState(draft => { draft.currentChat.tooltipInfo = null; });
-    }, []);
+    }, [setState]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -149,7 +145,12 @@ export const Tooltip = () => {
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [tooltipInfo]);
+    }, [tooltipInfo, onClose]);
+
+    const handleSelect = (node: NoteNode) => {
+        tooltipInfo?.onSelect(node);
+        onClose();
+    };
 
     if (!tooltipInfo || !settings) return null;
 
@@ -164,7 +165,7 @@ export const Tooltip = () => {
         >
             <DropdownMenu 
                 nodes={settings.notes} 
-                onSelect={tooltipInfo.onSelect}
+                onSelect={handleSelect}
                 lastHoveredNode={lastHoveredNode}
                 setLastHoveredNode={setLastHoveredNode}
             />
