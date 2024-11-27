@@ -21,7 +21,7 @@ const Avatar = ({ size }: { size: number }) => {
 
 const UserMessage = ({ messages }: { messages: string[] }) => {
     return (
-        <div className="message-container user-message">
+        <div className="message-container user-message pointer-events-none">
             <div className="messages-group">
                 {messages.map((text, index) => (
                     <div key={index} className="message-bubble">
@@ -35,7 +35,7 @@ const UserMessage = ({ messages }: { messages: string[] }) => {
 
 const AssistantMessage = ({ messages }: { messages: string[] }) => {
     return (
-        <div className="message-container assistant-message">
+        <div className="message-container assistant-message pointer-events-none">
             <div className="avatar-container">
                 <Avatar size={32} />
             </div>
@@ -151,7 +151,7 @@ export const MessageWindow: React.FC = () => {
             if (rect) {
                 setState(draft => { draft.currentChat.tooltipInfo = {
                     x: e.clientX - rect.left,
-                    y: e.clientY - rect.top,
+                    y: e.clientY - rect.top + (messageWindowRef.current?.scrollTop || 0),
                     onSelect: (note: NoteNode) => {}
                 } });
             }
@@ -172,6 +172,7 @@ export const MessageWindow: React.FC = () => {
                     <AssistantMessage key={index} messages={group.messages} />
                 )
             ))}
+            {tooltipInfo && <div className="mb-40" />}
             {tooltipInfo && <Tooltip />}
         </div>
     );

@@ -130,8 +130,6 @@ export const Tooltip = () => {
     const tooltipRef = useRef<HTMLDivElement>(null);
     const [lastHoveredNode, setLastHoveredNode] = useState<string>('');
 
-    console.log('lastHoveredNode', lastHoveredNode);
-
     const onClose = useCallback(() => {
         setState(draft => { draft.currentChat.tooltipInfo = null; });
     }, [setState]);
