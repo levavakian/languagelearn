@@ -145,9 +145,11 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
                         </div>
                         
                         {node.children && shouldFolderBeOpen(node) && (
-                            <div className={`absolute bottom-0 mb-[-1px] z-[1] ${
-                                tooltipInfo?.toRight ? 'left-full' : 'right-full'
-                            }`}>
+                            <div className={`
+                                absolute mb-[-1px] z-[1] 
+                                ${tooltipInfo?.toRight ? 'left-full' : 'right-full'}
+                                ${tooltipInfo?.toDown ? 'bottom-0' : 'top-0'}
+                            `}>
                                 <DropdownMenu 
                                     nodes={node.children} 
                                     onSelect={onSelect}
