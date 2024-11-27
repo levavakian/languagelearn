@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
 import { useSetStateValue, useStateValue } from '../../state/state';
 import type { CourseSettings, NoteNode } from '../../state/state';
+import { Icon } from '../Icon/Icon';
 
 interface DropdownMenuProps {
     nodes: NoteNode[];
@@ -51,11 +52,33 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
         return descendents.get(node.id)?.has(lastHoveredNode) || false;
     };
 
+    const highlight = (text: string) => {
+        const normalizedText = text.trim().replace(/\s+/g, ' ');
+        const parts = normalizedText.split(/(@(?:word|sentence)\b)/g);
+        
+        const elements = parts.map((part, i) => {
+            if (part === '@word' || part === '@sentence') {
+                return (
+                    <span key={i} className="text-coral">
+                        {part}
+                    </span>
+                );
+            }
+            return <span key={i}>{part}</span>;
+        });
+        
+        return (
+            <div className="text-left inline-block">
+                {elements}
+            </div>
+        );
+    };
+
     return (
         <div className={`
             shadow-lg rounded-md min-w-[200px] bg-indigo-dye mb-5 text-indigo-dye text-xl 
             mr-5 border-[1px] border-solid border-[--indigo-dye]
-            mt-0 rounded-t-md rounded-b-md
+            mt-0 rounded-t-md rounded-b-md w-max max-w-[400px]
         `}>
             {nodes.map((node) => {
                 return (
@@ -67,34 +90,24 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
                             e.stopPropagation();
                             setLastHoveredNode(node.id);
                         }}
-                        onMouseLeave={(e) => {
-                            const relatedTarget = e.relatedTarget as HTMLElement;
-                            // Walk up the DOM tree to find the closest parent with data-node-id
-                            const targetNode = relatedTarget?.closest('[data-node-id]');
-                            const targetNodeId = targetNode?.getAttribute('data-node-id');
-                            
-                            if (targetNodeId) {
-                                setLastHoveredNode(targetNodeId);
-                            }
-                        }}
                     >
                         <div 
                             onClick={() => !node.children && onSelect(node)}
                             className={`
-                                px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between text-indigo-dye text-xl
-                                border-[2px] border-solid border-[--indigo-dye] relative rounded-md
-                                hover:bg-gray-100
+                                px-4 py-2 cursor-pointer flex items-left text-indigo-dye text-xl
+                                border-[2px] border-solid border-[--indigo-dye] relative text-left rounded-md
                                 ${node.children 
                                     ? shouldFolderBeOpen(node)
                                         ? 'bg-coral text-white'
                                         : 'bg-alice-blue font-medium' 
-                                    : 'bg-baby-powder'}
+                                    : 'bg-baby-powder hover:bg-gray-200'}
                             `}
+                            title={node.name}
                         >
-                            {node.name}
-                            {node.children && (
-                                <span className="ml-2">→</span>
-                            )}
+                            <div className="mr-3">
+                                <Icon scale={16} name={node.children ? "dictionary" : "writing"} />
+                            </div>
+                            {node.children ? node.name : highlight(node.name)}
                         </div>
                         
                         {node.children && shouldFolderBeOpen(node) && (
