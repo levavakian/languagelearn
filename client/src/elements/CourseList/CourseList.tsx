@@ -76,7 +76,7 @@ export const CourseList= () => {
     const renderLessonPlans = (lessonPlans: LessonPlan[]) => {
         if (!lessonPlans?.length) {
             return <div className="h-[150px]">
-                <p className="text-indigo-dye text-[19px]">No lesson plans created yet</p>
+                <p className="text-gray-500 text-[19px]">No lesson plans created yet</p>
             </div>
         }
 
