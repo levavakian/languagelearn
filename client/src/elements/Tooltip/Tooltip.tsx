@@ -72,9 +72,10 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
 
     return (
         <div className={`
-            shadow-lg rounded-md min-w-[200px] bg-indigo-dye mb-5 text-indigo-dye text-xl 
+            shadow-lg rounded-md min-w-[200px] bg-indigo-dye text-indigo-dye text-xl 
             mr-5 border-[1px] border-solid border-[--indigo-dye]
-            mt-0 rounded-t-md rounded-b-md w-max max-w-[400px]
+            mb-0 rounded-t-md rounded-b-md w-max max-w-[400px]
+            flex flex-col-reverse
         `}>
             {nodes.map((node) => {
                 return (
@@ -107,7 +108,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
                         </div>
                         
                         {node.children && shouldFolderBeOpen(node) && (
-                            <div className="absolute left-full top-0 -mt-[1px] z-[1]">
+                            <div className="absolute left-full bottom-0 mb-[-1px] z-[1]">
                                 <DropdownMenu 
                                     nodes={node.children} 
                                     onSelect={onSelect}
@@ -159,6 +160,7 @@ export const Tooltip = () => {
             style={{
                 left: `${tooltipInfo.x}px`,
                 top: `${tooltipInfo.y}px`,
+                transform: 'translateY(-100%)'
             }}
         >
             <DropdownMenu 

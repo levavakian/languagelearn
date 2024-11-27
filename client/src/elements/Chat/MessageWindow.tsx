@@ -245,7 +245,6 @@ export const MessageWindow: React.FC = () => {
                     />
                 )
             ))}
-            {tooltipInfo && <div className="mb-40" />}
             {tooltipInfo && <Tooltip />}
         </div>
     );
