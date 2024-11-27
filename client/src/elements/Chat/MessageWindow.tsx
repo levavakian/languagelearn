@@ -59,6 +59,7 @@ const UserMessage = ({ messages, messageWindowRef }: {
                 draft.currentChat.tooltipInfo = {
                     x: e.clientX - rect.left,
                     y: e.clientY - rect.top + (messageWindowRef.current?.scrollTop || 0),
+                    toRight: false,
                     onSelect: (note: NoteNode) => {
                         const template = note.name.replace('@word', word).replace('@sentence', sentence);
                         onChatInputChange(template);
@@ -98,6 +99,7 @@ const AssistantMessage = ({ messages, messageWindowRef }: {
                 draft.currentChat.tooltipInfo = {
                     x: e.clientX - rect.left,
                     y: e.clientY - rect.top + (messageWindowRef.current?.scrollTop || 0),
+                    toRight: true,
                     onSelect: (note: NoteNode) => {
                         const template = note.name.replace('@word', word).replace('@sentence', sentence);
                         onChatInputChange(template);
@@ -222,23 +224,9 @@ export const MessageWindow: React.FC = () => {
         return acc;
     }, []);
 
-    const handleClick = useCallback((e: React.MouseEvent) => {
-        if (e.target === e.currentTarget) {
-            const rect = messageWindowRef.current?.getBoundingClientRect();
-            if (rect) {
-                setState(draft => { draft.currentChat.tooltipInfo = {
-                    x: e.clientX - rect.left,
-                    y: e.clientY - rect.top + (messageWindowRef.current?.scrollTop || 0),
-                    onSelect: (note: NoteNode) => {}
-                } });
-            }
-        }
-    }, []);
-
     return (
         <div 
             className={`message-window ${hiddenText ? 'hidden-text' : ''} relative`} 
-            onClick={handleClick}
             ref={messageWindowRef}
         >
             {uuid in onMessageCallbacks && <Connection />}
