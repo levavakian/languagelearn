@@ -60,6 +60,7 @@ const UserMessage = ({ messages, messageWindowRef }: {
                     x: e.clientX - rect.left,
                     y: e.clientY - rect.top + (messageWindowRef.current?.scrollTop || 0),
                     toRight: false,
+                    toDown: e.clientY - rect.top > rect.height / 2,
                     onSelect: (note: NoteNode) => {
                         const template = note.name.replace('@word', word).replace('@sentence', sentence);
                         onChatInputChange(template);
@@ -100,6 +101,7 @@ const AssistantMessage = ({ messages, messageWindowRef }: {
                     x: e.clientX - rect.left,
                     y: e.clientY - rect.top + (messageWindowRef.current?.scrollTop || 0),
                     toRight: true,
+                    toDown: e.clientY - rect.top > rect.height / 2,
                     onSelect: (note: NoteNode) => {
                         const template = note.name.replace('@word', word).replace('@sentence', sentence);
                         onChatInputChange(template);

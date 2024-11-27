@@ -57,7 +57,7 @@
     left: 0;
     right: 0;
     bottom: 7.25rem;
-    overflow-y: auto;
+    overflow: auto;
     padding: 16px;
 }
 

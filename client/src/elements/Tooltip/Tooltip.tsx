@@ -198,7 +198,7 @@ export const Tooltip = () => {
             const observer = new MutationObserver(() => {
                 const newDimensions = calculateTooltipDimensions(tooltipRef.current);
                 const newX = tooltipInfo.x - (!tooltipInfo.toRight ? newDimensions.width : 0);
-                const newY = tooltipInfo.y - newDimensions.height;
+                const newY = tooltipInfo.y - (tooltipInfo.toDown ? newDimensions.height : 0);
                 console.log('Tooltip dimensions changed:', newDimensions, newX, newY);
                 setGhostBoxDimensions({
                     x: newX, 
@@ -222,7 +222,7 @@ export const Tooltip = () => {
             // Initial calculation
             const newDimensions = calculateTooltipDimensions(tooltipRef.current);
             const newX = tooltipInfo.x - (!tooltipInfo.toRight ? newDimensions.width : 0);
-            const newY = tooltipInfo.y - newDimensions.height;
+            const newY = tooltipInfo.y - (tooltipInfo.toDown ? newDimensions.height : 0);
             console.log('Tooltip dimensions changed:', newDimensions, newX, newY);
             setGhostBoxDimensions({
                 x: newX, 
@@ -245,13 +245,14 @@ export const Tooltip = () => {
         <div>
             <div 
                 ref={tooltipRef}
-                className="absolute z-50" 
+                className={`
+                    absolute z-50
+                    ${!tooltipInfo.toRight ? '-translate-x-full' : ''}
+                    ${tooltipInfo.toDown ? '-translate-y-full' : ''}
+                `}
                 style={{
                     left: `${tooltipInfo.x}px`,
                     top: `${tooltipInfo.y}px`,
-                    transform: tooltipInfo.toRight 
-                        ? 'translateY(-100%)' 
-                        : 'translate(-100%, -100%)'
                 }}
             >
                 <DropdownMenu 

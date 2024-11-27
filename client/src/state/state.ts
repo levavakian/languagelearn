@@ -35,6 +35,7 @@ export type TooltipInfo = {
     y: number
     onSelect: (note: NoteNode) => void
     toRight: boolean
+    toDown: boolean
 }
 
 export type CourseSettings = {
