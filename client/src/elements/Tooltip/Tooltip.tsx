@@ -10,6 +10,40 @@ interface DropdownMenuProps {
     setLastHoveredNode: React.Dispatch<React.SetStateAction<string>>;
 }
 
+const calculateTooltipDimensions = (element: HTMLElement | null): { width: number; height: number } => {
+    if (!element) return { width: 0, height: 0 };
+    
+    // Get all nested dropdown menus
+    const dropdowns = element.querySelectorAll('[data-node-id]');
+    
+    // Initialize with the main container's bounds
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    
+    // Include the main container
+    const mainRect = element.getBoundingClientRect();
+    minX = Math.min(minX, mainRect.left);
+    maxX = Math.max(maxX, mainRect.right);
+    minY = Math.min(minY, mainRect.top);
+    maxY = Math.max(maxY, mainRect.bottom);
+    
+    // Include all dropdowns
+    dropdowns.forEach(dropdown => {
+        const rect = dropdown.getBoundingClientRect();
+        minX = Math.min(minX, rect.left);
+        maxX = Math.max(maxX, rect.right);
+        minY = Math.min(minY, rect.top);
+        maxY = Math.max(maxY, rect.bottom);
+    });
+    
+    return {
+        width: maxX - minX,
+        height: maxY - minY
+    };
+};
+
 export const DropdownMenu: React.FC<DropdownMenuProps> = ({ 
     nodes, 
     onSelect, 
@@ -135,6 +169,8 @@ export const Tooltip = () => {
     const tooltipInfo = useStateValue(state => state.currentChat.tooltipInfo);
     const tooltipRef = useRef<HTMLDivElement>(null);
     const [lastHoveredNode, setLastHoveredNode] = useState<string>('');
+    const [ghostBoxDimensions, setGhostBoxDimensions] = useState<{ width: number; height: number, x: number, y: number } | null>(null);
+    const observerRef = useRef<MutationObserver | null>(null);
 
     const onClose = useCallback(() => {
         setState(draft => { draft.currentChat.tooltipInfo = null; });
@@ -156,25 +192,83 @@ export const Tooltip = () => {
         onClose();
     };
 
+    useEffect(() => {
+        if (tooltipRef.current && tooltipInfo) {
+            // Create mutation observer
+            const observer = new MutationObserver(() => {
+                const newDimensions = calculateTooltipDimensions(tooltipRef.current);
+                const newX = tooltipInfo.x - (!tooltipInfo.toRight ? newDimensions.width : 0);
+                const newY = tooltipInfo.y - newDimensions.height;
+                console.log('Tooltip dimensions changed:', newDimensions, newX, newY);
+                setGhostBoxDimensions({
+                    x: newX, 
+                    y: newY, 
+                    width: newDimensions.width, 
+                    height: newDimensions.height
+                });
+            });
+
+            // Start observing
+            observer.observe(tooltipRef.current, {
+                attributes: true,
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+
+            // Store observer reference
+            observerRef.current = observer;
+
+            // Initial calculation
+            const newDimensions = calculateTooltipDimensions(tooltipRef.current);
+            const newX = tooltipInfo.x - (!tooltipInfo.toRight ? newDimensions.width : 0);
+            const newY = tooltipInfo.y - newDimensions.height;
+            console.log('Tooltip dimensions changed:', newDimensions, newX, newY);
+            setGhostBoxDimensions({
+                x: newX, 
+                y: newY, 
+                width: newDimensions.width, 
+                height: newDimensions.height
+            });
+
+            // Cleanup
+            return () => {
+                observer.disconnect();
+                observerRef.current = null;
+            };
+        }
+    }, [tooltipInfo]);
+
     if (!tooltipInfo || !settings) return null;
 
     return (
-        <div 
-            ref={tooltipRef}
-            className="absolute z-50" 
-            style={{
-                left: `${tooltipInfo.x}px`,
-                top: `${tooltipInfo.y}px`,
-                transform: tooltipInfo.toRight 
-                    ? 'translateY(-100%)' 
-                    : 'translate(-100%, -100%)'
-            }}
-        >
-            <DropdownMenu 
-                nodes={settings.notes} 
-                onSelect={handleSelect}
-                lastHoveredNode={lastHoveredNode}
-                setLastHoveredNode={setLastHoveredNode}
+        <div>
+            <div 
+                ref={tooltipRef}
+                className="absolute z-50" 
+                style={{
+                    left: `${tooltipInfo.x}px`,
+                    top: `${tooltipInfo.y}px`,
+                    transform: tooltipInfo.toRight 
+                        ? 'translateY(-100%)' 
+                        : 'translate(-100%, -100%)'
+                }}
+            >
+                <DropdownMenu 
+                    nodes={settings.notes} 
+                    onSelect={handleSelect}
+                    lastHoveredNode={lastHoveredNode}
+                    setLastHoveredNode={setLastHoveredNode}
+                />
+            </div>
+            <div 
+                className="absolute z-40 border-2 border-solid border-red-500" 
+                style={ghostBoxDimensions ? {
+                    left: `${ghostBoxDimensions.x}px`,
+                    top: `${ghostBoxDimensions.y}px`,
+                    width: `${ghostBoxDimensions.width}px`,
+                    height: `${ghostBoxDimensions.height}px`,
+                } : {}} 
             />
         </div>
     );
