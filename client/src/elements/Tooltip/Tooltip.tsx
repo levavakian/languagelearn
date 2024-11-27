@@ -17,6 +17,8 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
     setLastHoveredNode,
 }) => {
 
+    const tooltipInfo = useStateValue(state => state.currentChat.tooltipInfo);
+
     const descendents = useMemo(() => {
         const getDescendents = (node: NoteNode): Set<string> => {
             const descendentsSet = new Set<string>();
@@ -76,6 +78,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
             mr-5 border-[1px] border-solid border-[--indigo-dye]
             mb-0 rounded-t-md rounded-b-md w-max max-w-[400px]
             flex flex-col-reverse
+            ${!tooltipInfo?.toRight ? 'ml-5 mr-0' : 'mr-5 ml-0'}
         `}>
             {nodes.map((node) => {
                 return (
@@ -108,7 +111,9 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
                         </div>
                         
                         {node.children && shouldFolderBeOpen(node) && (
-                            <div className="absolute left-full bottom-0 mb-[-1px] z-[1]">
+                            <div className={`absolute bottom-0 mb-[-1px] z-[1] ${
+                                tooltipInfo?.toRight ? 'left-full' : 'right-full'
+                            }`}>
                                 <DropdownMenu 
                                     nodes={node.children} 
                                     onSelect={onSelect}
@@ -160,7 +165,9 @@ export const Tooltip = () => {
             style={{
                 left: `${tooltipInfo.x}px`,
                 top: `${tooltipInfo.y}px`,
-                transform: 'translateY(-100%)'
+                transform: tooltipInfo.toRight 
+                    ? 'translateY(-100%)' 
+                    : 'translate(-100%, -100%)'
             }}
         >
             <DropdownMenu 
