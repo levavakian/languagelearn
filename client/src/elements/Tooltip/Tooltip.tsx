@@ -264,7 +264,7 @@ export const Tooltip = () => {
                     setLastHoveredNode={setLastHoveredNode}
                 />
             </div>
-            <div 
+            {process.env.REACT_APP_DEBUG_BOXES && <div 
                 className="absolute z-40 border-2 border-solid border-red-500" 
                 style={ghostBoxDimensions ? {
                     left: `${ghostBoxDimensions.x}px`,
@@ -272,7 +272,7 @@ export const Tooltip = () => {
                     width: `${ghostBoxDimensions.width}px`,
                     height: `${ghostBoxDimensions.height}px`,
                 } : {}} 
-            />
+            />}
         </div>
     );
 };
