@@ -19,31 +19,108 @@ const Avatar = ({ size }: { size: number }) => {
     );
 };
 
-const UserMessage = ({ messages }: { messages: string[] }) => {
+const MessageBubble = ({ text, isAssistant, onWordClick }: { 
+    text: string, 
+    isAssistant: boolean, 
+    onWordClick: (word: string, sentence: string, e: React.MouseEvent) => void 
+}) => {
     return (
-        <div className="message-container user-message pointer-events-none">
+        <div className="message-bubble">
+            {text.split(' ').map((word, index) => (
+                <span
+                    key={index}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onWordClick(word, text, e);
+                    }}
+                    className={`cursor-pointer px-[2px] rounded 
+                        ${isAssistant 
+                            ? 'hover:text-coral' 
+                            : 'hover:text-lavender'
+                        }`}
+                >
+                    {word}{' '}
+                </span>
+            ))}
+        </div>
+    );
+};
+
+const UserMessage = ({ messages, messageWindowRef }: { 
+    messages: string[], 
+    messageWindowRef: React.RefObject<HTMLDivElement> 
+}) => {
+    const setState = useSetStateValue();
+    const onChatInputChange = useStateValue(state => state.currentChat.setChatInput);
+    const handleWordClick = useCallback((word: string, sentence: string, e: React.MouseEvent) => {
+        const rect = messageWindowRef.current?.getBoundingClientRect();
+        if (rect) {
+            setState(draft => {
+                draft.currentChat.tooltipInfo = {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top + (messageWindowRef.current?.scrollTop || 0),
+                    onSelect: (note: NoteNode) => {
+                        const template = note.name.replace('@word', word).replace('@sentence', sentence);
+                        onChatInputChange(template);
+                        setState(draft => { draft.currentChat.tooltipInfo = null; });
+                    }
+                };
+            });
+        }
+    }, [setState, onChatInputChange]);
+
+    return (
+        <div className="message-container user-message">
             <div className="messages-group">
                 {messages.map((text, index) => (
-                    <div key={index} className="message-bubble">
-                        {text}
-                    </div>
+                    <MessageBubble 
+                        key={index} 
+                        text={text} 
+                        isAssistant={false}
+                        onWordClick={handleWordClick}
+                    />
                 ))}
             </div>
         </div>
     );
 };
 
-const AssistantMessage = ({ messages }: { messages: string[] }) => {
+const AssistantMessage = ({ messages, messageWindowRef }: { 
+    messages: string[], 
+    messageWindowRef: React.RefObject<HTMLDivElement> 
+}) => {
+    const setState = useSetStateValue();
+    const onChatInputChange = useStateValue(state => state.currentChat.setChatInput);
+    const handleWordClick = useCallback((word: string, sentence: string, e: React.MouseEvent) => {
+        const rect = messageWindowRef.current?.getBoundingClientRect();
+        if (rect) {
+            setState(draft => {
+                draft.currentChat.tooltipInfo = {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top + (messageWindowRef.current?.scrollTop || 0),
+                    onSelect: (note: NoteNode) => {
+                        const template = note.name.replace('@word', word).replace('@sentence', sentence);
+                        onChatInputChange(template);
+                        setState(draft => { draft.currentChat.tooltipInfo = null; });
+                    }
+                };
+            });
+        }
+    }, [setState, onChatInputChange]);
+
     return (
-        <div className="message-container assistant-message pointer-events-none">
+        <div className="message-container assistant-message">
             <div className="avatar-container">
                 <Avatar size={32} />
             </div>
             <div className="messages-group">
                 {messages.map((text, index) => (
-                    <div key={index} className="message-bubble">
-                        {text}
-                    </div>
+                    <MessageBubble 
+                        key={index} 
+                        text={text} 
+                        isAssistant={true}
+                        onWordClick={handleWordClick}
+                    />
                 ))}
             </div>
         </div>
@@ -167,9 +244,17 @@ export const MessageWindow: React.FC = () => {
             {uuid in onMessageCallbacks && <Connection />}
             {groupedMessages.map((group, index) => (
                 group.sender === 'user' ? (
-                    <UserMessage key={index} messages={group.messages} />
+                    <UserMessage 
+                        key={index} 
+                        messages={group.messages} 
+                        messageWindowRef={messageWindowRef}
+                    />
                 ) : (
-                    <AssistantMessage key={index} messages={group.messages} />
+                    <AssistantMessage 
+                        key={index} 
+                        messages={group.messages} 
+                        messageWindowRef={messageWindowRef}
+                    />
                 )
             ))}
             {tooltipInfo && <div className="mb-40" />}
