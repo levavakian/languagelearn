@@ -1,17 +1,78 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import './Sidebar.css';
-import { Course, State, useSetStateValue, useStateValue, WorkPage } from '../../state/state';
+import { Course, Lesson, State, useSetStateValue, useStateValue, WorkPage } from '../../state/state';
 
 const CourseBox = ({ course }: { course: Course }) => {
     const setState = useSetStateValue();
+    const jwt = useStateValue((state: State) => state.auth.token);
+    const selectedLesson = useStateValue((state: State) => state.pageChoice.selectedLesson)
+    const onRequestError = useStateValue((state: State) => state.auth.onRequestError);
+    const [latestLesson, setLatestLesson] = useState<string | null>(null);
+    const [lastFailed, setLastFailed] = useState<number>(0);
+
+    const fetchCourse = useCallback(async () => {
+        const response = await fetch(`/api/course/${course.id}/lessons`, {
+            headers: { 'Authorization': `Bearer ${jwt}` }
+        });
+
+        if (!response.ok) {
+            onRequestError(response);
+            setLastFailed(Date.now());
+            return;
+        }
+
+        const data = await response.json() as Lesson[] | null;
+
+        if (data === null) {
+            setLatestLesson("");
+            return;
+        }
+
+        if (data.length > 0) {
+            const latestLesson = data.reduce((latest: Lesson, lesson: Lesson) => {
+                return new Date(lesson.updated_at) > new Date(latest.updated_at) ? lesson : latest;
+            });
+            setLatestLesson(latestLesson.id);
+        } else {
+            setLatestLesson("");
+        }
+    }, [jwt, onRequestError]);
+
+    useEffect(() => {
+        if (Date.now() - lastFailed < 10000) {
+            const timeoutId = setTimeout(fetchCourse, 10000 - (Date.now() - lastFailed));
+            return () => clearTimeout(timeoutId);
+        }
+        fetchCourse();
+    }, [fetchCourse, lastFailed, selectedLesson]);
+
+    const getFirstItem = () => {
+        if (latestLesson) {
+            return {
+                icon: <Icon scale={12} name="next" />, 
+                label: 'Continue Lesson',
+                onClick: () => setState(draft => { draft.pageChoice.workPage = WorkPage.Chat; draft.pageChoice.selectedLesson = latestLesson })
+            };
+        }
+
+        if (latestLesson === "") {
+            return {
+                icon: <Icon scale={12} name="next" />, 
+                label: 'Initial Assessment',
+                onClick: () => console.log('Initial Assessment for:', course.name)
+            };
+        }
+
+        return {
+            icon: <Icon scale={12} name="next" />, 
+            label: 'Loading...',
+            onClick: () => {}
+        };
+    };
 
     const standardItems = [
-        { 
-            icon: <Icon scale={12} name="next" />, 
-            label: 'Continue Lesson',
-            onClick: () => console.log('Continue Lesson for:', course.name)
-        },
+        getFirstItem(),
         { 
             icon: <Icon scale={12} name="color" />, 
             label: 'View Course',
@@ -19,7 +80,7 @@ const CourseBox = ({ course }: { course: Course }) => {
         },
         { 
             icon: <Icon scale={12} name="mic" />, 
-            label: 'Free Practice',
+            label: 'Quick Practice',
             onClick: () => console.log('Free Practice for:', course.name)
         }
     ];

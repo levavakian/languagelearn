@@ -355,18 +355,23 @@ func getCourseLessons(w http.ResponseWriter, r *http.Request) {
 	userEmail := r.Header.Get("X-User-Email")
 
 	if err := verifyOwnership(courseID, userEmail); err != nil {
+		fmt.Printf("Error verifying ownership: %v\n", err)
 		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 
 	lessons, err := getCourseLessonsFromDB(courseID)
 	if err != nil {
+		fmt.Printf("Error fetching lessons: %v\n", err)
 		http.Error(w, "Failed to fetch lessons", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(lessons)
+	if err := json.NewEncoder(w).Encode(lessons); err != nil {
+		fmt.Printf("Error encoding lessons to JSON: %v\n", err)
+		http.Error(w, "Failed to encode lessons", http.StatusInternalServerError)
+	}
 }
 
 func updateLesson(w http.ResponseWriter, r *http.Request) {

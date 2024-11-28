@@ -159,7 +159,7 @@ func insertLesson(lesson Lesson) error {
 
 func getCourseLessonsFromDB(courseID string) ([]Lesson, error) {
 	rows, err := db.DB.Query(
-		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at, name, free_practice FROM lessons WHERE course_id = $1 ORDER BY order_index",
+		"SELECT id, course_id, chat_id, lesson_plan, summary, order_index, created_at, updated_at, name, free_practice FROM lessons WHERE course_id = $1 ORDER BY order_index",
 		courseID,
 	)
 	if err != nil {
@@ -170,7 +170,7 @@ func getCourseLessonsFromDB(courseID string) ([]Lesson, error) {
 	var lessons []Lesson
 	for rows.Next() {
 		var lesson Lesson
-		if err := rows.Scan(&lesson.ID, &lesson.CourseID, &lesson.ChatID, &lesson.LessonPlan, &lesson.Summary, &lesson.OrderIndex, &lesson.CreatedAt, &lesson.Name, &lesson.FreePractice); err != nil {
+		if err := rows.Scan(&lesson.ID, &lesson.CourseID, &lesson.ChatID, &lesson.LessonPlan, &lesson.Summary, &lesson.OrderIndex, &lesson.CreatedAt, &lesson.UpdatedAt, &lesson.Name, &lesson.FreePractice); err != nil {
 			return nil, err
 		}
 		lessons = append(lessons, lesson)
