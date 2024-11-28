@@ -6,6 +6,7 @@ export enum ModalSelector {
     None = 'none',
     BuyCoins = 'buy-coins',
     NewCourse = 'new-course',
+    NewLesson = 'new-lesson',
 }
 
 export enum WorkPage {

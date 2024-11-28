@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useState, useRef } from 'react';
 import './CourseView.css';
-import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan, NoteNode, VocabItem } from '../../state/state';
+import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan, NoteNode, VocabItem, ModalSelector } from '../../state/state';
 import toast from 'react-hot-toast';
 import { Icon } from '../Icon/Icon';
 import { produce } from 'immer';
@@ -703,7 +703,9 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
     return (
         <div className="course-lesson-list">
             <div className="course-lesson-list-title">Lessons</div>
-            <div className="course-lesson-list-add-lesson">
+            <div className="course-lesson-list-add-lesson"
+                onClick={() => setState(draft => { draft.modalSelector = ModalSelector.NewLesson })}
+            >
                 + Start New Lesson
             </div>
                 {lessons.slice(0, viewAll ? lessons.length : 4).map(lesson => (

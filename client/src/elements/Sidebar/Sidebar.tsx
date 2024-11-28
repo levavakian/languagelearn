@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useMemo } from 'react';
 import { Icon } from '../Icon/Icon';
 import './Sidebar.css';
 import { Course, Lesson, State, useSetStateValue, useStateValue, WorkPage, ModalSelector } from '../../state/state';
@@ -152,6 +152,18 @@ const Sidebar = () => {
     const onRequestError = useStateValue((state: State) => state.auth.onRequestError);
     const courses = useStateValue((state: State) => state.courses);
 
+    const coursesElements = useMemo(() => {
+        return [...courses]
+            .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+            .slice(0, 4)
+            .map((course, index) => (
+                <CourseBox
+                    key={index}
+                    course={course} 
+                />
+            ))
+    }, [courses]);
+
     const fetchCourses = useCallback(async () => {
         try {
             const response = await fetch('/api/courses', {
@@ -190,15 +202,7 @@ const Sidebar = () => {
                         </h2>
                         
                         <div>
-                            {[...courses]
-                                .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-                                .slice(0, 4)
-                                .map((course, index) => (
-                                    <CourseBox
-                                        key={index}
-                                        course={course} 
-                                    />
-                                ))}
+                            {coursesElements}
                             <NewCourseButton />
                         </div>
                     </div>

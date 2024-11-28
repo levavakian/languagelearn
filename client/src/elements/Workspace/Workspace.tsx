@@ -7,6 +7,7 @@ import { ModalSelector, useStateValue, WorkPage } from '../../state/state';
 import CourseView from '../CourseView/CourseView';
 import Chat from '../Chat/Chat';
 import { CourseList } from '../CourseList/CourseList';
+import { NewLessonModal } from '../NewLessonModal/NewLessonModal';
 
 const Workspace = () => {
     const pageChoice = useStateValue(state => state.pageChoice);
@@ -16,6 +17,7 @@ const Workspace = () => {
         <div className="workspace-container">
             <Sidebar />
             {modalSelector === ModalSelector.NewCourse && <NewCourseModal />}
+            {modalSelector === ModalSelector.NewLesson && <NewLessonModal />}
             <div className="workspace-main">
                 <Topbar />
                 <div className="workspace-content">
