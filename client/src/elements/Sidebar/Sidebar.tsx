@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import './Sidebar.css';
-import { Course, Lesson, State, useSetStateValue, useStateValue, WorkPage } from '../../state/state';
+import { Course, Lesson, State, useSetStateValue, useStateValue, WorkPage, ModalSelector } from '../../state/state';
 
 const CourseBox = ({ course }: { course: Course }) => {
     const setState = useSetStateValue();
@@ -117,7 +117,7 @@ const NewCourseButton = () => {
         { 
             icon: <Icon scale={12} name="shuttle" />, 
             label: 'Start New Course',
-            onClick: () => setState(draft => { draft.pageChoice.workPage = WorkPage.AllCourses })
+            onClick: () => setState(draft => { draft.modalSelector = ModalSelector.NewCourse })
         },
         { 
             icon: <Icon scale={12} name="writing" />, 

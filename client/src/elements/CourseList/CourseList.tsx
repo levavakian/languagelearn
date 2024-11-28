@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSetStateValue, useStateValue, WorkPage } from '../../state/state';
+import { useSetStateValue, useStateValue, WorkPage, ModalSelector } from '../../state/state';
 import { Course, Lesson, LessonPlan } from '../../state/state';
 import toast from 'react-hot-toast';
 
@@ -35,8 +35,6 @@ export const CourseList= () => {
         };
         fetchCourses();
     }, [jwt, onRequestError]);
-
-    console.log(courseDetails);
 
     const renderLessons = (lessons: Lesson[]) => {
         if (!lessons?.length) {
@@ -123,7 +121,8 @@ export const CourseList= () => {
             <br></br>
 Choose a course to continue learning, or start a new language journey.
             </div>
-            <div className="bg-[--coral] hover:bg-[--coral-dark] text-center my-10 text-[24px] font-semibold text-[--baby-powder] max-w-[250px] rounded-xl p-2 border-[2px] border-solid border-[--indigo-dye] shadow-[0_6px_0_var(--indigo-dye)] cursor-pointer">
+            <div className="bg-[--coral] hover:brightness-95 text-center my-10 text-[24px] font-semibold text-[--baby-powder] max-w-[250px] rounded-xl p-2 border-[2px] border-solid border-[--indigo-dye] shadow-[0_6px_0_var(--indigo-dye)] cursor-pointer transition-all duration-100 active:translate-y-1 active:shadow-[0_0px_0_var(--indigo-dye)]"
+                onClick={() => setState(draft => { draft.modalSelector = ModalSelector.NewCourse })}>
                 Start New Course
             </div>
             <hr className="my-2 border-gray-200 max-w-[750px] ml-0" />

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import './Topbar.css';
 import { useSetStateValue, ModalSelector, useStateValue } from '../../state/state';
-import { closeModal, ShowModal } from '../Modal/Modal';
+import { ShowModal } from '../Modal/Modal';
 import { PaymentForm, CreditCard, GooglePay } from 'react-square-web-payments-sdk';
 import toast from 'react-hot-toast';
 

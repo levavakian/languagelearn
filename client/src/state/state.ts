@@ -5,6 +5,7 @@ import { createAtomHooks } from './statehooks'
 export enum ModalSelector {
     None = 'none',
     BuyCoins = 'buy-coins',
+    NewCourse = 'new-course',
 }
 
 export enum WorkPage {
