@@ -29,6 +29,7 @@ export enum PreferredResponseType {
 export type Course = {
     id: string
     name: string
+    updated_at: string
 }
 
 export type TooltipInfo = {

@@ -174,7 +174,7 @@ const Sidebar = () => {
 
     useEffect(() => {
         fetchCourses();
-    }, [fetchCourses]);
+    }, [fetchCourses, courses]);
     
     return (
         <div className="sidebar">
@@ -190,12 +190,15 @@ const Sidebar = () => {
                         </h2>
                         
                         <div>
-                            {courses.map((course, index) => (
-                                <CourseBox
-                                    key={index}
-                                    course={course} 
-                                />
-                            ))}
+                            {[...courses]
+                                .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+                                .slice(0, 4)
+                                .map((course, index) => (
+                                    <CourseBox
+                                        key={index}
+                                        course={course} 
+                                    />
+                                ))}
                             <NewCourseButton />
                         </div>
                     </div>
