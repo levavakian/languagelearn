@@ -135,7 +135,7 @@ export const NewLessonModal = () => {
                         <h2 className="text-3xl font-bold mb-4">New Lesson</h2>
                         <div className="absolute right-0 top-[10%] h-[80%] w-[1px] bg-gray-200"></div>
 
-                        <div className="bg-white border-solid border-[1px] border-indigo-dye rounded-xl border p-6 shadow-sm flex flex-col flex-grow overflow-auto">
+                        <div className="bg-white border-solid border-[2px] border-indigo-dye rounded-xl border p-6 shadow-[0_4px_0_0_var(--indigo-dye)] flex flex-col flex-grow overflow-auto">
                             <input 
                             className="w-[90%] px-3 py-2 border-solid text-indigo-dye font-semibold rounded-lg text-[20px] font-nobel focus:outline-none"
                             placeholder="Title"
