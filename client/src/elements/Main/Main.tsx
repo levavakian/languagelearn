@@ -5,6 +5,12 @@ import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { toast } from 'react-hot-toast';
 import { ToasterWithMax } from '../Toast/Toast';
 import Workspace from '../Workspace/Workspace';
+import {
+    QueryClient,
+    QueryClientProvider,
+  } from '@tanstack/react-query'
+  
+const queryClient = new QueryClient();
 
 interface MainProps {
     onToggleRefactor?: () => void;
@@ -51,41 +57,43 @@ const Main: React.FC<MainProps> = ({ onToggleRefactor }) => {
     };
 
     return (
-        <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
-            <div className="main-container">
-                <div >
-                    <ToasterWithMax 
-                        position="top-center"
-                        toastOptions={{
-                            duration: 3000,
-                            style: {
-                                cursor: 'pointer',
-                            },
-                        }}
-                        containerStyle={{
-                            top: 50,
-                        }}
-                        max={3}
-                    />
-                    {!jwt ? (
-                        <header style={{
-                            padding: '0px',
-                            display: 'flex',
-                            justifyContent: 'flex-end'
-                        }}>
-                            <GoogleLogin
-                                onSuccess={handleLoginSuccess}
-                                onError={handleLoginFailure}
-                            />
-                        </header>
-                    ) : (
-                        <div>
-                            <Workspace />
-                        </div>
-                    )}
-                </div>
-            </div>
-        </GoogleOAuthProvider>
+        <div className="main-container">
+            <QueryClientProvider client={queryClient}>
+                <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
+                    <div>
+                        <ToasterWithMax 
+                            position="top-center"
+                            toastOptions={{
+                                duration: 3000,
+                                style: {
+                                    cursor: 'pointer',
+                                },
+                            }}
+                            containerStyle={{
+                                top: 50,
+                            }}
+                            max={3}
+                        />
+                        {!jwt ? (
+                            <header style={{
+                                padding: '0px',
+                                display: 'flex',
+                                justifyContent: 'flex-end'
+                            }}>
+                                <GoogleLogin
+                                    onSuccess={handleLoginSuccess}
+                                    onError={handleLoginFailure}
+                                />
+                            </header>
+                        ) : (
+                            <div>
+                                <Workspace />
+                            </div>
+                        )}
+                    </div>
+                </GoogleOAuthProvider>
+            </QueryClientProvider>
+        </div>
     );
 };
 export default Main;

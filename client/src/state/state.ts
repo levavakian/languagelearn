@@ -9,6 +9,12 @@ export enum ModalSelector {
     NewLesson = 'new-lesson',
 }
 
+export enum PreferredInstructorStyle {
+    Neutral = 'neutral',
+    Strict = 'strict',
+    Casual = 'casual',
+}
+
 export enum WorkPage {
     Lesson = 'lesson',
     Chat = 'chat',
@@ -141,6 +147,7 @@ export type WrappedState = {
     toggleRefactor: () => void
     courses: Course[]
     modalSelector: ModalSelector
+    preferredInstructorStyle: Persistable<PreferredInstructorStyle>
 }
 
 const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
@@ -186,6 +193,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     toggleRefactor: () => { console.log("Toggle refactor handler unset") },
     courses: [],
     modalSelector: ModalSelector.None,
+    preferredInstructorStyle: persisted('preferred-instructor-style', PreferredInstructorStyle.Neutral),
 })
 
 export type State = typeof initialState

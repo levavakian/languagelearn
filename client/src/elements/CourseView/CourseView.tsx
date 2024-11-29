@@ -692,6 +692,11 @@ const LessonPlanList = () => {
 const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
     const setState = useSetStateValue();
     const [viewAll, setViewAll] = useState(false);
+    const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
+
+    useEffect(() => {
+        setViewAll(false);
+    }, [selectedCourseId]);
 
     const handleLessonChoice = (lesson: Lesson) => {
         setState(draft => {
@@ -728,6 +733,11 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
 const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
     const setState = useSetStateValue();
     const [viewAll, setViewAll] = useState(false);
+    const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
+
+    useEffect(() => {
+        setViewAll(false);
+    }, [selectedCourseId]);
 
     const handleLessonChoice = (lesson: Lesson) => {
         setState(draft => {

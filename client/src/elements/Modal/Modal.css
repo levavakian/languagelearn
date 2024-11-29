@@ -1,6 +1,6 @@
 .Modal {
     background-color: var(--baby-powder);
-    border-radius: 8px;
+    border-radius: 14px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
     padding: 30px;
     max-width: 90vw;

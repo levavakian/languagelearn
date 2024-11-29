@@ -1,10 +1,51 @@
-import React, { useCallback } from 'react';
+import React, { ChangeEvent, useCallback } from 'react';
 import { ShowModal } from '../Modal/Modal';
-import { useSetStateValue, ModalSelector, useStateValue, WorkPage } from '../../state/state';
+import { useSetStateValue, PreferredInstructorStyle, ModalSelector, useStateValue, WorkPage, LessonPlan } from '../../state/state';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { Icon } from '../Icon/Icon';
+// import {
+//     useQuery
+// } from '@tanstack/react-query'
 
 export const NewLessonModal = () => {
+    const setState = useSetStateValue();
+    const preferredInstructorStyle = useStateValue(state => state.preferredInstructorStyle);
+    
+    const [title, setTitle] = useState('');
+    const [lessonPlanText, setLessonPlanText] = useState('');
+    const [focusAreas, setFocusAreas] = useState('');
+    const [generating, isGenerating] = useState(false);
+    const [lessonPlans, setLessonPlans] = useState([]);
+
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
+    
+    const fetchLessonPlans = useCallback(async () => {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/lesson-plans/new`, {
+            headers: {
+                'Authorization': `Bearer ${jwt}`
+            }
+        })
+
+        if (!response.ok) {
+            onRequestError(response, "Failed to fetch lesson plans");
+            throw new Error("Failed to fetch lesson plans");
+            return;
+        }
+
+        return response.json();
+    }, [jwt, onRequestError]);
+
+    // const {isPending: isPendingLessonPlans, error: errorLessonPlans, data: dataLessonPlans} = useQuery({
+    //     queryKey: ['lesson-plans-new-lesson-modal'],
+    //     queryFn: fetchLessonPlans
+    // })
+
+    // if (!isPendingLessonPlans && !errorLessonPlans) {
+    //     setLessonPlans(dataLessonPlans);
+    // }
+
     return ShowModal(
         ModalSelector.NewLesson,
         <div className="max-w-6xl mx-auto p-6 my-auto">
@@ -16,14 +57,18 @@ export const NewLessonModal = () => {
 
                     <div className="bg-white border-solid border-[1px] border-indigo-dye rounded-xl border p-6 shadow-sm flex flex-col flex-grow overflow-auto">
                         <input 
-                        className="w-[90%] px-3 py-2 border text-indigo-dye font-semibold rounded-lg text-[20px] font-nobel focus:outline-none"
+                        className="w-[90%] px-3 py-2 border-solid text-indigo-dye font-semibold rounded-lg text-[20px] font-nobel focus:outline-none"
                         placeholder="Title"
                         type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
                         />
 
                         <textarea 
-                        className="w-[90%] p-3 border rounded-lg min-w-[500px] text-[20px] text-indigo-dye resize-none font-nobel mt-4 flex-1 focus:outline-none"
+                        className="w-[90%] p-3 border-solid rounded-lg min-w-[500px] text-[20px] text-indigo-dye resize-none font-nobel mt-4 flex-1 focus:outline-none"
                         placeholder="Fill out or generate the lesson plan for today"
+                        value={lessonPlanText}
+                        onChange={(e) => setLessonPlanText(e.target.value)}
                         />
                     </div>
                 </div>
@@ -33,44 +78,57 @@ export const NewLessonModal = () => {
                 <div className="flex-grow">
                     <h3 className="font-semibold text-[20px] font-nobel focus:outline-none mb-3">Customise plan with focus areas</h3>
                     <textarea 
-                    className="w-[90%] p-3 border rounded-xl min-h-[200px] min-w-[300px] resize-none text-[20px] text-indigo-dye font-nobel focus:outline-none"
+                    className="w-[90%] p-3 border-solid rounded-xl min-h-[200px] min-w-[300px] resize-none text-[20px] text-indigo-dye font-nobel focus:outline-none"
                     placeholder="What topics or focus areas would you like the lesson to focus on?"
+                    value={focusAreas}
+                    onChange={(e) => setFocusAreas(e.target.value)}
                     />
                 </div>
 
                 <div className="space-y-6">
                     <div>
                     <h3 className="font-semibold mb-3">Learning Style</h3>
-                    <div className="flex gap-2">
-                        <button className="px-4 py-1 rounded-md bg-blue-50 border border-blue-200 text-blue-700">
-                        Neural
-                        </button>
-                        <button className="px-4 py-1 rounded-md bg-orange-50 border border-orange-200 text-orange-700">
-                        Conversational
-                        </button>
-                        <button className="px-4 py-1 rounded-md bg-purple-50 border border-purple-200 text-purple-700">
-                        Practice-based
-                        </button>
+                    <div className="flex gap-4">
+                        <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg text-indigo-dye font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Strict ? 'bg-coral text-baby-powder' : 'bg-alice-blue'}`}
+                            onClick={() => {
+                                setState(drift => drift.preferredInstructorStyle = PreferredInstructorStyle.Strict );
+                            }}
+                        >
+                            Strict
+                        </div>
+                        <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg text-indigo-dye font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Neutral ? 'bg-coral text-baby-powder' : 'bg-alice-blue'}`}
+                            onClick={() => {
+                                setState(drift => drift.preferredInstructorStyle = PreferredInstructorStyle.Neutral );
+                            }}
+                        >
+                            Neutral
+                        </div>
+                        <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg text-indigo-dye font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Casual ? 'bg-coral text-baby-powder' : 'bg-alice-blue'}`}
+                            onClick={() => {
+                                setState(drift => drift.preferredInstructorStyle = PreferredInstructorStyle.Casual );
+                            }}
+                        >
+                            Casual
+                        </div>
                     </div>
                     </div>
-
+                    <div className="bg-indigo-dye rounded-xl w-fit p-3 px-5 flex flex-row cursor-pointer hover:brightness-125 transition-all duration-300">
+                        <div className="text-baby-powder font-semibold text-[18px]">
+                            Generate Plan
+                        </div>
+                        <Icon name="shuttle" scale={18} style={{ filter: 'invert(100%) sepia(0%) saturate(0%) hue-rotate(180deg) brightness(125%) contrast(100%)', marginLeft: '15px' }} />
+                    </div>
                     <div>
-                    <h3 className="font-semibold mb-3">Instructor Style</h3>
-                    <select className="w-48 px-3 py-2 border rounded-md bg-white text-gray-700">
-                    <option>Select a Lesson Template</option>
-                    </select>
+                        Or
                     </div>
-
-                    <div className="flex gap-3">
-                    <button className="flex-1 px-4 py-2 border rounded-md bg-white hover:bg-gray-50 transition-colors">
-                        Cancel
-                    </button>
-                    <button className="flex-1 px-4 py-2 bg-orange-400 text-white rounded-md hover:bg-orange-500 transition-colors flex items-center justify-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                        </svg>
-                        Start Lesson
-                    </button>
+                    <div>
+                    <select className="w-48 px-3 py-2 border-solid text-indigo-dye w-fit max-w-[300px] text-ellipsis font-semibold rounded-3xl bg-baby-powder text-indigo-dye font-nobel text-[16px]"
+                        onChange={(event: ChangeEvent<HTMLSelectElement>) => {console.log(event.target.value)}}>
+                        <option>Fill from Lesson Template</option>
+                        {lessonPlans.map((lessonPlan: LessonPlan) => (
+                            <option key={lessonPlan.id} value={lessonPlan.id}>{lessonPlan.title}</option>
+                        ))}
+                    </select>
                     </div>
                 </div>
                 </div>

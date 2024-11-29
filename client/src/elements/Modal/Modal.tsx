@@ -3,6 +3,10 @@ import { useStateValue, useSetStateValue } from '../../state/state';
 import Modal from 'react-modal';
 import './Modal.css';
 import { Icon } from '../Icon/Icon';
+// import {
+//     QueryClientProvider,
+// } from '@tanstack/react-query'
+// import { queryClient } from '../../state/query_client';
 
 Modal.setAppElement('#root');
 
@@ -34,22 +38,24 @@ export const ShowModal = (selector: ModalSelector, children: React.ReactNode, on
         className="Modal"
         overlayClassName="Overlay"
     >
-        <div className="relative flex flex-col min-h-full">
-            <div 
-                className="absolute -top-[25px] -right-[25px]"
-                onClick={() => { handleClose(true); }}
-                role="button"
-                tabIndex={0}
-            >
-                <Icon 
-                    name="x" 
-                    scale={30} 
-                    style={{ filter: 'brightness(0) saturate(100%) invert(95%) sepia(2%) saturate(150%) hue-rotate(182deg) brightness(97%) contrast(85%)' }}
-                />
+        {/* <QueryClientProvider client={queryClient}> */}
+            <div className="relative flex flex-col min-h-full">
+                <div 
+                    className="absolute -top-[25px] -right-[25px]"
+                    onClick={() => { handleClose(true); }}
+                    role="button"
+                    tabIndex={0}
+                >
+                    <Icon 
+                        name="x" 
+                        scale={30} 
+                        style={{ filter: 'brightness(0) saturate(100%) invert(95%) sepia(2%) saturate(150%) hue-rotate(182deg) brightness(97%) contrast(85%)' }}
+                    />
+                </div>
+                <div>
+                    {children}
+                </div>
             </div>
-            <div>
-                {children}
-            </div>
-        </div>
+        {/* </QueryClientProvider> */}
     </Modal>;
 }
