@@ -4,6 +4,7 @@ import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan, NoteNode
 import toast from 'react-hot-toast';
 import { Icon } from '../Icon/Icon';
 import { produce } from 'immer';
+import { useQuery } from '@tanstack/react-query'
 
 const QuickPrompts = () => {
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
@@ -808,30 +809,33 @@ const CourseView: React.FC = () => {
     useEffect(() => {
         fetchCourse();
     }, [fetchCourse]);
-    
+
     const fetchLessons = useCallback(async () => {
-        try {
-            const response = await fetch(`/api/course/${selectedCourseId}/lessons`, {
-                headers: {
-                    'Authorization': `Bearer ${jwt}`
-                }
-            });
-            
-            if (!response.ok) {
-                onRequestError(response, "Error fetching lessons");
-                return;
+        const response = await fetch(`/api/course/${selectedCourseId}/lessons`, {
+            headers: {
+                'Authorization': `Bearer ${jwt}`
             }
-            const data = await response.json();
-            setState(draft => { draft.currentCourse.lessons = data || [] });
-        } catch (error) {
-            toast.error(`Error fetching lessons`);
-            console.error('Error fetching lessons:', error);
+        })
+
+        if (!response.ok) {
+            onRequestError(response, "Failed to fetch lessons", "course-view-lessons");
+            throw new Error("Failed to fetch lessons");
+            return;
         }
-    }, [jwt, selectedCourseId, onRequestError, setState]);
-    
+
+        return response.json();
+    }, [selectedCourseId, jwt, onRequestError]);
+
+    const {isPending: isPendingLessons, error: errorLessons, data: dataLessons} = useQuery({
+        queryKey: ['course-view-lessons-' + selectedCourseId],
+        queryFn: fetchLessons
+    })
+
     useEffect(() => {
-        fetchLessons();
-    }, [fetchLessons]);
+        if (dataLessons) {
+            setState(draft => { draft.currentCourse.lessons = dataLessons });
+        }
+    }, [dataLessons, setState]);
 
     return (
         <div className="course-view">
