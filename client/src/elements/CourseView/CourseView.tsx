@@ -692,6 +692,8 @@ const LessonPlanList = () => {
 
 const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
     const setState = useSetStateValue();
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
     const [viewAll, setViewAll] = useState(false);
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
 
@@ -703,6 +705,28 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
         setState(draft => {
             draft.pageChoice.workPage = WorkPage.Chat;
             draft.pageChoice.selectedLesson = lesson.id;
+        });
+    }
+
+    const handleDelete = async (lessonId: string) => {
+        if (!window.confirm('Are you sure you want to delete this lesson? This action cannot be undone.')) {
+            return;
+        }
+
+        const response = await fetch(`/api/course/${selectedCourseId}/lesson/${lessonId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${jwt}`
+            }
+        });
+
+        if (!response.ok) {
+            onRequestError(response, "Failed to delete practice lesson", "course-view-practice-delete");
+            return;
+        }
+
+        setState(draft => {
+            draft.currentCourse.lessons = draft.currentCourse.lessons.filter(lesson => lesson.id !== lessonId);
         });
     }
 
@@ -736,7 +760,7 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
                                 style={{ cursor: 'pointer' }} 
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    toast.error(`Delete lesson: ${lesson.name}`);
+                                    handleDelete(lesson.id);
                                 }}
                             />
                         </div>
@@ -757,6 +781,8 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
     const setState = useSetStateValue();
     const [viewAll, setViewAll] = useState(false);
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
 
     useEffect(() => {
         setViewAll(false);
@@ -769,14 +795,63 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
         });
     }
 
+    const handleDelete = async (lessonId: string) => {
+        if (!window.confirm('Are you sure you want to delete this practice? This action cannot be undone.')) {
+            return;
+        }
+
+        const response = await fetch(`/api/course/${selectedCourseId}/lesson/${lessonId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${jwt}`
+            }
+        });
+
+        if (!response.ok) {
+            onRequestError(response, "Failed to delete practice lesson", "course-view-practice-delete");
+            return;
+        }
+
+        setState(draft => {
+            draft.currentCourse.lessons = draft.currentCourse.lessons.filter(lesson => lesson.id !== lessonId);
+        });
+    }
+
+    const handleNewPractice = async () => {
+        const response = await fetch(`/api/course/${selectedCourseId}/lesson`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${jwt}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: "",
+                free_practice: true,
+                lesson_plan_content: "Let's have a casual conversation to review what you've learned so far. I'll reference your vocabulary list for context, but feel free to explore any topics or concepts you'd like to practice. We can focus on strengthening your communication skills while naturally incorporating previous material.",
+            })
+        });
+
+        if (!response.ok) {
+            onRequestError(response, "Failed to create practice lesson", "course-view-practice-new");
+            return;
+        }
+
+        const newLesson = await response.json();
+
+        setState(draft => {
+            draft.pageChoice.workPage = WorkPage.Chat;
+            draft.pageChoice.selectedLesson = newLesson.id;
+        });
+    }
+
     return (
         <div className="practice-lesson-list">
             <div className="practice-lesson-list-title">Quick Practice</div>
-            <div className="practice-lesson-list-add-lesson">
+            <div className="practice-lesson-list-add-lesson" onClick={handleNewPractice}>
                 + Start New Practice
             </div>
             {lessons.slice(0, viewAll ? lessons.length : 4).map(lesson => (
-                <div key={lesson.id} className="practice-lesson-item group" onClick={() => handleLessonChoice(lesson)}>
+                <div key={lesson.id} className="practice-lesson-item group mt-5" onClick={() => handleLessonChoice(lesson)}>
                     <div className="flex justify-between items-center w-full">
                         <div>
                             {lesson.name}
@@ -797,7 +872,7 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
                                 style={{ cursor: 'pointer' }} 
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    toast.error(`Delete practice: ${lesson.name}`);
+                                    handleDelete(lesson.id);
                                 }}
                             />
                         </div>
@@ -897,6 +972,38 @@ const CourseView: React.FC = () => {
                     <PracticeList lessons={lessons.filter(lesson => lesson.free_practice)} />
                     <VocabList />
                     <CustomInstructions />
+                    <div 
+                        className="ml-10 text-coral cursor-pointer mt-4 text-sm hover:brightness-75 transition-all"
+                        onClick={async () => {
+                            if (window.confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+                                const response = await fetch(`/api/course/${selectedCourseId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': `Bearer ${jwt}`
+                                    }
+                                });
+
+                                if (!response.ok) {
+                                    onRequestError(response, "Failed to delete course", "course-delete");
+                                    return;
+                                }
+
+                                // Redirect to courses page after successful deletion
+                                setState(draft => {
+                                    draft.courses = draft.courses.filter(course => course.id !== selectedCourseId);
+                                    draft.pageChoice.workPage = WorkPage.AllCourses;
+                                    draft.pageChoice.selectedCourse = null;
+                                    draft.currentCourse = {
+                                        content: null,
+                                        lessons: [],
+                                        settings: null
+                                    };
+                                });
+                            }
+                        }}
+                    >
+                        Delete Course
+                    </div>
                 </div>
             </div>
         </div>

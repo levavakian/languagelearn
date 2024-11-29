@@ -132,11 +132,11 @@ func deleteLessonPlanFromDB(planID string) error {
 }
 
 // Lesson operations
-func getNextLessonOrderIndex(courseID string) (int, error) {
+func getNextLessonOrderIndex(courseID string, freePractice bool) (int, error) {
 	var maxIndex sql.NullInt64
 	err := db.DB.QueryRow(
-		"SELECT MAX(order_index) FROM lessons WHERE course_id = $1",
-		courseID,
+		"SELECT MAX(order_index) FROM lessons WHERE course_id = $1 AND free_practice = $2",
+		courseID, freePractice,
 	).Scan(&maxIndex)
 	
 	if err != nil {

@@ -2,6 +2,7 @@ import React, { useEffect, useCallback, useState, useMemo } from 'react';
 import { Icon } from '../Icon/Icon';
 import './Sidebar.css';
 import { Course, Lesson, State, useSetStateValue, useStateValue, WorkPage, ModalSelector } from '../../state/state';
+import { useQuery } from '@tanstack/react-query';
 
 const CourseBox = ({ course }: { course: Course }) => {
     const setState = useSetStateValue();
@@ -165,29 +166,28 @@ const Sidebar = () => {
     }, [courses]);
 
     const fetchCourses = useCallback(async () => {
-        try {
-            const response = await fetch('/api/courses', {
-                headers: {
-                    'Authorization': `Bearer ${jwt}`
-                }
-            });
-
-            if (!response.ok) {
-                console.error('Error fetching courses:', response);
-                onRequestError(response);
-                return;
+        const response = await fetch('/api/courses', {
+            headers: {
+                'Authorization': `Bearer ${jwt}`
             }
-            const data = await response.json();
-            setState(draft => { draft.courses = data || [] });
-        } catch (error) {
-            console.error('Error fetching courses:', error);
+        });
+
+        if (!response.ok) {
+            console.error('Error fetching courses:', response);
+            onRequestError(response, "Failed to fetch courses", "sidebar-fetch-courses");
+            throw new Error("Failed to fetch courses");
+            return;
         }
+        const data = await response.json();
+        setState(draft => { draft.courses = data || [] });
+        return data;
     }, [jwt, setState, onRequestError]);
 
-    useEffect(() => {
-        fetchCourses();
-    }, [fetchCourses, courses]);
-    
+    const {isPending: isFetchingCourses, error: errorCourses, data: dataCourses} = useQuery({
+        queryKey: ['side-bar-courses'],
+        queryFn: fetchCourses
+    });
+
     return (
         <div className="sidebar">
             <div className="sidebar-title" onClick={toggleRefactor}>

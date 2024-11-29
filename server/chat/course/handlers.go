@@ -279,7 +279,7 @@ func createLesson(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the next order index
-	orderIndex, err := getNextLessonOrderIndex(courseID)
+	orderIndex, err := getNextLessonOrderIndex(courseID, request.FreePractice)
 	if err != nil {
 		http.Error(w, "Failed to get order index", http.StatusInternalServerError)
 		return
@@ -291,10 +291,14 @@ func createLesson(w http.ResponseWriter, r *http.Request) {
 	// Create chat with meaningful name and lesson ID
 	chatID := uuid.New().String()
 	chatName := request.Title
+	baseChatName := "Lesson #%d"
+	if request.FreePractice {
+		baseChatName = "Practice #%d"
+	}
 	if chatName == "" {
-		chatName = fmt.Sprintf("Lesson #%d", orderIndex+1)
+		chatName = fmt.Sprintf(baseChatName, orderIndex+1)
 	} else {
-		chatName = fmt.Sprintf("Lesson #%d: %s", orderIndex+1, chatName)
+		chatName = fmt.Sprintf(baseChatName + ": %s", orderIndex+1, chatName)
 	}
 	
 	chat := &Chat{
@@ -330,7 +334,7 @@ func createLesson(w http.ResponseWriter, r *http.Request) {
 		ID:         lessonID,  // Use the pre-generated lesson ID
 		CourseID:   courseID,
 		ChatID:     chatID,
-		Name:       request.Title,
+		Name:       chatName,
 		LessonPlan: request.LessonPlanContent,
 		FreePractice: request.FreePractice,
 		OrderIndex: orderIndex,

@@ -74,7 +74,7 @@ export const CourseList= () => {
     const renderLessonPlans = (lessonPlans: LessonPlan[]) => {
         if (!lessonPlans?.length) {
             return <div className="h-[150px]">
-                <p className="text-gray-500 text-[19px]">No lesson plans created yet</p>
+                <p className="text-gray-500 text-[19px]">No lesson templates created yet</p>
             </div>
         }
 
@@ -137,7 +137,7 @@ Choose a course to continue learning, or start a new language journey.
                             {renderLessons(course.lessons)}
                         </div>
                         <div>
-                            <h3 className="text-[22px] font-semibold mb-2">Lesson Plans</h3>
+                            <h3 className="text-[22px] font-semibold mb-2">Lesson Templates</h3>
                             {renderLessonPlans(course.lesson_plans)}
                         </div>
                     </div>
