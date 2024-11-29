@@ -4,32 +4,49 @@ import { useSetStateValue, PreferredInstructorStyle, ModalSelector, useStateValu
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Icon } from '../Icon/Icon';
-// import {
-//     useQuery
-// } from '@tanstack/react-query'
+import {
+    useQuery
+} from '@tanstack/react-query'
 
 export const NewLessonModal = () => {
     const setState = useSetStateValue();
     const preferredInstructorStyle = useStateValue(state => state.preferredInstructorStyle);
-    
+    const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
+
     const [title, setTitle] = useState('');
     const [lessonPlanText, setLessonPlanText] = useState('');
     const [focusAreas, setFocusAreas] = useState('');
     const [generating, isGenerating] = useState(false);
-    const [lessonPlans, setLessonPlans] = useState([]);
 
     const jwt = useStateValue(state => state.auth.token);
     const onRequestError = useStateValue(state => state.auth.onRequestError);
-    
+
+    const onLessonPick = useCallback((lessonPlans: LessonPlan[], chosen: string) => {
+        if (!chosen) {
+            return;
+        }
+
+        const selectedLessonPlan = lessonPlans.find(plan => plan.id === chosen);
+        if (selectedLessonPlan) {
+            setLessonPlanText(selectedLessonPlan.content);
+            setTitle(selectedLessonPlan.title);
+        } else {
+            toast.error("Selected lesson plan not found");
+            return;
+        }
+        setLessonPlanText(selectedLessonPlan.content);
+        setTitle(selectedLessonPlan.title);
+    }, []);
+
     const fetchLessonPlans = useCallback(async () => {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/lesson-plans/new`, {
+        const response = await fetch(`/api/course/${selectedCourseId}/lesson-plans`, {
             headers: {
                 'Authorization': `Bearer ${jwt}`
             }
         })
 
         if (!response.ok) {
-            onRequestError(response, "Failed to fetch lesson plans");
+            onRequestError(response, "Failed to fetch lesson plans", "lesson-plans-new-lesson-modal");
             throw new Error("Failed to fetch lesson plans");
             return;
         }
@@ -37,14 +54,10 @@ export const NewLessonModal = () => {
         return response.json();
     }, [jwt, onRequestError]);
 
-    // const {isPending: isPendingLessonPlans, error: errorLessonPlans, data: dataLessonPlans} = useQuery({
-    //     queryKey: ['lesson-plans-new-lesson-modal'],
-    //     queryFn: fetchLessonPlans
-    // })
-
-    // if (!isPendingLessonPlans && !errorLessonPlans) {
-    //     setLessonPlans(dataLessonPlans);
-    // }
+    const {isPending: isPendingLessonPlans, error: errorLessonPlans, data: dataLessonPlans} = useQuery({
+        queryKey: ['lesson-plans-new-lesson-modal'],
+        queryFn: fetchLessonPlans
+    })
 
     return ShowModal(
         ModalSelector.NewLesson,
@@ -89,21 +102,21 @@ export const NewLessonModal = () => {
                     <div>
                     <h3 className="font-semibold mb-3">Learning Style</h3>
                     <div className="flex gap-4">
-                        <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg text-indigo-dye font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Strict ? 'bg-coral text-baby-powder' : 'bg-alice-blue'}`}
+                        <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Strict ? 'bg-coral text-baby-powder' : 'bg-alice-blue text-indigo-dye'}`}
                             onClick={() => {
                                 setState(drift => drift.preferredInstructorStyle = PreferredInstructorStyle.Strict );
                             }}
                         >
                             Strict
                         </div>
-                        <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg text-indigo-dye font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Neutral ? 'bg-coral text-baby-powder' : 'bg-alice-blue'}`}
+                        <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Neutral ? 'bg-coral text-baby-powder' : 'bg-alice-blue text-indigo-dye'}`}
                             onClick={() => {
                                 setState(drift => drift.preferredInstructorStyle = PreferredInstructorStyle.Neutral );
                             }}
                         >
                             Neutral
                         </div>
-                        <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg text-indigo-dye font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Casual ? 'bg-coral text-baby-powder' : 'bg-alice-blue'}`}
+                        <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Casual ? 'bg-coral text-baby-powder' : 'bg-alice-blue text-indigo-dye'}`}
                             onClick={() => {
                                 setState(drift => drift.preferredInstructorStyle = PreferredInstructorStyle.Casual );
                             }}
@@ -122,10 +135,10 @@ export const NewLessonModal = () => {
                         Or
                     </div>
                     <div>
-                    <select className="w-48 px-3 py-2 border-solid text-indigo-dye w-fit max-w-[300px] text-ellipsis font-semibold rounded-3xl bg-baby-powder text-indigo-dye font-nobel text-[16px]"
-                        onChange={(event: ChangeEvent<HTMLSelectElement>) => {console.log(event.target.value)}}>
-                        <option>Fill from Lesson Template</option>
-                        {lessonPlans.map((lessonPlan: LessonPlan) => (
+                    <select className="w-full px-3 py-2 border-solid text-indigo-dye text-ellipsis font-semibold rounded-3xl bg-baby-powder text-indigo-dye font-nobel text-[16px]"
+                        onChange={(event: ChangeEvent<HTMLSelectElement>) => {onLessonPick(dataLessonPlans, event.target.value)}}>
+                        <option value="">Fill Plan from Lesson Template</option>
+                        {!isPendingLessonPlans && !errorLessonPlans && dataLessonPlans.map((lessonPlan: LessonPlan) => (
                             <option key={lessonPlan.id} value={lessonPlan.id}>{lessonPlan.title}</option>
                         ))}
                     </select>

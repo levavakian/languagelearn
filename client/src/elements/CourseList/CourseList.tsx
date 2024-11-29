@@ -108,7 +108,6 @@ export const CourseList= () => {
 
     return (
         <div className="p-4">
-            Courses
             <h1 className="text-2xl font-bold mb-4">Courses</h1>
             <div className="text-indigo-dye text-base">
             Courses organize your learning by language. Each course contains:<br></br><br></br>

@@ -107,7 +107,7 @@ export type Message = {
 export type WrappedState = {
     auth: {
         token: Persistable<string>
-        onRequestError: (response: any, msg?: string) => void
+        onRequestError: (response: any, msg?: string, id?: string) => void
     }
     triggers: {
         timeLastPayment: number

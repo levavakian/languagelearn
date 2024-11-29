@@ -23,7 +23,7 @@ const Main: React.FC<MainProps> = ({ onToggleRefactor }) => {
     useEffect(() => {
         setState(draft => {
             console.log("Setting up response error handler");
-            draft.auth.onRequestError = (response: any, msg?: string) => {
+            draft.auth.onRequestError = (response: any, msg?: string, id?: string) => {
                 console.log("Checking status",response.status);
                 if (response.status === 401) {
                     console.log("Expiring token");
@@ -34,7 +34,7 @@ const Main: React.FC<MainProps> = ({ onToggleRefactor }) => {
 
                 console.log("Got response error", response);
                 if (msg) {
-                    toast.error(msg);
+                    toast.error(msg, {id: id});
                 }
             };
         });
