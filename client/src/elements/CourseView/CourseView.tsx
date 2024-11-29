@@ -714,10 +714,32 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
             >
                 + Start New Lesson
             </div>
-                {lessons.slice(0, viewAll ? lessons.length : 4).map(lesson => (
-                <div key={lesson.id} className="course-lesson-item" onClick={() => handleLessonChoice(lesson)}>
-                    <div>
-                        Lesson {lesson.order_index + 1}: {lesson.name}
+            {lessons.slice(0, viewAll ? lessons.length : 4).map(lesson => (
+                <div key={lesson.id} className="course-lesson-item group" onClick={() => handleLessonChoice(lesson)}>
+                    <div className="flex justify-between items-center w-full">
+                        <div>
+                            Lesson {lesson.order_index + 1}: {lesson.name}
+                        </div>
+                        <div className="lesson-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <Icon 
+                                name="pencil" 
+                                scale={14} 
+                                style={{ cursor: 'pointer', marginRight: '10px' }} 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toast.success(`Edit lesson: ${lesson.name}`);
+                                }}
+                            />
+                            <Icon 
+                                name="bin" 
+                                scale={14} 
+                                style={{ cursor: 'pointer' }} 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toast.error(`Delete lesson: ${lesson.name}`);
+                                }}
+                            />
+                        </div>
                     </div>
                     <div className="course-lesson-item-updated-at">
                         Last used: {lesson.updated_at}
@@ -754,9 +776,31 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
                 + Start New Practice
             </div>
             {lessons.slice(0, viewAll ? lessons.length : 4).map(lesson => (
-                <div key={lesson.id} className="practice-lesson-item" onClick={() => handleLessonChoice(lesson)}>
-                    <div>
-                        {lesson.name}
+                <div key={lesson.id} className="practice-lesson-item group" onClick={() => handleLessonChoice(lesson)}>
+                    <div className="flex justify-between items-center w-full">
+                        <div>
+                            {lesson.name}
+                        </div>
+                        <div className="practice-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <Icon 
+                                name="pencil" 
+                                scale={14} 
+                                style={{ cursor: 'pointer', marginRight: '10px' }} 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toast.success(`Edit practice: ${lesson.name}`);
+                                }}
+                            />
+                            <Icon 
+                                name="bin" 
+                                scale={14} 
+                                style={{ cursor: 'pointer' }} 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toast.error(`Delete practice: ${lesson.name}`);
+                                }}
+                            />
+                        </div>
                     </div>
                     <div className="practice-lesson-item-updated-at">
                         Last used: {lesson.updated_at}

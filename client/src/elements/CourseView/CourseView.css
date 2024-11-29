@@ -51,6 +51,8 @@
     font-family: 'Nobel Uno', sans-serif !important;
     color: var(--indigo-dye);
     background-color: var(--porcelain);
+    position: relative;
+    overflow: hidden;
 }
 
 .course-lesson-item:hover {
@@ -114,6 +116,8 @@
     box-shadow: 0 4px 0 var(--half-grey);
     position: relative;
     top: 0;
+    position: relative;
+    overflow: hidden;
 }
 
 .practice-lesson-item:hover {
@@ -614,4 +618,31 @@
     opacity: 0.7;
     display: flex;
     align-items: center;
+}
+
+.lesson-actions, .practice-actions {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+}
+
+.course-lesson-item:hover .lesson-actions {
+    background: var(--alice-blue);
+}
+
+.practice-lesson-item:hover .practice-actions {
+    background: var(--alice-blue);
+}
+
+.lesson-actions svg, .practice-actions svg {
+    color: var(--indigo-dye);
+    transition: color 0.2s ease;
+    background: transparent;
+}
+
+.lesson-actions svg:hover, .practice-actions svg:hover {
+    color: var(--coral);
 }
