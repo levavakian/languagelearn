@@ -94,6 +94,15 @@ export const NewLessonModal = () => {
 
     const onStartLesson = useCallback(async () => {
         isGenerating(true);
+
+        let instructorStyleNote = '';
+        if (preferredInstructorStyle === 'strict') {
+            instructorStyleNote = `\n\nTeaching Style Note: All grammar and vocabulary errors will be identified and corrected during this lesson to ensure proper language acquisition.`;
+        } else if (preferredInstructorStyle === 'casual') {
+            instructorStyleNote = `\n\nTeaching Style Note: Minor grammar and vocabulary errors will be overlooked to maintain conversational flow, unless they significantly impact comprehension.`;
+        }
+        const lessonPlanWithStyle = lessonPlanText + instructorStyleNote;
+
         const response = await fetch(`/api/course/${selectedCourseId}/lesson`, {
             method: 'POST',
             headers: {
@@ -102,7 +111,7 @@ export const NewLessonModal = () => {
             },
             body: JSON.stringify({
                 title: title,
-                lesson_plan_content: lessonPlanText,
+                lesson_plan_content: lessonPlanWithStyle,
             })
         });
         isGenerating(false);
@@ -118,7 +127,7 @@ export const NewLessonModal = () => {
             drift.pageChoice.selectedLesson = newLesson.id;
             drift.modalSelector = ModalSelector.None;
         });
-    }, [jwt, selectedCourseId, onRequestError, title, lessonPlanText, setState]);
+    }, [jwt, selectedCourseId, onRequestError, preferredInstructorStyle, title, lessonPlanText, setState]);
 
     const {isPending: isPendingLessonPlans, error: errorLessonPlans, data: dataLessonPlans} = useQuery({
         queryKey: ['lesson-plans-new-lesson-modal'],
@@ -137,7 +146,7 @@ export const NewLessonModal = () => {
 
                         <div className="bg-white border-solid border-[2px] border-indigo-dye rounded-xl border p-6 shadow-[0_4px_0_0_var(--indigo-dye)] flex flex-col flex-grow overflow-auto">
                             <input 
-                            className="w-[90%] px-3 py-2 border-solid text-indigo-dye font-semibold rounded-lg text-[20px] font-nobel focus:outline-none"
+                            className="w-[94%] px-3 py-2 border-solid text-indigo-dye font-semibold rounded-lg text-[20px] font-nobel focus:outline-none"
                             placeholder="Title"
                             type="text"
                             value={title}
