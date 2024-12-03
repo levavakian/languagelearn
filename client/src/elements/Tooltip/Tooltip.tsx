@@ -109,7 +109,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
     return (
         <div className={`
             shadow-lg rounded-md min-w-[200px] bg-indigo-dye text-indigo-dye text-xl 
-            mr-5 border-[1px] border-solid border-[--indigo-dye]
+            border-[1px] border-solid border-[--indigo-dye]
             mb-0 rounded-t-md rounded-b-md w-max max-w-[400px]
             flex flex-col-reverse
             ${!tooltipInfo?.toRight ? 'ml-5 mr-0' : 'mr-5 ml-0'}

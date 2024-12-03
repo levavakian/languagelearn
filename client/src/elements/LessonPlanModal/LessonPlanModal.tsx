@@ -6,14 +6,13 @@ import toast from 'react-hot-toast';
 import { Icon } from '../Icon/Icon';
 import { useQuery } from '@tanstack/react-query'
 
-export const NewLessonModal = () => {
+export const LessonPlanModal = ({lessonTemplateExisting}: {lessonTemplateExisting: LessonPlan | null}) => {
     const setState = useSetStateValue();
-    const preferredInstructorStyle = useStateValue(state => state.preferredInstructorStyle);
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
     const lessons = useStateValue(state => state.currentCourse.lessons);
 
-    const [title, setTitle] = useState('');
-    const [lessonPlanText, setLessonPlanText] = useState('');
+    const [title, setTitle] = useState(lessonTemplateExisting?.title || '');
+    const [lessonPlanText, setLessonPlanText] = useState(lessonTemplateExisting?.content || '');
     const [focusAreas, setFocusAreas] = useState('');
     const [generating, isGenerating] = useState(false);
 
@@ -92,56 +91,48 @@ export const NewLessonModal = () => {
         return response.json();
     }, [selectedCourseId, jwt, onRequestError]);
 
-    const onStartLesson = useCallback(async () => {
+    const onCreateLessonTemplate = useCallback(async () => {
         isGenerating(true);
 
-        let instructorStyleNote = '';
-        if (preferredInstructorStyle === 'strict') {
-            instructorStyleNote = `\n\nTeaching Style Note: All grammar and vocabulary errors will be identified and corrected during this lesson to ensure proper language acquisition.`;
-        } else if (preferredInstructorStyle === 'casual') {
-            instructorStyleNote = `\n\nTeaching Style Note: Minor grammar and vocabulary errors will be overlooked to maintain conversational flow, unless they significantly impact comprehension.`;
-        }
-        const lessonPlanWithStyle = lessonPlanText + instructorStyleNote;
-
-        const response = await fetch(`/api/course/${selectedCourseId}/lesson`, {
-            method: 'POST',
+        const uri = lessonTemplateExisting ? `/api/course/${selectedCourseId}/lesson-plan/${lessonTemplateExisting.id}` : `/api/course/${selectedCourseId}/lesson-plan`;
+        const method = lessonTemplateExisting ? 'PUT' : 'POST';
+        const response = await fetch(uri, {
+            method: method,
             headers: {
                 'Authorization': `Bearer ${jwt}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 title: title,
-                lesson_plan_content: lessonPlanWithStyle,
+                content: lessonPlanText,
             })
         });
         isGenerating(false);
         
         if (!response.ok) {
-            onRequestError(response, "Failed to start lesson", "new-lesson-modal-create");
+            onRequestError(response, "Failed to create lesson template", "lesson-template-modal-create");
             return;
         }
 
-        const newLesson = await response.json();
+        const newLessonTemplate = await response.json();
         setState(drift => {
-            drift.pageChoice.workPage = WorkPage.Chat;
-            drift.pageChoice.selectedLesson = newLesson.id;
             drift.modalSelector = ModalSelector.None;
         });
-    }, [jwt, selectedCourseId, onRequestError, preferredInstructorStyle, title, lessonPlanText, setState]);
+    }, [jwt, selectedCourseId, onRequestError, title, lessonPlanText, setState]);
 
     const {isPending: isPendingLessonPlans, error: errorLessonPlans, data: dataLessonPlans} = useQuery({
-        queryKey: ['lesson-plans-new-lesson-modal'],
+        queryKey: ['lesson-plans-lesson-plan-modal'],
         queryFn: fetchLessonPlans
     })
 
     return ShowModal(
-        ModalSelector.NewLesson,
+        ModalSelector.LessonPlan,
         <div className="max-w-6xl mx-auto p-6 my-auto">
             <div className="flex flex-col gap-8">
                 <div className="flex gap-8">
                     {/* Left Column */}
                     <div className="w-2/3 pr-8 flex flex-col relative">
-                        <h2 className="text-3xl font-bold mb-4">New Lesson</h2>
+                        <h2 className="text-3xl font-bold mb-4">{lessonTemplateExisting ? 'Edit Lesson Template' : 'New Lesson Template'}</h2>
                         <div className="absolute right-0 top-[10%] h-[80%] w-[1px] bg-gray-200"></div>
 
                         <div className="bg-white border-solid border-[2px] border-indigo-dye rounded-xl border p-6 shadow-[0_4px_0_0_var(--indigo-dye)] flex flex-col flex-grow overflow-auto">
@@ -160,6 +151,30 @@ export const NewLessonModal = () => {
                             onChange={(e) => setLessonPlanText(e.target.value)}
                             />
                         </div>
+                        <div 
+                            className="text-coral cursor-pointer mt-4 text-sm hover:brightness-75 transition-all"
+                            onClick={async () => {
+                                if (window.confirm('Are you sure you want to delete this template? This action cannot be undone.')) {
+                                    const response = await fetch(`/api/course/${selectedCourseId}/lesson-plan/${lessonTemplateExisting?.id}`, {
+                                        method: 'DELETE',
+                                        headers: {
+                                            'Authorization': `Bearer ${jwt}`
+                                        }
+                                    });
+
+                                    if (!response.ok) {
+                                        onRequestError(response, "Failed to delete lesson template", "lesson-template-modal-delete");
+                                        return;
+                                    }
+
+                                    setState(draft => {
+                                        draft.modalSelector = ModalSelector.None;
+                                    });
+                                }
+                            }}
+                        >
+                            Delete Template
+                        </div>
                     </div>
 
                     {/* Right Column */}
@@ -175,33 +190,7 @@ export const NewLessonModal = () => {
                     </div>
 
                     <div className="space-y-6">
-                        <div>
-                        <h3 className="font-semibold mb-3">Learning Style</h3>
-                        <div className="flex gap-4">
-                            <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Strict ? 'bg-coral text-baby-powder' : 'bg-alice-blue text-indigo-dye'}`}
-                                onClick={() => {
-                                    setState(drift => drift.preferredInstructorStyle = PreferredInstructorStyle.Strict );
-                                }}
-                            >
-                                Strict
-                            </div>
-                            <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Neutral ? 'bg-coral text-baby-powder' : 'bg-alice-blue text-indigo-dye'}`}
-                                onClick={() => {
-                                    setState(drift => drift.preferredInstructorStyle = PreferredInstructorStyle.Neutral );
-                                }}
-                            >
-                                Neutral
-                            </div>
-                            <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Casual ? 'bg-coral text-baby-powder' : 'bg-alice-blue text-indigo-dye'}`}
-                                onClick={() => {
-                                    setState(drift => drift.preferredInstructorStyle = PreferredInstructorStyle.Casual );
-                                }}
-                            >
-                                Casual
-                            </div>
-                        </div>
-                        </div>
-                        <div className="bg-indigo-dye rounded-xl w-fit p-3 px-5 flex flex-row cursor-pointer hover:brightness-125 transition-all duration-300" onClick={onLessonGenerate}>
+                        <div className="bg-indigo-dye mt-4 rounded-xl w-fit p-3 px-5 flex flex-row cursor-pointer hover:brightness-125 transition-all duration-300" onClick={onLessonGenerate}>
                             <div className="text-baby-powder font-semibold text-[18px]">
                                 Generate Plan
                             </div>
@@ -219,7 +208,7 @@ export const NewLessonModal = () => {
                                     ? "Loading templates..." 
                                     : errorLessonPlans 
                                         ? "Error loading templates" 
-                                        : "Fill Plan from Lesson Template"}
+                                        : "Fill Template from Existing Template"}
                             </option>
                             {dataLessonPlans?.map((lessonPlan: LessonPlan) => (
                                 <option key={lessonPlan.id} value={lessonPlan.id}>{lessonPlan.title}</option>
@@ -239,10 +228,10 @@ export const NewLessonModal = () => {
                         Cancel
                     </button>
                     <button 
-                        className="px-8 py-3 bg-coral hover:bg-coral border-solid border-[1px] border-indigo-dye text-baby-powder rounded-xl font-nobel text-[26px] shadow-[0_4px_0_0_#1B365D] hover:brightness-125 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3"
-                        onClick={onStartLesson}
+                        className="px-16 py-3 bg-coral hover:bg-coral border-solid border-[1px] border-indigo-dye text-baby-powder rounded-xl font-nobel text-[26px] shadow-[0_4px_0_0_#1B365D] hover:brightness-125 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3"
+                        onClick={onCreateLessonTemplate}
                     >
-                        Start Lesson
+                        {lessonTemplateExisting ? 'Update' : 'Create'}
                         <Icon name="next" scale={22} style={{ marginBottom: '-3px', filter: 'invert(100%) sepia(0%) saturate(0%) hue-rotate(180deg) brightness(125%) contrast(100%)' }} />
                     </button>
                 </div>

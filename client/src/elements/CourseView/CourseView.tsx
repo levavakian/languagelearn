@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { Icon } from '../Icon/Icon';
 import { produce } from 'immer';
 import { useQuery } from '@tanstack/react-query'
+import { LessonPlanModal } from '../LessonPlanModal/LessonPlanModal';
 
 const QuickPrompts = () => {
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
@@ -649,11 +650,14 @@ const SettingsLoader = () => {
     return null;
 }
 
-const LessonPlanList = () => {
+const LessonPlanList = () => {      
+    const setState = useSetStateValue();
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
     const [lessonPlans, setLessonPlans] = useState<LessonPlan[]>([]);
     const jwt = useStateValue(state => state.auth.token);
     const onRequestError = useStateValue(state => state.auth.onRequestError);
+    const [selectedLessonPlan, setSelectedLessonPlan] = useState<LessonPlan | null>(null);
+    const modalSelector = useStateValue(state => state.modalSelector);
 
     const fetchLessonPlans = useCallback(async () => {
         const response  = await fetch(`/api/course/${selectedCourseId}/lesson-plans`, {
@@ -671,7 +675,7 @@ const LessonPlanList = () => {
 
     useEffect(() => {
         fetchLessonPlans();
-    }, [fetchLessonPlans]);
+    }, [fetchLessonPlans, modalSelector]);
 
     return (
         <div>
@@ -679,13 +683,14 @@ const LessonPlanList = () => {
                 Lesson Templates
             </div>
             <div className="auto-flex">
-                <div className="lesson-plan-item add-new-lesson-plan">
-                    + New Lesson Plan
+                <div className="lesson-plan-item add-new-lesson-plan" onClick={() => {setSelectedLessonPlan(null); setState(draft => {draft.modalSelector = ModalSelector.LessonPlan})}}>
+                    + New Lesson Template
                 </div>
                 {lessonPlans?.map(lessonPlan => (
-                    <div className="lesson-plan-item" key={lessonPlan.id}>{lessonPlan.title}</div>
+                    <div className="lesson-plan-item text-truncate" key={lessonPlan.id} onClick={() => {setSelectedLessonPlan(lessonPlan); setState(draft => {draft.modalSelector = ModalSelector.LessonPlan})}}>{lessonPlan.title}</div>
                 ))}
             </div>
+            {modalSelector === ModalSelector.LessonPlan && <LessonPlanModal lessonTemplateExisting={selectedLessonPlan} />}
         </div>
     );
 }

@@ -7,6 +7,7 @@ export enum ModalSelector {
     BuyCoins = 'buy-coins',
     NewCourse = 'new-course',
     NewLesson = 'new-lesson',
+    LessonPlan = 'lesson-plan',
 }
 
 export enum PreferredInstructorStyle {

@@ -253,9 +253,9 @@ func saveCourseSettingsToDB(settings Settings) error {
 func getLessonPlanFromDB(planID string, courseID string) (*LessonPlan, error) {
 	var plan LessonPlan
 	err := db.DB.QueryRow(
-		"SELECT id, course_id, title, content, created_at FROM lesson_plans WHERE id = $1 AND course_id = $2",
+		"SELECT id, course_id, title, content, created_at, updated_at FROM lesson_plans WHERE id = $1 AND course_id = $2",
 		planID, courseID,
-	).Scan(&plan.ID, &plan.CourseID, &plan.Title, &plan.Content, &plan.CreatedAt)
+	).Scan(&plan.ID, &plan.CourseID, &plan.Title, &plan.Content, &plan.CreatedAt, &plan.UpdatedAt)
 	
 	if err != nil {
 		return nil, err

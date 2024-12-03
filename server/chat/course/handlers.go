@@ -183,6 +183,7 @@ func createLessonPlan(w http.ResponseWriter, r *http.Request) {
 	lessonPlan.ID = uuid.New().String()
 	lessonPlan.CourseID = courseID
 	lessonPlan.CreatedAt = time.Now()
+	lessonPlan.UpdatedAt = time.Now()
 
 	if err := insertLessonPlan(lessonPlan); err != nil {
 		http.Error(w, "Failed to create lesson plan", http.StatusInternalServerError)
@@ -232,6 +233,7 @@ func updateLessonPlan(w http.ResponseWriter, r *http.Request) {
 
 	lessonPlan.ID = planID
 	lessonPlan.CourseID = courseID
+	lessonPlan.UpdatedAt = time.Now()
 
 	if err := updateLessonPlanInDB(lessonPlan); err != nil {
 		http.Error(w, "Failed to update lesson plan", http.StatusInternalServerError)
