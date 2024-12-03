@@ -80,15 +80,15 @@ func deleteCourseFromDB(courseID string) error {
 // Lesson plan operations
 func insertLessonPlan(plan LessonPlan) error {
 	_, err := db.DB.Exec(
-		"INSERT INTO lesson_plans (id, course_id, title, content, created_at) VALUES ($1, $2, $3, $4, $5)",
-		plan.ID, plan.CourseID, plan.Title, plan.Content, plan.CreatedAt,
+		"INSERT INTO lesson_plans (id, course_id, title, content, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)",
+		plan.ID, plan.CourseID, plan.Title, plan.Content, plan.CreatedAt, plan.UpdatedAt,
 	)
 	return err
 }
 
 func getCourseLessonPlansFromDB(courseID string) ([]LessonPlan, error) {
 	rows, err := db.DB.Query(
-		"SELECT id, course_id, title, content, created_at FROM lesson_plans WHERE course_id = $1 ORDER BY created_at",
+		"SELECT id, course_id, title, content, created_at, updated_at FROM lesson_plans WHERE course_id = $1 ORDER BY created_at",
 		courseID,
 	)
 	if err != nil {
@@ -99,7 +99,7 @@ func getCourseLessonPlansFromDB(courseID string) ([]LessonPlan, error) {
 	var plans []LessonPlan
 	for rows.Next() {
 		var plan LessonPlan
-		if err := rows.Scan(&plan.ID, &plan.CourseID, &plan.Title, &plan.Content, &plan.CreatedAt); err != nil {
+		if err := rows.Scan(&plan.ID, &plan.CourseID, &plan.Title, &plan.Content, &plan.CreatedAt, &plan.UpdatedAt); err != nil {
 			return nil, err
 		}
 		plans = append(plans, plan)
@@ -109,8 +109,8 @@ func getCourseLessonPlansFromDB(courseID string) ([]LessonPlan, error) {
 
 func updateLessonPlanInDB(plan LessonPlan) error {
 	result, err := db.DB.Exec(
-		"UPDATE lesson_plans SET title = $1, content = $2 WHERE id = $3 AND course_id = $4",
-		plan.Title, plan.Content, plan.ID, plan.CourseID,
+		"UPDATE lesson_plans SET title = $1, content = $2, updated_at = $3 WHERE id = $4 AND course_id = $5",
+		plan.Title, plan.Content, plan.UpdatedAt, plan.ID, plan.CourseID,
 	)
 	if err != nil {
 		return err

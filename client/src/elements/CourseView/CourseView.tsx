@@ -686,8 +686,10 @@ const LessonPlanList = () => {
                 <div className="lesson-plan-item add-new-lesson-plan" onClick={() => {setSelectedLessonPlan(null); setState(draft => {draft.modalSelector = ModalSelector.LessonPlan})}}>
                     + New Lesson Template
                 </div>
-                {lessonPlans?.map(lessonPlan => (
-                    <div className="lesson-plan-item text-truncate" key={lessonPlan.id} onClick={() => {setSelectedLessonPlan(lessonPlan); setState(draft => {draft.modalSelector = ModalSelector.LessonPlan})}}>{lessonPlan.title}</div>
+                {lessonPlans
+                    ?.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+                    .map(lessonPlan => (
+                        <div className="lesson-plan-item text-truncate" key={lessonPlan.id} onClick={() => {setSelectedLessonPlan(lessonPlan); setState(draft => {draft.modalSelector = ModalSelector.LessonPlan})}}>{lessonPlan.title}</div>
                 ))}
             </div>
             {modalSelector === ModalSelector.LessonPlan && <LessonPlanModal lessonTemplateExisting={selectedLessonPlan} />}
