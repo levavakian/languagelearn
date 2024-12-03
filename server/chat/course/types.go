@@ -9,6 +9,7 @@ type Course struct {
 	CreatorID   string    `json:"creator_id"`
 	Name        string    `json:"name"`
 	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type LessonPlan struct {

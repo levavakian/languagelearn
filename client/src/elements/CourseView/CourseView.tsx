@@ -745,7 +745,10 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
             >
                 + Start New Lesson
             </div>
-            {lessons.slice(0, viewAll ? lessons.length : 4).map(lesson => (
+            {lessons
+                .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+                .slice(0, viewAll ? lessons.length : 4)
+                .map(lesson => (
                 <div key={lesson.id} className="course-lesson-item group" onClick={() => handleLessonChoice(lesson)}>
                     <div className="flex justify-between items-center w-full">
                         <div>
@@ -857,7 +860,10 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
             <div className="practice-lesson-list-add-lesson" onClick={handleNewPractice}>
                 + Start New Practice
             </div>
-            {lessons.slice(0, viewAll ? lessons.length : 4).map(lesson => (
+            {lessons
+                .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+                .slice(0, viewAll ? lessons.length : 4)
+                .map(lesson => (
                 <div key={lesson.id} className="practice-lesson-item group mt-5 active:translate-y-1 active:shadow-none" onClick={() => handleLessonChoice(lesson)}>
                     <div className="flex justify-between items-center w-full">
                         <div>

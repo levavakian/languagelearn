@@ -48,6 +48,14 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Update lesson timestamp if this chat is associated with a lesson
+	if chat.LessonID != "" {
+		if err := updateLessonLastAccessedTime(chat.LessonID); err != nil {
+			// Log the error but continue with the connection
+			fmt.Printf("Error updating lesson timestamp: %v\n", err)
+		}
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println(err)

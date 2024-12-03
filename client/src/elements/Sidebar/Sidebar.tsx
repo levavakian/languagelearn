@@ -152,6 +152,8 @@ const Sidebar = () => {
     const toggleRefactor = useStateValue((state: State) => state.toggleRefactor);
     const onRequestError = useStateValue((state: State) => state.auth.onRequestError);
     const courses = useStateValue((state: State) => state.courses);
+    const currentCourse = useStateValue(state => state.currentCourse.content);
+    const currentChat = useStateValue(state => state.currentChat.chat);
 
     const coursesElements = useMemo(() => {
         return [...courses]
@@ -184,7 +186,7 @@ const Sidebar = () => {
     }, [jwt, setState, onRequestError]);
 
     const {isPending: isFetchingCourses, error: errorCourses, data: dataCourses} = useQuery({
-        queryKey: ['side-bar-courses'],
+        queryKey: ['side-bar-courses', currentCourse, currentChat],
         queryFn: fetchCourses
     });
 

@@ -126,7 +126,9 @@ Choose a course to continue learning, or start a new language journey.
             </div>
             <hr className="my-2 border-gray-200 max-w-[750px] ml-0" />
             <div className="grid mt-5 grid-cols-[repeat(auto-fill,minmax(200px,300px))] gap-6">
-                {courseDetails.map(course => (
+                {courseDetails
+                    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+                    .map(course => (
                     <div key={course.id} className="border px-4 rounded shadow max-w-58 bg-[--porcelain]">
                         <div className="flex justify-between items-center mb-2">
                             <h2 className="text-[24px] font-semibold">{course.name}</h2>

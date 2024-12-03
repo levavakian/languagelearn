@@ -20,7 +20,7 @@ func insertCourse(course Course) error {
 
 func getUserCoursesFromDB(userEmail string) ([]Course, error) {
 	rows, err := db.DB.Query(
-		"SELECT id, creator_id, name, created_at FROM courses WHERE creator_id = $1 ORDER BY created_at DESC",
+		"SELECT id, creator_id, name, created_at, updated_at FROM courses WHERE creator_id = $1 ORDER BY updated_at DESC",
 		userEmail,
 	)
 	if err != nil {
@@ -31,7 +31,7 @@ func getUserCoursesFromDB(userEmail string) ([]Course, error) {
 	var courses []Course
 	for rows.Next() {
 		var course Course
-		if err := rows.Scan(&course.ID, &course.CreatorID, &course.Name, &course.CreatedAt); err != nil {
+		if err := rows.Scan(&course.ID, &course.CreatorID, &course.Name, &course.CreatedAt, &course.UpdatedAt); err != nil {
 			return nil, err
 		}
 		courses = append(courses, course)
@@ -42,9 +42,9 @@ func getUserCoursesFromDB(userEmail string) ([]Course, error) {
 func getCourseFromDB(courseID string) (*Course, error) {
 	var course Course
 	err := db.DB.QueryRow(
-		"SELECT id, creator_id, name, created_at FROM courses WHERE id = $1",
+		"SELECT id, creator_id, name, created_at, updated_at FROM courses WHERE id = $1",
 		courseID,
-	).Scan(&course.ID, &course.CreatorID, &course.Name, &course.CreatedAt)
+	).Scan(&course.ID, &course.CreatorID, &course.Name, &course.CreatedAt, &course.UpdatedAt)
 	
 	if err != nil {
 		return nil, err
@@ -154,6 +154,24 @@ func insertLesson(lesson Lesson) error {
 		"INSERT INTO lessons (id, course_id, chat_id, lesson_plan, summary, order_index, created_at, name, free_practice) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
 		lesson.ID, lesson.CourseID, lesson.ChatID, lesson.LessonPlan, lesson.Summary, lesson.OrderIndex, lesson.CreatedAt, lesson.Name, lesson.FreePractice,
 	)
+
+	// Update the course's updated_at timestamp
+	_, err = db.DB.Exec(
+		"UPDATE courses SET updated_at = NOW() WHERE id = $1",
+		lesson.CourseID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update course timestamp: %v", err)
+	}
+
+	// Update the lesson's updated_at timestamp
+	_, err = db.DB.Exec(
+		"UPDATE lessons SET updated_at = NOW() WHERE id = $1",
+		lesson.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update lesson timestamp: %v", err)
+	}
 	return err
 }
 
@@ -673,4 +691,51 @@ func updateCourseVocabItems(courseID string, vocabItems map[string]VocabItem) er
 	}
 
 	return nil
+}
+
+func updateCourseLastAccessedTime(courseID string) error {
+	_, err := db.DB.Exec(
+		"UPDATE courses SET updated_at = NOW() WHERE id = $1",
+		courseID,
+	)
+	return err
+}
+
+func updateLessonLastAccessedTime(lessonID string) error {
+	// First, get the course ID for this lesson
+	var courseID string
+	err := db.DB.QueryRow(
+		"SELECT course_id FROM lessons WHERE id = $1",
+		lessonID,
+	).Scan(&courseID)
+	if err != nil {
+		return fmt.Errorf("failed to get course ID: %v", err)
+	}
+
+	// Begin transaction to update both lesson and course
+	tx, err := db.DB.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	// Update lesson timestamp
+	_, err = tx.Exec(
+		"UPDATE lessons SET updated_at = NOW() WHERE id = $1",
+		lessonID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update lesson timestamp: %v", err)
+	}
+
+	// Update course timestamp
+	_, err = tx.Exec(
+		"UPDATE courses SET updated_at = NOW() WHERE id = $1",
+		courseID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update course timestamp: %v", err)
+	}
+
+	return tx.Commit()
 }

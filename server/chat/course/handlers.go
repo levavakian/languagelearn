@@ -27,6 +27,7 @@ type CourseDetails struct {
 	ID          string       `json:"id"`
 	Name        string       `json:"name"`
 	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
 	LessonPlans []LessonPlan `json:"lesson_plans"`
 	Lessons     []Lesson     `json:"lessons"`
 }
@@ -111,6 +112,12 @@ func getCourse(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Course not found", http.StatusNotFound)
 		return
+	}
+
+	// Update the last accessed time
+	if err := updateCourseLastAccessedTime(courseID); err != nil {
+		// Log the error but don't fail the request
+		fmt.Printf("Failed to update course last accessed time: %v\n", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1209,6 +1216,7 @@ func getUserCoursesDetails(w http.ResponseWriter, r *http.Request) {
 			ID:          course.ID,
 			Name:        course.Name,
 			CreatedAt:   course.CreatedAt,
+			UpdatedAt:   course.UpdatedAt,
 			LessonPlans: lessonPlans,
 			Lessons:     lessons,
 		}
