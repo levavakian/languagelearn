@@ -858,7 +858,7 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
                 + Start New Practice
             </div>
             {lessons.slice(0, viewAll ? lessons.length : 4).map(lesson => (
-                <div key={lesson.id} className="practice-lesson-item group mt-5" onClick={() => handleLessonChoice(lesson)}>
+                <div key={lesson.id} className="practice-lesson-item group mt-5 active:translate-y-1 active:shadow-none" onClick={() => handleLessonChoice(lesson)}>
                     <div className="flex justify-between items-center w-full">
                         <div>
                             {lesson.name}
