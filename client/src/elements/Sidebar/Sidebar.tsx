@@ -38,7 +38,7 @@ const CourseBox = ({ course }: { course: Course }) => {
         } else {
             setLatestLesson("");
         }
-    }, [jwt, onRequestError]);
+    }, [jwt, onRequestError, course.id]);
 
     useEffect(() => {
         if (Date.now() - lastFailed < 10000) {
@@ -153,7 +153,7 @@ const Sidebar = () => {
     const onRequestError = useStateValue((state: State) => state.auth.onRequestError);
     const courses = useStateValue((state: State) => state.courses);
     const currentCourse = useStateValue(state => state.currentCourse.content);
-    const currentChat = useStateValue(state => state.currentChat.chat);
+    const sendMessage = useStateValue(state => state.currentChat.ws.sendMessage);
 
     const coursesElements = useMemo(() => {
         return [...courses]
@@ -178,15 +178,14 @@ const Sidebar = () => {
             console.error('Error fetching courses:', response);
             onRequestError(response, "Failed to fetch courses", "sidebar-fetch-courses");
             throw new Error("Failed to fetch courses");
-            return;
         }
         const data = await response.json();
         setState(draft => { draft.courses = data || [] });
         return data;
     }, [jwt, setState, onRequestError]);
 
-    const {isPending: isFetchingCourses, error: errorCourses, data: dataCourses} = useQuery({
-        queryKey: ['side-bar-courses', currentCourse, currentChat],
+    useQuery({
+        queryKey: ['side-bar-courses', currentCourse, sendMessage],
         queryFn: fetchCourses
     });
 
