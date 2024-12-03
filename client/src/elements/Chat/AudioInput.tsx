@@ -76,11 +76,12 @@ export const AudioInput = () => {
                     preferred_response_type: PreferredResponseType.Audio,
                     response_id: ""
                 };
+                setState(draft => { draft.currentChat.lastAudioInTime = Date.now() });
                 sendMessage(JSON.stringify(message));
             };
             reader.readAsArrayBuffer(chunk);
         }
-    }, [sendMessage, micAlwaysOn]);
+    }, [sendMessage, setState, micAlwaysOn]);
 
     const startRecording = useCallback(async () => {
         if (!recordingRef.current) {

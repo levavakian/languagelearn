@@ -9,12 +9,13 @@ const ChatInput = () => {
     const chatOpts = useStateValue(state => state.currentChat.chatOpts);
     const lastAudioInTime = useStateValue(state => state.currentChat.lastAudioInTime);
     const audioInput = useStateValue(state => state.currentChat.audioInput);
-
+    const [isRecentAudio, setIsRecentAudio] = useState(false);
     const sendMessage = useStateValue(state => state.currentChat.ws.sendMessage);
     const [inputMessage, setInputMessage] = useState('');
 
     const sendText = useCallback((text: string) => {
         if (sendMessage) {
+            console.log("Sending text message", chatOpts.preferAudio, PreferredResponseType.Audio);
             let msg: Message = {
                 type: MessageType.Text,
                 content: text.trim(),
@@ -46,9 +47,15 @@ const ChatInput = () => {
         };
     }, [setChatInput, setState]);
 
-    const isRecentAudio = useMemo(() => {
-        if (!lastAudioInTime) return false;
-        return Date.now() - lastAudioInTime < 500; // 500ms = 0.5 seconds
+    useEffect(() => {
+        if (!lastAudioInTime) return;
+
+        setIsRecentAudio(true);
+        const timer = setTimeout(() => {
+            setIsRecentAudio(false);
+        }, 500);
+
+        return () => clearTimeout(timer);
     }, [lastAudioInTime]);
 
     return (
@@ -79,6 +86,7 @@ const ChatInput = () => {
                     <div 
                         className={`icon ${chatOpts.preferAudio ? '' : 'inactive'}`}
                         title={`${chatOpts.preferAudio ? 'Click to disable prefer audio mode' : 'Click to enable prefer audio mode, which will respond with audio even to text messages'}`}
+                        onClick={() => setState(draft => { draft.currentChat.chatOpts.preferAudio = !draft.currentChat.chatOpts.preferAudio })}
                     >  
                         <Icon scale={24} name="speaker" />
                     </div>

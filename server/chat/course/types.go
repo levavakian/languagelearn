@@ -71,7 +71,7 @@ type Message struct {
 	Sender              string    `json:"sender"`
 	Content             string    `json:"content"`
 	Type                string    `json:"type,omitempty"` // "text" or "audio"
-	PreferredResponseType string    `json:"preferredResponseType,omitempty"`
+	PreferredResponseType string    `json:"preferred_response_type,omitempty"`
 	ResponseID          string    `json:"responseId,omitempty"`
 	CreatedAt           time.Time `json:"created_at"`
 }
