@@ -28,6 +28,11 @@ export const IconPaths = {
     folderDown: '/icons/folder-down.svg',
     addfolder: '/icons/addfolder.svg',
     dictionary: '/icons/dictionary.svg',
+    time10: '/icons/time10.svg',
+    timeinf: '/icons/timeinf.svg',
+    time10white: '/icons/time10white.svg',
+    micwhite: '/icons/micwhite.svg',
+    timeinfwhite: '/icons/timeinfwhite.svg',
   } as const;
   
   export type IconName = keyof typeof IconPaths;

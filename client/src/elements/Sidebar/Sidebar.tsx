@@ -149,7 +149,6 @@ const Sidebar = () => {
     const setState = useSetStateValue();
 
     const jwt = useStateValue((state: State) => state.auth.token);
-    const toggleRefactor = useStateValue((state: State) => state.toggleRefactor);
     const onRequestError = useStateValue((state: State) => state.auth.onRequestError);
     const courses = useStateValue((state: State) => state.courses);
     const currentCourse = useStateValue(state => state.currentCourse.content);
@@ -191,7 +190,7 @@ const Sidebar = () => {
 
     return (
         <div className="sidebar">
-            <div className="sidebar-title" onClick={toggleRefactor}>
+            <div className="sidebar-title">
                 <span className="sidebar-title-text">ARATTA</span>
             </div>
             

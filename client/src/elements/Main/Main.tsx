@@ -12,11 +12,7 @@ import {
   
 const queryClient = new QueryClient();
 
-interface MainProps {
-    onToggleRefactor?: () => void;
-}
-
-const Main: React.FC<MainProps> = ({ onToggleRefactor }) => {
+const Main = () => {
     const jwt = useStateValue((state: State) => state.auth.token);
     const setState = useSetStateValue();
 
@@ -39,12 +35,6 @@ const Main: React.FC<MainProps> = ({ onToggleRefactor }) => {
             };
         });
     }, [setState]);
-
-    useEffect(() => {
-        setState(draft => {
-            draft.toggleRefactor = () => { onToggleRefactor?.(); };
-        });
-    }, [setState, onToggleRefactor]);
 
     const handleLoginSuccess = (response: any) => {
         console.log('Login Success:', response);

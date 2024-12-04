@@ -8,12 +8,19 @@ export enum ModalSelector {
     NewCourse = 'new-course',
     NewLesson = 'new-lesson',
     LessonPlan = 'lesson-plan',
+    AlwaysOn = 'always-on',
 }
 
 export enum PreferredInstructorStyle {
     Neutral = 'neutral',
     Strict = 'strict',
     Casual = 'casual',
+}
+
+export enum AlwaysOnMode {
+    Off = 'off',
+    On = 'on',
+    Temp = 'temp',
 }
 
 export enum WorkPage {
@@ -129,7 +136,7 @@ export type WrappedState = {
         messages: Message[]
         chatOpts: {
             preferAudio: Persistable<boolean>
-            alwaysOn: boolean
+            alwaysOn: AlwaysOnMode
             hiddenText: Persistable<boolean>
         }
         lastAudioInTime: number
@@ -145,7 +152,6 @@ export type WrappedState = {
         }
         tooltipInfo: TooltipInfo | null
     }
-    toggleRefactor: () => void
     courses: Course[]
     modalSelector: ModalSelector
     preferredInstructorStyle: Persistable<PreferredInstructorStyle>
@@ -175,7 +181,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
         messages: [],
         chatOpts: {
             preferAudio: persisted('chat-prefer-audio', false),
-            alwaysOn: false,
+            alwaysOn: AlwaysOnMode.Off,
             hiddenText: persisted('chat-hidden-text', false),
         },
         lastAudioInTime: 0,
@@ -191,7 +197,6 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
         },
         tooltipInfo: null,
     },
-    toggleRefactor: () => { console.log("Toggle refactor handler unset") },
     courses: [],
     modalSelector: ModalSelector.None,
     preferredInstructorStyle: persisted('preferred-instructor-style', PreferredInstructorStyle.Neutral),

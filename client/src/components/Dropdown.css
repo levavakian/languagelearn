@@ -1,8 +1,0 @@
-.dropdown-item:hover {
-    background-color: #3a3f4b;
-  }
-
-/* Add this new rule */
-div[style*="overflow-y: auto"]::-webkit-scrollbar {
-    display: none;
-}

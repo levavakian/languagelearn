@@ -1,8 +1,9 @@
 import './Chat.css';
 import './ChatInput.css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useStateValue, useSetStateValue, Message, MessageType, PreferredResponseType } from '../../state/state';
+import { useStateValue, useSetStateValue, Message, MessageType, PreferredResponseType, ModalSelector, AlwaysOnMode } from '../../state/state';
 import { Icon } from '../Icon/Icon';
+import { AlwaysOnModal } from './AlwaysOnModal';
 
 const ChatInput = () => {
     const setState = useSetStateValue();
@@ -12,6 +13,7 @@ const ChatInput = () => {
     const [isRecentAudio, setIsRecentAudio] = useState(false);
     const sendMessage = useStateValue(state => state.currentChat.ws.sendMessage);
     const [inputMessage, setInputMessage] = useState('');
+    const modalSelector = useStateValue(state => state.modalSelector);
 
     const sendText = useCallback((text: string) => {
         if (sendMessage) {
@@ -60,6 +62,7 @@ const ChatInput = () => {
 
     return (
         <div className="chat-input-container">
+            {modalSelector === ModalSelector.AlwaysOn && <AlwaysOnModal />}
             <div className="chat-input-top">
                 <textarea 
                     placeholder="Type your message, or hold Alt or Option to speak"
@@ -78,8 +81,11 @@ const ChatInput = () => {
             <div className="chat-input-bottom">
                 <div className="left-icons">
                     <div 
-                        className={`icon ${chatOpts.alwaysOn ? '' : 'inactive'}`}
-                        title={`${chatOpts.alwaysOn ? 'Click to disable always listening mode' : 'Click to enable always listening mode'}`}
+                        className={`icon ${chatOpts.alwaysOn !== AlwaysOnMode.Off ? '' : 'inactive'}`}
+                        title={`${chatOpts.alwaysOn !== AlwaysOnMode.Off ? 'Click to disable always listening mode' : 'Click to enable always listening mode'}`}
+                        onClick={() => setState(draft => {
+                            draft.modalSelector = ModalSelector.AlwaysOn;
+                        })}
                     >
                         <Icon scale={24} name="ear" />
                     </div>

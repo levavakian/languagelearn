@@ -21,6 +21,7 @@ module.exports = {
         'warn-red': '#ac3636',
         'porcelain': '#f0f1f2ff',
         'transparent-grey': '#a2a2a233',
+        'okgreen': '#679436ff',
       }
     },
     fontFamily: {

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useStateValue, useSetStateValue, Message, MessageType, PreferredResponseType } from '../../state/state';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useStateValue, useSetStateValue, Message, MessageType, PreferredResponseType, AlwaysOnMode } from '../../state/state';
 import { audioService } from '../../services/AudioService';
 import { audioPlayer } from '../../services/AudioPlayer';
 
@@ -7,10 +7,12 @@ export const AudioInput = () => {
     const setState = useSetStateValue();
     const latchedResponseId = useStateValue(state => state.currentChat.latchedResponseId);
     const latchedResponseIdRef = useRef(latchedResponseId);
-    const micAlwaysOn = useStateValue(state => state.currentChat.chatOpts.alwaysOn);
+    const micAlwaysOnMode = useStateValue(state => state.currentChat.chatOpts.alwaysOn);
     const sendMessage = useStateValue(state => state.currentChat.ws.sendMessage);
     const [recording, setRecording] = useState(false);
     const recordingRef = useRef(recording);
+
+    const micAlwaysOn = useMemo(() => micAlwaysOnMode !== AlwaysOnMode.Off, [micAlwaysOnMode]);
 
     useEffect(() => {
         recordingRef.current = recording;

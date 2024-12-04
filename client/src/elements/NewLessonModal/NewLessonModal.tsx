@@ -233,13 +233,13 @@ export const NewLessonModal = () => {
                 {/* New buttons row */}
                 <div className="flex justify-end gap-4 mt-4">
                     <button 
-                        className="px-20 py-3 bg-alice-blue hover:bg-alice-blue border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel text-[26px] shadow-[0_4px_0_0_#1B365D] hover:brightness-105 active:shadow-none active:translate-y-1 transition-all duration-100"
+                        className="px-20 py-3 bg-alice-blue hover:bg-alice-blue border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel text-[26px] shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-1 transition-all duration-100"
                         onClick={() => setState(drift => drift.modalSelector = ModalSelector.None)}
                     >
                         Cancel
                     </button>
                     <button 
-                        className="px-8 py-3 bg-coral hover:bg-coral border-solid border-[1px] border-indigo-dye text-baby-powder rounded-xl font-nobel text-[26px] shadow-[0_4px_0_0_#1B365D] hover:brightness-125 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3"
+                        className="px-8 py-3 bg-coral hover:bg-coral border-solid border-[1px] border-indigo-dye text-baby-powder rounded-xl font-nobel text-[26px] shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-125 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3"
                         onClick={onStartLesson}
                     >
                         Start Lesson
