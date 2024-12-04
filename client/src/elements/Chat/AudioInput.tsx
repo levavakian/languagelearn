@@ -145,6 +145,32 @@ export const AudioInput = () => {
     }, [micAlwaysOnMode, startRecording, stopRecording, setState]);
 
     useEffect(() => {
+        if (!sendMessage) return;
+
+        if (micAlwaysOnMode === AlwaysOnMode.Off) {
+            let msg: Message = {
+                sender: 'user',
+                content: 'server_vad:disable',
+                type: MessageType.Audio,
+                preferred_response_type: PreferredResponseType.Audio,
+                response_id: ""
+            };
+            console.log("Sending disable message", msg);
+            sendMessage(JSON.stringify(msg));
+        } else {
+            let msg: Message = {
+                sender: 'user',
+                content: 'server_vad:enable',
+                type: MessageType.Audio,
+                preferred_response_type: PreferredResponseType.Audio,
+                response_id: ""
+            };
+            console.log("Sending enable message", msg);
+            sendMessage(JSON.stringify(msg));
+        }
+    }, [sendMessage, micAlwaysOnMode]);
+
+    useEffect(() => {
         return () => {
             setState(draft => { draft.currentChat.chatOpts.alwaysOn = AlwaysOnMode.Off });
         }

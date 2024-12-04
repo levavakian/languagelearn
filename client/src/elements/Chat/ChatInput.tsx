@@ -17,7 +17,6 @@ const ChatInput = () => {
 
     const sendText = useCallback((text: string) => {
         if (sendMessage) {
-            console.log("Sending text message", chatOpts.preferAudio, PreferredResponseType.Audio);
             let msg: Message = {
                 type: MessageType.Text,
                 content: text.trim(),
