@@ -41,15 +41,17 @@ export const Connection = () => {
             sendMessage(message);
         } else {
             console.error("WebSocket is not open");
-            toast.error("There was an error with the WebSocket connection. Please refresh the page.", { id: "ws-error" });
+            toast.error("There was an error with the WebSocket connection. If issues persist, please refresh the page.", { id: "ws-error" });
         }
     }, [sendMessage, readyState]);
 
     useEffect(() => {
+        if (readyState !== ReadyState.OPEN) return;
+
         setState(draft => {
             draft.currentChat.ws.sendMessage = sendWebSocketMessage;
         });
-    }, [sendWebSocketMessage, setState]);
+    }, [sendWebSocketMessage, readyState, setState]);
 
     const onMessageCallbacksRef = useRef(onMessageCallbacks);
     useEffect(() => {
@@ -65,6 +67,13 @@ export const Connection = () => {
             }
         }
     }, [lastMessage]);
+
+    // Cleanup
+    useEffect(() => {
+        return () => {
+            setState(draft => { draft.currentChat.ws.sendMessage = null; });
+        };
+    }, [setState]);
 
     return null;
 };

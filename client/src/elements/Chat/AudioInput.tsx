@@ -98,10 +98,10 @@ export const AudioInput = () => {
         }
     }, [onAudioChunk, setRecording, setState]);
 
-    const stopRecording = useCallback(async () => {
+    const stopRecording = useCallback(async (stoppedAlwaysOn: boolean = false) => {
         if (recordingRef.current) {
             audioService.stopRecording();
-            onAudioChunk(new Blob(), true, false); // Pass stoppedAlwaysOn to callback
+            onAudioChunk(new Blob(), true, stoppedAlwaysOn); // Pass stoppedAlwaysOn to callback
             setRecording(false);
         }
     }, [onAudioChunk, setRecording]);
@@ -123,7 +123,7 @@ export const AudioInput = () => {
 
     useEffect(() => {
         if (micAlwaysOnMode === AlwaysOnMode.Off) {
-            stopRecording();
+            stopRecording(true);
         } else {
             startRecording();
         }
@@ -155,7 +155,6 @@ export const AudioInput = () => {
                 preferred_response_type: PreferredResponseType.Audio,
                 response_id: ""
             };
-            console.log("Sending disable message", msg);
             sendMessage(JSON.stringify(msg));
         } else {
             let msg: Message = {
@@ -165,7 +164,6 @@ export const AudioInput = () => {
                 preferred_response_type: PreferredResponseType.Audio,
                 response_id: ""
             };
-            console.log("Sending enable message", msg);
             sendMessage(JSON.stringify(msg));
         }
     }, [sendMessage, micAlwaysOnMode]);
