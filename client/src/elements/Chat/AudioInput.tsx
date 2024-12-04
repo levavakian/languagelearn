@@ -122,6 +122,35 @@ export const AudioInput = () => {
     }, [setState, startRecording, stopRecording]);
 
     useEffect(() => {
+        if (micAlwaysOnMode === AlwaysOnMode.Off) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+
+        let timeoutId: NodeJS.Timeout | undefined;
+        if (micAlwaysOnMode === AlwaysOnMode.Temp) {
+            timeoutId = setTimeout(() => {
+                setState(draft => {
+                    draft.currentChat.chatOpts.alwaysOn = AlwaysOnMode.Off
+                });
+            }, 10 * 60 * 1000);
+        }
+
+        return () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+        }
+    }, [micAlwaysOnMode, startRecording, stopRecording, setState]);
+
+    useEffect(() => {
+        return () => {
+            setState(draft => { draft.currentChat.chatOpts.alwaysOn = AlwaysOnMode.Off });
+        }
+    }, [setState]);
+
+    useEffect(() => {
         const handleKeyDown = async (e: KeyboardEvent) => {
             if (micAlwaysOn) return; // Ignore key events in always-on mode
             

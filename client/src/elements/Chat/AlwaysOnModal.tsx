@@ -19,7 +19,13 @@ export const AlwaysOnModal = () => {
                 <div className="flex flex-col items-center gap-2">
                     <button className={`w-[70px] h-[70px] border-solid border-[1px] border-indigo-dye rounded-xl shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-[4px] transition-all duration-100 flex items-center justify-center ${
                         alwaysOnMode === AlwaysOnMode.Off ? 'bg-coral' : 'bg-alice-blue'
-                    }`}>
+                    }`}
+                    onClick={() => {
+                        setState(draft => {
+                            draft.currentChat.chatOpts.alwaysOn = AlwaysOnMode.Off;
+                            draft.modalSelector = ModalSelector.None;
+                        });
+                    }}>
                         <Icon name={alwaysOnMode === AlwaysOnMode.Off ? 'micwhite' : 'mic'} scale={38} />
                     </button>
                     <div className="text-[18px] font-bold font-nobel">Push to Talk</div>
@@ -27,7 +33,13 @@ export const AlwaysOnModal = () => {
                 <div className="flex flex-col items-center gap-2">
                     <button className={`w-[70px] h-[70px] border-solid border-[1px] border-indigo-dye rounded-xl shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-[4px] transition-all duration-100 flex items-center justify-center ${
                         alwaysOnMode === AlwaysOnMode.Temp ? 'bg-coral' : 'bg-alice-blue'
-                    }`}>
+                    }`}
+                    onClick={() => {
+                        setState(draft => {
+                            draft.currentChat.chatOpts.alwaysOn = AlwaysOnMode.Temp;
+                            draft.modalSelector = ModalSelector.None;
+                        });
+                    }}>
                         <Icon name={alwaysOnMode === AlwaysOnMode.Temp ? 'time10white' : 'time10'} scale={36} />
                     </button>
                     <div className="text-[18px] max-w-[100px] text-center font-bold font-nobel">Open Mic for 10 minutes</div>
