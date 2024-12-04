@@ -21,12 +21,18 @@ var (
 	}
 )
 
+type LastTranscriptMessage struct {
+	Mutex     sync.Mutex
+	Timestamp time.Time
+}
+
 type ChatConnections struct {
 	Clients map[*websocket.Conn]bool
 	Mutex   sync.RWMutex
 	ErrorState ChatErrorState
 	SettingsUpdate chan SettingsUpdate
 	UserEmail string
+	LastTranscriptMessage LastTranscriptMessage
 }
 
 type ChatErrorState struct {
@@ -113,6 +119,7 @@ func sendMessageHistory(conn *websocket.Conn, chat *Chat) {
         Sender:     "Assistant @OpenAI Realtime",
         Content:    "Hey, are you ready for your lesson?",
         Type:       "text",
+		CreatedAt: time.Now(),
     }
     if err := conn.WriteJSON(initialMsg); err != nil {
         fmt.Printf("Error sending initial message: %v\n", err)
@@ -132,6 +139,7 @@ func handleUserMessages(conn *websocket.Conn, chat *Chat, chatConns *ChatConnect
 		var msg Message
 		err := conn.ReadJSON(&msg)
 		msg.ChatID = chat.ID
+		msg.CreatedAt = time.Now()
 		if err != nil {
 			break
 		}

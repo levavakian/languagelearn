@@ -235,6 +235,9 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 		switch msgType.Type {
 		case "conversation.item.input_audio_transcription.completed":
 			var transcriptionMsg AudioTranscriptionCompleted
+			chatConns.LastTranscriptMessage.Mutex.Lock()
+			chatConns.LastTranscriptMessage.Timestamp = time.Now()
+			chatConns.LastTranscriptMessage.Mutex.Unlock()
 			if err := json.Unmarshal(message, &transcriptionMsg); err != nil {
 				fmt.Printf("Error parsing transcription message from OpenAI: %v\n", err)
 				continue
@@ -245,6 +248,8 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 				Sender:  "user",
 				Content: transcriptionMsg.Transcript,
 				Type:    "text",
+				IsTranscript: true,
+				CreatedAt: time.Now(),
 			}
 
 			addMessageToChat(userMsg)
@@ -263,6 +268,7 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 				Content:    audioMsg.Delta,
 				Type:       "audio",
 				ResponseID: audioMsg.ResponseID,
+				CreatedAt: time.Now(),
 			}
 
 			broadcastMessage(chatConns, assistantMsg)
@@ -295,6 +301,7 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 						Sender:  "Assistant @OpenAI Realtime",
 						Content: "<Error in receiving response from Tutor>",
 						Type:    "text",
+						CreatedAt: time.Now(),
 					}
 					addMessageToChat(errorMsg)
 					broadcastMessage(chatConns, errorMsg)
@@ -337,9 +344,28 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 					assistantMsg.Content = content.Transcript
 					
 					go func(msg Message) {
-						time.Sleep(500 * time.Millisecond)
-						addMessageToChat(msg)
-						broadcastMessage(chatConns, msg)
+						startTime := time.Now()
+						for {
+							// Check if there's a recent transcript
+							chatConns.LastTranscriptMessage.Mutex.Lock()
+							lastTranscriptTime := chatConns.LastTranscriptMessage.Timestamp
+							chatConns.LastTranscriptMessage.Mutex.Unlock()
+
+							timeSinceStart := time.Since(startTime)
+							
+							// Add message if:
+							// 1. No recent transcript (>500ms old) exists, or
+							// 2. More than 2 seconds have passed since start
+							if lastTranscriptTime.After(startTime.Add(-500*time.Millisecond)) || 
+							   timeSinceStart > 2*time.Second {
+								addMessageToChat(msg)
+								broadcastMessage(chatConns, msg)
+								return
+							}
+
+							// Check every 100ms
+							time.Sleep(100 * time.Millisecond)
+						}
 					}(assistantMsg)
 				}
 			}
@@ -350,6 +376,7 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 				Sender:  "Assistant @OpenAI Realtime",
 				Content: "speech_stopped", 
 				Type:    "audio",
+				CreatedAt: time.Now(),
 			}
 			
 			broadcastMessage(chatConns, speechStoppedMsg)

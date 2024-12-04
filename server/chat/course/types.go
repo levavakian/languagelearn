@@ -72,6 +72,7 @@ type Message struct {
 	Content             string    `json:"content"`
 	Type                string    `json:"type,omitempty"` // "text" or "audio"
 	PreferredResponseType string    `json:"preferred_response_type,omitempty"`
+	IsTranscript          bool      `json:"is_transcript"`
 	ResponseID          string    `json:"responseId,omitempty"`
 	CreatedAt           time.Time `json:"created_at"`
 }
