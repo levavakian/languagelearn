@@ -146,6 +146,8 @@ type OpenAIConnection struct {
 	Conn *websocket.Conn
 	Closed chan bool
 	IsClosed bool
+	LastSend time.Time
+	LastRead time.Time
 	Mutex sync.Mutex
 }
 
@@ -210,7 +212,7 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *OpenA
 				return
 			}
 
-			if time.Since(startTime) > 10*time.Second && time.Since(lastRead) > 1*time.Second {
+			if time.Since(startTime) > 10*time.Minute && time.Since(lastRead) > 1*time.Second {
 				conn.Closed <- true
 				return
 			}
@@ -220,6 +222,7 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *OpenA
 
 	for {
 		_, message, err := conn.Conn.ReadMessage()
+		conn.LastRead = time.Now()
 		if err != nil {
 			fmt.Printf("Error reading message from OpenAI Realtime API: %v\n", err)
 			conn.Mutex.Lock()
@@ -656,11 +659,20 @@ func getInstructions(chatID string) (string, error) {
 
 func InitOpenAIConnection(chat *Chat, chatConns *ChatConnections) (*OpenAIConnection, error) {
 	// Get initial settings
+	errMsg := Message{
+		ChatID: chat.ID,
+		Sender:  "system",
+		Content: "Error initializing OpenAI connection",
+		Type:    "error",
+		IsTranscript: false,
+		CreatedAt: time.Now(),
+	}
 	instructions, _ := getInstructions(chat.ID)
 
 	openAIConn, err := connectToOpenAI()
 	if err != nil {
 		fmt.Printf("Error connecting to OpenAI Realtime API: %v\n", err)
+		broadcastMessage(chatConns, errMsg)
 		return nil, err
 	}
 
@@ -668,6 +680,7 @@ func InitOpenAIConnection(chat *Chat, chatConns *ChatConnections) (*OpenAIConnec
 	if err := updateOpenAISession(openAIConn.Conn, instructions, nil); err != nil {
 		fmt.Printf("Error sending session update: %v\n", err)
 		openAIConn.Conn.Close()
+		broadcastMessage(chatConns, errMsg)
 		return nil, err
 	}
 
@@ -689,6 +702,7 @@ func InitOpenAIConnection(chat *Chat, chatConns *ChatConnections) (*OpenAIConnec
 	if err := openAIConn.Conn.WriteJSON(initMsg); err != nil {
 		fmt.Printf("Error sending audio init message: %v\n", err)
 		openAIConn.Conn.Close()
+		broadcastMessage(chatConns, errMsg)
 		return nil, err
 	}
 
@@ -703,6 +717,7 @@ func InitOpenAIConnection(chat *Chat, chatConns *ChatConnections) (*OpenAIConnec
 	if err := openAIConn.Conn.WriteJSON(responseCreate); err != nil {
 		fmt.Printf("Error sending initial response.create: %v\n", err)
 		openAIConn.Conn.Close()
+		broadcastMessage(chatConns, errMsg)
 		return nil, err
 	}
 
@@ -735,11 +750,13 @@ func InitOpenAIConnection(chat *Chat, chatConns *ChatConnections) (*OpenAIConnec
 	case success := <-done:
 		if !success {
 			openAIConn.Conn.Close()
+			broadcastMessage(chatConns, errMsg)
 			return nil, err
 		}
 	case <-time.After(10 * time.Second):
 		fmt.Printf("Timeout waiting for init response\n")
 		openAIConn.Conn.Close()
+		broadcastMessage(chatConns, errMsg)
 		return nil, err
 	}
 
@@ -796,6 +813,7 @@ func InitOpenAIConnection(chat *Chat, chatConns *ChatConnections) (*OpenAIConnec
 	if err := sendConversationCreate(openAIConn.Conn, initialMsg); err != nil {
 		fmt.Printf("Error sending initial message to OpenAI: %v\n", err)
 		openAIConn.Conn.Close()
+		broadcastMessage(chatConns, errMsg)
 		return nil, err
 	}
 
@@ -804,6 +822,7 @@ func InitOpenAIConnection(chat *Chat, chatConns *ChatConnections) (*OpenAIConnec
 		if err := sendConversationCreate(openAIConn.Conn, msg); err != nil {
 			fmt.Printf("Error sending message history to OpenAI: %v\n", err)
 			openAIConn.Conn.Close()
+			broadcastMessage(chatConns, errMsg)
 			return nil, err
 		}
 	}
@@ -834,7 +853,6 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 					openAIConn.IsClosed = true
 					openAIConn.Conn.Close()
 					openAIConn.Mutex.Unlock()
-					openAIConn = nil
 					fmt.Println("OpenAI connection closed for chat", chat.ID)
 				}
 				return
@@ -843,13 +861,25 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 				openAIConn, err = InitOpenAIConnection(chat, chatConns)
 				if err != nil {
 					fmt.Printf("Error initializing OpenAI connection: %v\n", err)
+					openAIConn = &OpenAIConnection{
+						IsClosed: true,
+					}
 					continue
 				}
 			}
+			openAIConn.LastSend = time.Now()
 			if err := sendMessageToOpenAI(openAIConn.Conn, msg, chatConns); err != nil {
 				fmt.Printf("Error sending message to OpenAI: %v\n", err)
 				openAIConn.IsClosed = true
 				openAIConn.Conn.Close()
+				broadcastMessage(chatConns, Message{
+					ChatID: chat.ID,
+					Sender:  "system",
+					Content: "Error communicating with OpenAI Realtime API",
+					Type:    "error",
+					IsTranscript: false,
+					CreatedAt: time.Now(),
+				})
 			}
 		case update := <-chatConns.SettingsUpdate:
 			if openAIConn == nil || openAIConn.IsClosed {
@@ -863,11 +893,21 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 				fmt.Printf("Error updating OpenAI session: %v\n", err)
 				openAIConn.IsClosed = true
 				openAIConn.Conn.Close()
+				broadcastMessage(chatConns, Message{
+					ChatID: chat.ID,
+					Sender:  "system",
+					Content: "Error updating session settings",
+					Type:    "error",
+					IsTranscript: false,
+					CreatedAt: time.Now(),
+				})
 			}
 		case restart := <-openAIConn.Closed:
 			openAIConn.Mutex.Lock()
-			openAIConn.IsClosed = true
-			openAIConn.Conn.Close()
+			if !openAIConn.IsClosed {
+				openAIConn.IsClosed = true
+				openAIConn.Conn.Close()	
+			}
 			openAIConn.Mutex.Unlock()
 			if !restart {
 				return

@@ -3,6 +3,7 @@ import './MessageWindow.css';
 import { Message, NoteNode, useSetStateValue, useStateValue } from '../../state/state';
 import { Connection } from './Connection';
 import { Tooltip } from '../Tooltip/Tooltip';
+import toast from 'react-hot-toast';
 
 const Avatar = ({ size }: { size: number }) => {
     return (
@@ -193,6 +194,10 @@ export const MessageWindow: React.FC = () => {
 
     const onMessage = useCallback((data: any) => {
         const message = data as Message
+        if (message.type === 'error') {
+            toast.error(message.content, { id: "ws-error" });
+            return;
+        }
         if (message.type !== 'audio') {
             setState(draft => {
                 draft.currentChat.messages = [...draft.currentChat.messages, message];

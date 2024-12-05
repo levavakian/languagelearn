@@ -34,6 +34,7 @@ export enum WorkPage {
 export enum MessageType {
     Text = 'text',
     Audio = 'audio',
+    Error = 'error',
 }
 
 export enum PreferredResponseType {
