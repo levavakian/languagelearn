@@ -86,6 +86,9 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	chatConns.Clients[conn] = true
 	chatConns.Mutex.Unlock()
 
+	// Create a channel to signal new messages
+	newMessage := make(chan Message)
+
 	defer func() {
 		chatConns.Mutex.Lock()
 		delete(chatConns.Clients, conn)
@@ -97,13 +100,13 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			delete(activeChats, chatID)
 		}
 		chatsMutex.Unlock()
+
+		fmt.Println("Closing newMessage channel for chat", chatID)
+		close(newMessage)
 	}()
 
 	// Send message history to the newly connected client
 	sendMessageHistory(conn, chat)
-
-	// Create a channel to signal new messages
-	newMessage := make(chan Message)
 
 	// Start OpenAI connection handler
 	go handleOpenAIConnection(chat, chatConns, newMessage)

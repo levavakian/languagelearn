@@ -7,6 +7,7 @@ import (
 	"os"
 	"encoding/json"
 	"strings"
+	"sync"
 
 
 	"github.com/google/uuid"
@@ -141,7 +142,14 @@ type Response struct {
     Instructions string   `json:"instructions,omitempty"`
 }
 
-func connectToOpenAI() (*websocket.Conn, error) {
+type OpenAIConnection struct {
+	Conn *websocket.Conn
+	Closed chan bool
+	IsClosed bool
+	Mutex sync.Mutex
+}
+
+func connectToOpenAI() (*OpenAIConnection, error) {
 	secretKey := os.Getenv("OPENAI_SECRET_KEY")
 	if secretKey == "" {
 		return nil, fmt.Errorf("OPENAI_SECRET_KEY environment variable is not set")
@@ -151,7 +159,14 @@ func connectToOpenAI() (*websocket.Conn, error) {
 		"Authorization": []string{"Bearer " + secretKey},
 		"OpenAI-Beta":   []string{"realtime=v1"},
 	})
-	return conn, err
+
+	openAIConn := &OpenAIConnection{
+		Conn: conn,
+		Closed: make(chan bool, 1),
+		IsClosed: false,
+	}
+
+	return openAIConn, err
 }
 
 func sendConversationCreate(conn *websocket.Conn, msg Message) error {
@@ -185,12 +200,33 @@ func sendConversationCreate(conn *websocket.Conn, msg Message) error {
     return conn.WriteJSON(create)
 }
 
-func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *websocket.Conn) {
+func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *OpenAIConnection) {
+	startTime := time.Now()
+	lastRead := time.Now()
+
+	go func(){
+		for {
+			if conn.IsClosed {
+				return
+			}
+
+			if time.Since(startTime) > 10*time.Second && time.Since(lastRead) > 1*time.Second {
+				conn.Closed <- true
+				return
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+	}()
+
 	for {
-		_, message, err := conn.ReadMessage()
+		_, message, err := conn.Conn.ReadMessage()
 		if err != nil {
 			fmt.Printf("Error reading message from OpenAI Realtime API: %v\n", err)
-			conn.Close()
+			conn.Mutex.Lock()
+			if !conn.IsClosed {
+				conn.Closed <- true
+			}
+			conn.Mutex.Unlock()
 			return
 		}
 
@@ -313,7 +349,7 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *webso
 							Modalities: []string{"text"},
 						},
 					}
-					if err := conn.WriteJSON(responseCreate); err != nil {
+					if err := conn.Conn.WriteJSON(responseCreate); err != nil {
 						fmt.Printf("Error sending retry response.create: %v\n", err)
 					}
 				}
@@ -618,188 +654,223 @@ func getInstructions(chatID string) (string, error) {
 	return instructions, nil
 }
 
-func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <-chan Message) {
-	var openAIConn *websocket.Conn
-	var err error
-
+func InitOpenAIConnection(chat *Chat, chatConns *ChatConnections) (*OpenAIConnection, error) {
 	// Get initial settings
 	instructions, _ := getInstructions(chat.ID)
 
-	for {
-		if openAIConn == nil {
-			openAIConn, err = connectToOpenAI()
+	openAIConn, err := connectToOpenAI()
+	if err != nil {
+		fmt.Printf("Error connecting to OpenAI Realtime API: %v\n", err)
+		return nil, err
+	}
+
+	// Send initial session update
+	if err := updateOpenAISession(openAIConn.Conn, instructions, nil); err != nil {
+		fmt.Printf("Error sending session update: %v\n", err)
+		openAIConn.Conn.Close()
+		return nil, err
+	}
+
+	// Add initialization sequence for audio
+	initMsg := ConversationItemCreate{
+		Type: "conversation.item.create",
+		Item: Item{
+			Type: "message",
+			Role: "system",
+			Content: []Content{
+				{
+					Type: "text",
+					Text: "Initialize audio session",
+				},
+			},
+		},
+	}
+
+	if err := openAIConn.Conn.WriteJSON(initMsg); err != nil {
+		fmt.Printf("Error sending audio init message: %v\n", err)
+		openAIConn.Conn.Close()
+		return nil, err
+	}
+
+	// Request response with audio and text modalities
+	responseCreate := ResponseCreate{
+		Type: "response.create",
+		Response: Response{
+			Modalities: []string{"audio", "text"},
+		},
+	}
+
+	if err := openAIConn.Conn.WriteJSON(responseCreate); err != nil {
+		fmt.Printf("Error sending initial response.create: %v\n", err)
+		openAIConn.Conn.Close()
+		return nil, err
+	}
+
+	// Wait for response.done before continuing
+	done := make(chan bool)
+	go func() {
+		for {
+			_, message, err := openAIConn.Conn.ReadMessage()
 			if err != nil {
-				fmt.Printf("Error connecting to OpenAI Realtime API: %v\n", err)
-				continue
+				fmt.Printf("Error reading init response: %v\n", err)
+				done <- false
+				return
 			}
 
-			// Send initial session update
-			if err := updateOpenAISession(openAIConn, instructions, nil); err != nil {
-				fmt.Printf("Error sending session update: %v\n", err)
-				openAIConn.Close()
-				openAIConn = nil
-				continue
+			var msgType OpenAIMessageType
+			if err := json.Unmarshal(message, &msgType); err != nil {
+				fmt.Printf("Error unmarshaling init response: %v\n", err)
+				done <- false
+				return
 			}
 
-			// Add initialization sequence for audio
-			initMsg := ConversationItemCreate{
-				Type: "conversation.item.create",
-				Item: Item{
-					Type: "message",
-					Role: "system",
-					Content: []Content{
-						{
-							Type: "text",
-							Text: "Initialize audio session",
-						},
-					},
-				},
+			if msgType.Type == "response.done" {
+				done <- true
+				return
 			}
+		}
+	}()
 
-			if err := openAIConn.WriteJSON(initMsg); err != nil {
-				fmt.Printf("Error sending audio init message: %v\n", err)
-				openAIConn.Close()
-				openAIConn = nil
-				continue
+	select {
+	case success := <-done:
+		if !success {
+			openAIConn.Conn.Close()
+			return nil, err
+		}
+	case <-time.After(10 * time.Second):
+		fmt.Printf("Timeout waiting for init response\n")
+		openAIConn.Conn.Close()
+		return nil, err
+	}
+
+	// Get lesson plan and vocab list if available and add them to the chat just for openai
+	if chat.LessonID != "" {
+		lesson, err := getLessonFromDB(chat.LessonID)
+		if err == nil && lesson.LessonPlan != "" {
+			lessonPlanMsg := Message{
+				ChatID:  chat.ID,
+				Sender:  "Assistant @OpenAI Realtime",
+				Content: fmt.Sprintf("Our lesson plan for the day is:\n%s", lesson.LessonPlan),
+				Type:    "text",
 			}
-
-			// Request response with audio and text modalities
-			responseCreate := ResponseCreate{
-				Type: "response.create",
-				Response: Response{
-					Modalities: []string{"audio", "text"},
-				},
+			if err := sendConversationCreate(openAIConn.Conn, lessonPlanMsg); err != nil {
+				fmt.Printf("Error sending lesson plan message to OpenAI: %v\n", err)
 			}
-
-			if err := openAIConn.WriteJSON(responseCreate); err != nil {
-				fmt.Printf("Error sending initial response.create: %v\n", err)
-				openAIConn.Close()
-				openAIConn = nil
-				continue
-			}
-
-			// Wait for response.done before continuing
-			done := make(chan bool)
-			go func() {
-				for {
-					_, message, err := openAIConn.ReadMessage()
-					if err != nil {
-						fmt.Printf("Error reading init response: %v\n", err)
-						done <- false
-						return
-					}
-
-					var msgType OpenAIMessageType
-					if err := json.Unmarshal(message, &msgType); err != nil {
-						fmt.Printf("Error unmarshaling init response: %v\n", err)
-						done <- false
-						return
-					}
-
-					if msgType.Type == "response.done" {
-						done <- true
-						return
-					}
-				}
-			}()
-
-			select {
-			case success := <-done:
-				if !success {
-					openAIConn.Close()
-					openAIConn = nil
-					continue
-				}
-			case <-time.After(10 * time.Second):
-				fmt.Printf("Timeout waiting for init response\n")
-				openAIConn.Close()
-				openAIConn = nil
-				continue
-			}
-
-			// Get lesson plan and vocab list if available and add them to the chat just for openai
-			if chat.LessonID != "" {
-				lesson, err := getLessonFromDB(chat.LessonID)
-				if err == nil && lesson.LessonPlan != "" {
-					lessonPlanMsg := Message{
-						ChatID:  chat.ID,
-						Sender:  "Assistant @OpenAI Realtime",
-						Content: fmt.Sprintf("Our lesson plan for the day is:\n%s", lesson.LessonPlan),
-						Type:    "text",
-					}
-					if err := sendConversationCreate(openAIConn, lessonPlanMsg); err != nil {
-						fmt.Printf("Error sending lesson plan message to OpenAI: %v\n", err)
-					}
-				}
-
-				// Get vocab list from chat settings
-				settings, err := getChatSettingsFromDB(chat.ID)
-				if err == nil && settings.VocabItems != nil && len(settings.VocabItems) > 0 {
-					var vocabList strings.Builder
-					vocabList.WriteString("Here is the list of vocab and concepts you have been reviewing:\n")
-					
-					for word, item := range settings.VocabItems {
-						vocabList.WriteString(fmt.Sprintf("- %s (%s): %s", word, item.Type, item.Definition))
-						if item.Notes != "" {
-							vocabList.WriteString(fmt.Sprintf(" (Notes: %s)", item.Notes))
-						}
-						vocabList.WriteString(fmt.Sprintf(" [Used %d times, last used: %s]\n", 
-							item.UsageCount, 
-							item.LastUsed.Format("2006-01-02")))
-					}
-
-					vocabMsg := Message{
-						ChatID:  chat.ID,
-						Sender:  "Assistant @OpenAI Realtime",
-						Content: vocabList.String(),
-						Type:    "text",
-					}
-					if err := sendConversationCreate(openAIConn, vocabMsg); err != nil {
-						fmt.Printf("Error sending vocab list message to OpenAI: %v\n", err)
-					}
-				}
-			}
-
-			// Send initial greeting message to OpenAI
-			initialMsg := Message{
-				ChatID:     chat.ID,
-				Sender:     "Assistant @OpenAI Realtime", 
-				Content:    "Hey, are you ready for your lesson? We can do over chat and over voice, and switch between at any time.",
-				Type:       "text",
-			}
-			if err := sendConversationCreate(openAIConn, initialMsg); err != nil {
-				fmt.Printf("Error sending initial message to OpenAI: %v\n", err)
-				openAIConn.Close()
-				openAIConn = nil
-				continue
-			}
-
-			// Send message history to OpenAI
-			for _, msg := range chat.Messages {
-				if err := sendConversationCreate(openAIConn, msg); err != nil {
-					fmt.Printf("Error sending message history to OpenAI: %v\n", err)
-					openAIConn.Close()
-					openAIConn = nil
-					break
-				}
-			}
-
-			go handleOpenAIMessages(chat.ID, chatConns, openAIConn)
 		}
 
+		// Get vocab list from chat settings
+		settings, err := getChatSettingsFromDB(chat.ID)
+		if err == nil && settings.VocabItems != nil && len(settings.VocabItems) > 0 {
+			var vocabList strings.Builder
+			vocabList.WriteString("Here is the list of vocab and concepts you have been reviewing:\n")
+			
+			for word, item := range settings.VocabItems {
+				vocabList.WriteString(fmt.Sprintf("- %s (%s): %s", word, item.Type, item.Definition))
+				if item.Notes != "" {
+					vocabList.WriteString(fmt.Sprintf(" (Notes: %s)", item.Notes))
+				}
+				vocabList.WriteString(fmt.Sprintf(" [Used %d times, last used: %s]\n", 
+					item.UsageCount, 
+					item.LastUsed.Format("2006-01-02")))
+			}
+
+			vocabMsg := Message{
+				ChatID:  chat.ID,
+				Sender:  "Assistant @OpenAI Realtime",
+				Content: vocabList.String(),
+				Type:    "text",
+			}
+			if err := sendConversationCreate(openAIConn.Conn, vocabMsg); err != nil {
+				fmt.Printf("Error sending vocab list message to OpenAI: %v\n", err)
+			}
+		}
+	}
+
+	// Send initial greeting message to OpenAI
+	initialMsg := Message{
+		ChatID:     chat.ID,
+		Sender:     "Assistant @OpenAI Realtime", 
+		Content:    "Hey, are you ready for your lesson? We can do over chat and over voice, and switch between at any time.",
+		Type:       "text",
+	}
+	if err := sendConversationCreate(openAIConn.Conn, initialMsg); err != nil {
+		fmt.Printf("Error sending initial message to OpenAI: %v\n", err)
+		openAIConn.Conn.Close()
+		return nil, err
+	}
+
+	// Send message history to OpenAI
+	for _, msg := range chat.Messages {
+		if err := sendConversationCreate(openAIConn.Conn, msg); err != nil {
+			fmt.Printf("Error sending message history to OpenAI: %v\n", err)
+			openAIConn.Conn.Close()
+			return nil, err
+		}
+	}
+
+	go handleOpenAIMessages(chat.ID, chatConns, openAIConn)
+	return openAIConn, nil
+}
+
+func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <-chan Message) {
+	var openAIConn *OpenAIConnection
+	var err error
+
+	openAIConn, err = InitOpenAIConnection(chat, chatConns)
+	if err != nil {
+		fmt.Printf("Error initializing OpenAI connection: %v\n", err)
+		openAIConn = &OpenAIConnection{
+			IsClosed: true,
+		}
+	}
+
+	for {
 		// Wait for a new message, settings update, or connection error
 		select {
-		case msg := <-newMessage:
-			if err := sendMessageToOpenAI(openAIConn, msg, chatConns); err != nil {
+		case msg, ok := <-newMessage:
+			if !ok {
+				if openAIConn != nil {
+					openAIConn.Mutex.Lock()
+					openAIConn.IsClosed = true
+					openAIConn.Conn.Close()
+					openAIConn.Mutex.Unlock()
+					openAIConn = nil
+					fmt.Println("OpenAI connection closed for chat", chat.ID)
+				}
+				return
+			}
+			if openAIConn == nil || openAIConn.IsClosed {
+				openAIConn, err = InitOpenAIConnection(chat, chatConns)
+				if err != nil {
+					fmt.Printf("Error initializing OpenAI connection: %v\n", err)
+					continue
+				}
+			}
+			if err := sendMessageToOpenAI(openAIConn.Conn, msg, chatConns); err != nil {
 				fmt.Printf("Error sending message to OpenAI: %v\n", err)
-				openAIConn.Close()
-				openAIConn = nil
+				openAIConn.IsClosed = true
+				openAIConn.Conn.Close()
 			}
 		case update := <-chatConns.SettingsUpdate:
-			if err := updateOpenAISession(openAIConn, update.Settings.CustomInstructions, nil); err != nil {
+			if openAIConn == nil || openAIConn.IsClosed {
+				openAIConn, err = InitOpenAIConnection(chat, chatConns)
+				if err != nil {
+					fmt.Printf("Error initializing OpenAI connection: %v\n", err)
+					continue
+				}
+			}
+			if err := updateOpenAISession(openAIConn.Conn, update.Settings.CustomInstructions, nil); err != nil {
 				fmt.Printf("Error updating OpenAI session: %v\n", err)
-				openAIConn.Close()
-				openAIConn = nil
+				openAIConn.IsClosed = true
+				openAIConn.Conn.Close()
+			}
+		case restart := <-openAIConn.Closed:
+			openAIConn.Mutex.Lock()
+			openAIConn.IsClosed = true
+			openAIConn.Conn.Close()
+			openAIConn.Mutex.Unlock()
+			if !restart {
+				return
 			}
 		}
 	}
