@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useStateValue, useSetStateValue } from '../../state/state';
 import toast from 'react-hot-toast';
@@ -8,6 +8,20 @@ export const Connection = () => {
     const jwt = useStateValue(state => state.auth.token);
     const selectedChatId = useStateValue(state => state.currentChat.chat?.id);
     const onMessageCallbacks = useStateValue(state => state.currentChat.ws.onMessageCallbacks);
+    const [lastSend, setLastSend] = useState(0);
+    const [lastReceive, setLastReceive] = useState(0);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            console.log(lastSend, lastReceive)
+            if (lastSend < lastReceive) {
+                toast.error("There was an error with the network connection. If issues persist, please refresh the page.", { id: "ws-error" });
+            }
+            setLastReceive(Date.now());
+        }, 10000);
+
+        return () => clearTimeout(timer);
+    }, [lastSend, lastReceive]);
 
     const { sendMessage, lastMessage, readyState } = useWebSocket(
         selectedChatId ? 
@@ -39,6 +53,7 @@ export const Connection = () => {
     const sendWebSocketMessage = useCallback((message: string | Blob | ArrayBufferView | ArrayBufferLike) => {
         if (readyState === ReadyState.OPEN) {
             sendMessage(message);
+            setLastSend(Date.now());
         } else {
             console.error("WebSocket is not open");
             toast.error("There was an error with the WebSocket connection. If issues persist, please refresh the page.", { id: "ws-error" });
@@ -62,6 +77,7 @@ export const Connection = () => {
     useEffect(() => {
         if (lastMessage) {
             const data = JSON.parse(lastMessage.data);
+            setLastReceive(Date.now());
             for (const callback of Object.values(onMessageCallbacksRef.current)) {
                 callback(data);
             }

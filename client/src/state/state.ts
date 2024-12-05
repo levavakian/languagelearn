@@ -9,6 +9,7 @@ export enum ModalSelector {
     NewLesson = 'new-lesson',
     LessonPlan = 'lesson-plan',
     AlwaysOn = 'always-on',
+    LessonEdit = 'lesson-edit',
 }
 
 export enum PreferredInstructorStyle {
