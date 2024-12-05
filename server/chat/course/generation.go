@@ -73,6 +73,18 @@ func generateLessonSummary(w http.ResponseWriter, r *http.Request) {
 	lessonID := vars["lessonId"]
 	userEmail := r.Header.Get("X-User-Email")
 
+	userCredits, err := GetUserCredits(userEmail)
+	if err != nil {
+		fmt.Printf("Error getting user credits: %v\n", err)
+		http.Error(w, "Failed to get user credits", http.StatusInternalServerError)
+		return
+	}
+
+	if userCredits <= 0 {
+		http.Error(w, "Insufficient credits", http.StatusPaymentRequired)
+		return
+	}
+
 	// Get the lesson
 	lesson, err := getLessonFromDB(lessonID)
 	if err != nil {
@@ -199,6 +211,18 @@ func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	lessonID := vars["lessonId"]
 	userEmail := r.Header.Get("X-User-Email")
+
+	userCredits, err := GetUserCredits(userEmail)
+	if err != nil {
+		fmt.Printf("Error getting user credits: %v\n", err)
+		http.Error(w, "Failed to get user credits", http.StatusInternalServerError)
+		return
+	}
+
+	if userCredits <= 0 {
+		http.Error(w, "Insufficient credits", http.StatusPaymentRequired)
+		return
+	}
 
 	// Get the lesson
 	lesson, err := getLessonFromDB(lessonID)
@@ -410,6 +434,18 @@ func generateNextLessonPlan(w http.ResponseWriter, r *http.Request) {
 	// Get and validate all lessons first
 	lessons := make([]Lesson, 0, len(req.LessonIDs))
 	userEmail := r.Header.Get("X-User-Email")
+
+	userCredits, err := GetUserCredits(userEmail)
+	if err != nil {
+		fmt.Printf("Error getting user credits: %v\n", err)
+		http.Error(w, "Failed to get user credits", http.StatusInternalServerError)
+		return
+	}
+
+	if userCredits <= 0 {
+		http.Error(w, "Insufficient credits", http.StatusPaymentRequired)
+		return
+	}
 
 	for _, lessonID := range req.LessonIDs {
 		lesson, err := getLessonFromDB(lessonID)

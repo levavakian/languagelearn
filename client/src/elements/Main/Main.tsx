@@ -28,6 +28,11 @@ const Main = () => {
                     return;
                 }
 
+                if (response.status === 402) {
+                    toast.error('Insufficient credits for request, please purchase more credits for generative content', {id: "insufficient-credits"});
+                    return;
+                }
+
                 console.log("Got response error", response);
                 if (msg) {
                     toast.error(msg, {id: id});

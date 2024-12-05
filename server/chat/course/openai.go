@@ -226,7 +226,8 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *OpenA
 		if err != nil {
 			fmt.Printf("Error reading message from OpenAI Realtime API: %v\n", err)
 			conn.Mutex.Lock()
-			if !conn.IsClosed {
+			isClosedConnErr := strings.Contains(err.Error(), "use of closed network connection")
+			if !conn.IsClosed && !isClosedConnErr {
 				conn.Closed <- true
 			}
 			conn.Mutex.Unlock()
@@ -658,6 +659,15 @@ func getInstructions(chatID string) (string, error) {
 }
 
 func InitOpenAIConnection(chat *Chat, chatConns *ChatConnections) (*OpenAIConnection, error) {
+	userCredits, err := GetUserCredits(chatConns.UserEmail)
+	if err != nil {
+		fmt.Printf("Error getting user credits: %v\n", err)
+	}
+
+	if userCredits <= 0 {
+		return nil, fmt.Errorf("insufficient credits")
+	}
+
 	// Get initial settings
 	errMsg := Message{
 		ChatID: chat.ID,
@@ -851,7 +861,9 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 				if openAIConn != nil {
 					openAIConn.Mutex.Lock()
 					openAIConn.IsClosed = true
-					openAIConn.Conn.Close()
+					if openAIConn.Conn != nil {
+						openAIConn.Conn.Close()
+					}
 					openAIConn.Mutex.Unlock()
 					fmt.Println("OpenAI connection closed for chat", chat.ID)
 				}
@@ -871,7 +883,9 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 			if err := sendMessageToOpenAI(openAIConn.Conn, msg, chatConns); err != nil {
 				fmt.Printf("Error sending message to OpenAI: %v\n", err)
 				openAIConn.IsClosed = true
-				openAIConn.Conn.Close()
+				if openAIConn.Conn != nil {
+					openAIConn.Conn.Close()
+				}
 				broadcastMessage(chatConns, Message{
 					ChatID: chat.ID,
 					Sender:  "system",
@@ -892,7 +906,9 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 			if err := updateOpenAISession(openAIConn.Conn, update.Settings.CustomInstructions, nil); err != nil {
 				fmt.Printf("Error updating OpenAI session: %v\n", err)
 				openAIConn.IsClosed = true
-				openAIConn.Conn.Close()
+				if openAIConn.Conn != nil {
+					openAIConn.Conn.Close()
+				}
 				broadcastMessage(chatConns, Message{
 					ChatID: chat.ID,
 					Sender:  "system",
@@ -906,7 +922,9 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 			openAIConn.Mutex.Lock()
 			if !openAIConn.IsClosed {
 				openAIConn.IsClosed = true
-				openAIConn.Conn.Close()	
+				if openAIConn.Conn != nil {
+					openAIConn.Conn.Close()
+				}
 			}
 			openAIConn.Mutex.Unlock()
 			if !restart {

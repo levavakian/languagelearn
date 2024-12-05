@@ -577,6 +577,12 @@ func logPayment(email string, previousAmount int64, adjustedAmount int64, change
 	return tx.Commit()
 }
 
+func GetUserCredits(email string) (int64, error) {
+	var nanocredits int64
+	err := db.DB.QueryRow("SELECT nanocredits FROM user_credits WHERE email = $1", email).Scan(&nanocredits)
+	return nanocredits, err
+}
+
 // DeductCredits subtracts the specified amount of nanocredits from the user's account.
 // Returns an error if the user doesn't have sufficient credits or if there's a database error.
 func DeductCredits(email string, amount int64) error {

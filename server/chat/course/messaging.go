@@ -155,6 +155,29 @@ func handleUserMessages(conn *websocket.Conn, chat *Chat, chatConns *ChatConnect
 		}
 		broadcastMessage(chatConns, msg)
 
+		userCredits, err := GetUserCredits(chatConns.UserEmail)
+		if err != nil {
+			fmt.Printf("Error getting user credits: %v\n", err)
+			broadcastMessage(chatConns, Message{
+				ChatID: chat.ID,
+				Sender: "system",
+				Content: "Could not retrieve user credits, please try again later",
+				Type: "error",
+				CreatedAt: time.Now(),
+			})
+		}
+
+		if userCredits <= 0 {
+			broadcastMessage(chatConns, Message{
+				ChatID: chat.ID,
+				Sender: "system",
+				Content: "Insufficient credits, please purchase more credits to continue",
+				Type: "error",
+				CreatedAt: time.Now(),
+			})
+			continue;
+		}
+
 		// Send the new message to OpenAI
 		newMessage <- msg
 	}
