@@ -198,7 +198,7 @@ func getCourseLessonsFromDB(courseID string) ([]Lesson, error) {
 
 func updateLessonInDB(lesson Lesson) error {
 	result, err := db.DB.Exec(
-		"UPDATE lessons SET lesson_plan = $1, summary = $2, order_index = $3, name = $4 WHERE id = $5 AND course_id = $6",
+		"UPDATE lessons SET lesson_plan = $1, summary = $2, order_index = $3, name = $4, updated_at = NOW() WHERE id = $5 AND course_id = $6",
 		lesson.LessonPlan, lesson.Summary, lesson.OrderIndex, lesson.Name, lesson.ID, lesson.CourseID,
 	)
 	if err != nil {
@@ -744,4 +744,20 @@ func updateLessonLastAccessedTime(lessonID string) error {
 	}
 
 	return tx.Commit()
+}
+
+// getLessonCourseID returns the course ID for a given lesson ID
+func getLessonCourseID(lessonID string) (string, error) {
+	var courseID string
+	err := db.DB.QueryRow(
+		"SELECT course_id FROM lessons WHERE id = $1",
+		lessonID,
+	).Scan(&courseID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("lesson not found")
+		}
+		return "", fmt.Errorf("failed to get course ID: %v", err)
+	}
+	return courseID, nil
 }

@@ -723,7 +723,7 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
             return;
         }
 
-        const response = await fetch(`/api/course/${selectedCourseId}/lesson/${lessonId}`, {
+        const response = await fetch(`/api/lesson/${lessonId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${jwt}`
@@ -815,7 +815,7 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
             return;
         }
 
-        const response = await fetch(`/api/course/${selectedCourseId}/lesson/${lessonId}`, {
+        const response = await fetch(`/api/lesson/${lessonId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${jwt}`

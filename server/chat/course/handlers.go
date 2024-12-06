@@ -389,17 +389,26 @@ func getCourseLessons(w http.ResponseWriter, r *http.Request) {
 
 func updateLesson(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	courseID := vars["id"]
 	lessonID := vars["lessonId"]
 	userEmail := r.Header.Get("X-User-Email")
 
+	// Get the course ID for this lesson
+	courseID, err := getLessonCourseID(lessonID)
+	if err != nil {
+		fmt.Printf("Error getting course ID for lesson: %v\n", err)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
 	if err := verifyOwnership(courseID, userEmail); err != nil {
+		fmt.Printf("Error verifying ownership: %v\n", err)
 		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 
 	var lesson Lesson
 	if err := json.NewDecoder(r.Body).Decode(&lesson); err != nil {
+		fmt.Printf("Error decoding lesson: %v\n", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -408,12 +417,20 @@ func updateLesson(w http.ResponseWriter, r *http.Request) {
 	lesson.CourseID = courseID
 
 	if err := updateLessonInDB(lesson); err != nil {
+		fmt.Printf("Error updating lesson: %v\n", err)
 		http.Error(w, "Failed to update lesson", http.StatusInternalServerError)
 		return
 	}
 
+	lessonOut, err := getLessonFromDB(lessonID)
+	if err != nil {
+		fmt.Printf("Error getting lesson: %v\n", err)
+		http.Error(w, "Failed to get lesson", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(lesson)
+	json.NewEncoder(w).Encode(lessonOut)
 }
 
 func deleteLesson(w http.ResponseWriter, r *http.Request) {

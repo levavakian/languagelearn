@@ -53,7 +53,7 @@ const CourseBox = ({ course }: { course: Course }) => {
             return {
                 icon: <Icon scale={12} name="next" />, 
                 label: 'Continue Lesson',
-                onClick: () => setState(draft => { draft.pageChoice.workPage = WorkPage.Chat; draft.pageChoice.selectedLesson = latestLesson })
+                onClick: () => setState(draft => { draft.pageChoice.workPage = WorkPage.Chat; draft.pageChoice.selectedLesson = latestLesson; draft.pageChoice.selectedCourse = course.id })
             };
         }
 

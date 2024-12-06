@@ -25,8 +25,8 @@ func SetupRoutes(api *mux.Router) {
 	// Lesson routes
 	api.HandleFunc("/course/{id}/lesson", auth.AuthMiddleware(createLesson)).Methods("POST")
 	api.HandleFunc("/course/{id}/lessons", auth.AuthMiddleware(getCourseLessons)).Methods("GET")
-	api.HandleFunc("/course/{id}/lesson/{lessonId}", auth.AuthMiddleware(updateLesson)).Methods("PUT")
-	api.HandleFunc("/course/{id}/lesson/{lessonId}", auth.AuthMiddleware(deleteLesson)).Methods("DELETE")
+	api.HandleFunc("/lesson/{lessonId}", auth.AuthMiddleware(updateLesson)).Methods("PUT")
+	api.HandleFunc("/lesson/{lessonId}", auth.AuthMiddleware(deleteLesson)).Methods("DELETE")
 
 	// Vocab list routes
 	api.HandleFunc("/course/{id}/vocab", auth.AuthMiddleware(updateVocabList)).Methods("PUT")

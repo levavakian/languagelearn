@@ -13,11 +13,10 @@ export const Connection = () => {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            console.log(lastSend, lastReceive)
-            if (lastSend < lastReceive) {
+            if (lastSend > lastReceive) {
                 toast.error("There was an error with the network connection. If issues persist, please refresh the page.", { id: "ws-error" });
+                setLastReceive(Date.now());
             }
-            setLastReceive(Date.now());
         }, 10000);
 
         return () => clearTimeout(timer);

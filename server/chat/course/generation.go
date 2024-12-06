@@ -247,8 +247,10 @@ func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
 			Content: `You are an AI language tutor responsible for maintaining a vocabulary and grammar reference list. 
 					 Analyze the lesson content and identify important vocabulary words, grammar concepts, idioms, or 
 					 language patterns that should be added to or updated in the reference list. Keep entries concise 
-					 and information-dense. The word and definition should each be as few words as possible, preferably one or two max.
-					 Each entry should be categorized by type (word, verb, tense, idiom, etc.).`,
+					 and information-dense. The word should be in the language the user is trying to learn, and the definition
+					 should be in the languate the user speaks natively. The word and definition should each be as few
+					 words as possible, preferably one or two max. Each entry should be categorized by type
+					 (word, verb, tense, idiom, etc.).`,
 		},
 	}
 
@@ -286,8 +288,8 @@ func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
 	// Add final instruction
 	messages = append(messages, ChatMessage{
 		Role: "user",
-		Content: "Based on this lesson, provide updates or additions to the vocabulary list. Suggestions should be concise and information-dense. They do not have to be only vocab words and their definitions, they can be tenses, idioms, conjunctions, etc. Anything that would be helpful during language learning. Focus on things that seemed new or tough for the student, or things they seemed to be particularly curious or interested in." +
-			"Return the response in the specified JSON format.",
+		Content: "Based on this lesson, provide updates or additions to the vocabulary list. Suggestions should be concise and information-dense. They do not have to be only vocab words and their definitions, they can be tenses, idioms, conjunctions, etc. Anything that would be helpful during language learning. Focus on things that seemed new or tough for the student, or things they seemed to be particularly curious or interested in. The word should be in the language the user is trying to learn, and the definition should be in the languate the user speaks natively." +
+		"Return the response in the specified JSON format.",
 	})
 
 	// Prepare the request to OpenAI
