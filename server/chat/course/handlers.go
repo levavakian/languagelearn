@@ -387,6 +387,8 @@ func getCourseLessons(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+
+
 func updateLesson(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	lessonID := vars["lessonId"]
@@ -1247,6 +1249,39 @@ func getUserCoursesDetails(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 		return
 	}
+}
+
+func getLesson(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	lessonID := vars["lessonId"]
+	userEmail := r.Header.Get("X-User-Email")
+
+	// Get the lesson
+	lesson, err := getLessonFromDB(lessonID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Lesson not found", http.StatusNotFound)
+			return
+		}
+		fmt.Printf("Error getting lesson: %v\n", err)
+		http.Error(w, "Failed to get lesson", http.StatusInternalServerError)
+		return
+	}
+
+	// Verify course ownership
+	if err := verifyOwnership(lesson.CourseID, userEmail); err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+
+	// Update the last accessed time
+	if err := updateLessonLastAccessedTime(lessonID); err != nil {
+		// Log the error but don't fail the request
+		fmt.Printf("Failed to update lesson last accessed time: %v\n", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(lesson)
 }
 
 

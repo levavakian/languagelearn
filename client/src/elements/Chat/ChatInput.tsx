@@ -1,9 +1,11 @@
 import './Chat.css';
 import './ChatInput.css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useStateValue, useSetStateValue, Message, MessageType, PreferredResponseType, ModalSelector, AlwaysOnMode } from '../../state/state';
+import { useStateValue, useSetStateValue, Message, MessageType, PreferredResponseType, ModalSelector, AlwaysOnMode, VocabItem, Lesson } from '../../state/state';
 import { Icon } from '../Icon/Icon';
 import { AlwaysOnModal } from './AlwaysOnModal';
+import { LessonEditModal } from '../LessonEditModal/LessonEditModal';
+import toast from 'react-hot-toast';
 
 const ChatInput = () => {
     const setState = useSetStateValue();
@@ -14,6 +16,21 @@ const ChatInput = () => {
     const sendMessage = useStateValue(state => state.currentChat.ws.sendMessage);
     const [inputMessage, setInputMessage] = useState('');
     const modalSelector = useStateValue(state => state.modalSelector);
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
+    const selectedLesson = useStateValue(state => state.pageChoice.selectedLesson);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const [genVocab, setGenVocab] = useState<Record<string, VocabItem>>({});
+    const [genSummary, setGenSummary] = useState<string>("");
+    const [genLesson, setGenLesson] = useState<Lesson | null>(null);
+
+    useEffect(() => {
+        document.body.style.cursor = isSaving ? 'wait' : 'default';
+        return () => {
+            document.body.style.cursor = 'default';
+        };
+    }, [isSaving]);
 
     const sendText = useCallback((text: string) => {
         if (sendMessage) {
@@ -59,8 +76,82 @@ const ChatInput = () => {
         return () => clearTimeout(timer);
     }, [lastAudioInTime]);
 
+    const doSave = useCallback(async () => {
+        setIsSaving(true);
+        const vresponse = await fetch(`/api/lesson/${selectedLesson}/generate-vocab`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${jwt}`,
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!vresponse.ok) {
+            setIsSaving(false);
+            onRequestError(vresponse, "Failed to generate lesson vocab", "save-lesson-modal");
+            return;
+        }
+
+        const vdata = await vresponse.json();
+        const newVocabItems: Record<string, VocabItem> = {};
+        vdata.vocab_updates.forEach((item: {
+            word: string;
+            type: string;
+            definition: string;
+            notes: string;
+        }) => {
+            newVocabItems[item.word] = {
+                word: item.word,
+                type: item.type,
+                definition: item.definition,
+                notes: item.notes || "",
+                last_used: new Date().toISOString(),
+                usageCount: 1
+            };
+        });
+        setGenVocab(newVocabItems);
+
+        const sresponse = await fetch(`/api/lesson/${selectedLesson}/generate-summary`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${jwt}`,
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!sresponse.ok) {
+            setIsSaving(false);
+            onRequestError(sresponse, "Failed to generate lesson plan", "save-lesson-modal");
+            return;
+        }
+
+        const sdata = await sresponse.json();
+        setGenSummary(sdata.summary);
+
+        const response = await fetch(`/api/lesson/${selectedLesson}`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${jwt}`,
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!response.ok) {
+            setIsSaving(false);
+            onRequestError(response, "Failed to get lesson", "save-lesson-modal");
+            return;
+        }
+
+        const ldata = await response.json();
+        setGenLesson(ldata);
+
+        setIsSaving(false);
+        setState(draft => { draft.modalSelector = ModalSelector.LessonEdit });
+    }, [setState, jwt, onRequestError, selectedLesson]);
+
     return (
         <div className="chat-input-container">
+            {modalSelector === ModalSelector.LessonEdit && genLesson && <LessonEditModal lesson={genLesson} summaryInput={genSummary} vocabEdit={genVocab} />}
             {modalSelector === ModalSelector.AlwaysOn && <AlwaysOnModal />}
             <div className="chat-input-top">
                 <textarea 
@@ -102,10 +193,9 @@ const ChatInput = () => {
                     >
                         <Icon scale={24} name="eyebrow" />
                     </div>
-                    <div className="icon" title="Settings">
-                        <Icon scale={24} name="settings" />
-                    </div>
-                    <div className="icon" title="Generate a summary and save your progress">
+                    <div className="icon" title="Generate a summary and save your progress"
+                        onClick={() => doSave()}
+                    >
                         <Icon scale={24} name="save" />
                     </div>
                 </div>
