@@ -2,7 +2,7 @@ import { ModalSelector, AlwaysOnMode, useStateValue, Lesson, VocabItem } from ".
 import { Icon } from "../Icon/Icon";
 import { ShowModal } from "../Modal/Modal";
 import { useSetStateValue } from "../../state/state";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 
 export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: Lesson, summaryInput?: string, vocabEdit?: Record<string, VocabItem>}) => {
@@ -13,6 +13,8 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
     const [vocab, setVocab] = useState(vocabEdit || {});
     const spanRef = useRef<HTMLSpanElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
 
     useEffect(() => {
         if (spanRef.current && inputRef.current) {
@@ -20,6 +22,42 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
             inputRef.current.style.width = `${width + 20}px`;
         }
     }, [title, isEditing]);
+
+    const fetchVocabUpdates = useCallback(async () => {
+        const response = await fetch(`/api/lesson/${lesson.id}/generate-vocab`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${jwt}`,
+                "Content-Type": "application/json",
+            },
+        });
+        
+        if (!response.ok) {
+            onRequestError(response, "Failed to generate lesson plan", "generate-new-lesson-modal");
+            return;
+        }
+
+        const data = await response.json();
+        
+        const newVocabItems: Record<string, VocabItem> = {};
+        data.vocab_updates.forEach((item: {
+            word: string;
+            type: string;
+            definition: string;
+            notes: string;
+        }) => {
+            newVocabItems[item.word] = {
+                word: item.word,
+                type: item.type,
+                definition: item.definition,
+                notes: item.notes || "",
+                last_used: Date.now().toString(),
+                usageCount: 1
+            };
+        });
+
+        setVocab(newVocabItems);
+    }, [jwt, onRequestError]);
 
     return ShowModal(
         ModalSelector.LessonEdit,
@@ -112,7 +150,7 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
                     <div className="mt-4">
                         <button 
                             className="bg-alice-blue border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel font-semibold text-[16px] px-2 py-1 shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3"
-                            onClick={() => {/* Add your click handler here */}}
+                            onClick={() => {fetchVocabUpdates()}}
                         >
                             <Icon name="ai" style={{ marginTop: '1px' }} scale={18} />
                             Generate Vocab Updates
