@@ -3,14 +3,15 @@ import { Icon } from '../Icon/Icon';
 import './Sidebar.css';
 import { Course, Lesson, State, useSetStateValue, useStateValue, WorkPage, ModalSelector } from '../../state/state';
 import { useQuery } from '@tanstack/react-query';
+import { createAssessment } from '../../api/assessment';
 
 const CourseBox = ({ course }: { course: Course }) => {
     const setState = useSetStateValue();
     const jwt = useStateValue((state: State) => state.auth.token);
-    const selectedLesson = useStateValue((state: State) => state.pageChoice.selectedLesson)
     const onRequestError = useStateValue((state: State) => state.auth.onRequestError);
     const [latestLesson, setLatestLesson] = useState<string | null>(null);
     const [lastFailed, setLastFailed] = useState<number>(0);
+    const timeLastLessonMod = useStateValue((state: State) => state.triggers.timeLastLessonMod);
 
     const fetchCourse = useCallback(async () => {
         const response = await fetch(`/api/course/${course.id}/lessons`, {
@@ -29,9 +30,11 @@ const CourseBox = ({ course }: { course: Course }) => {
             setLatestLesson("");
             return;
         }
+        
+        const nonPracticeLessons = data.filter(lesson => !lesson.free_practice);
 
-        if (data.length > 0) {
-            const latestLesson = data.reduce((latest: Lesson, lesson: Lesson) => {
+        if (nonPracticeLessons.length > 0) {
+            const latestLesson = nonPracticeLessons.reduce((latest: Lesson, lesson: Lesson) => {
                 return new Date(lesson.updated_at) > new Date(latest.updated_at) ? lesson : latest;
             });
             setLatestLesson(latestLesson.id);
@@ -46,7 +49,7 @@ const CourseBox = ({ course }: { course: Course }) => {
             return () => clearTimeout(timeoutId);
         }
         fetchCourse();
-    }, [fetchCourse, lastFailed, selectedLesson]);
+    }, [fetchCourse, lastFailed, timeLastLessonMod]);
 
     const handleNewPractice = useCallback(async () => {
         const response = await fetch(`/api/course/${course.id}/lesson`, {
@@ -73,6 +76,25 @@ const CourseBox = ({ course }: { course: Course }) => {
             draft.pageChoice.workPage = WorkPage.Chat;
             draft.pageChoice.selectedCourse = course.id;
             draft.pageChoice.selectedLesson = newLesson.id;
+            draft.triggers.timeLastLessonMod = Date.now();
+        });
+    }, [jwt, onRequestError, course.id, setState]);
+
+    const handleNewAssessment = useCallback(async () => {
+        const response = await createAssessment(jwt, course.id, "Initial Assessment");
+
+        if (!response.ok) {
+            onRequestError(response, "Failed to create assessment", "course-view-assessment-new");
+            return;
+        }
+
+        const newLesson = await response.json();
+
+        setState(draft => {
+            draft.pageChoice.workPage = WorkPage.Chat;
+            draft.pageChoice.selectedCourse = course.id;
+            draft.pageChoice.selectedLesson = newLesson.id;
+            draft.triggers.timeLastLessonMod = Date.now();
         });
     }, [jwt, onRequestError, course.id, setState]);
 
@@ -89,7 +111,7 @@ const CourseBox = ({ course }: { course: Course }) => {
             return {
                 icon: <Icon scale={12} name="next" />, 
                 label: 'Initial Assessment',
-                onClick: () => console.log('Initial Assessment for:', course.name)
+                onClick: handleNewAssessment
             };
         }
 

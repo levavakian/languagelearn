@@ -123,6 +123,7 @@ export type WrappedState = {
     }
     triggers: {
         timeLastPayment: number
+        timeLastLessonMod: number
     }
     pageChoice: Persistable<{
         workPage: WorkPage
@@ -168,6 +169,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     },
     triggers: {
         timeLastPayment: 0,
+        timeLastLessonMod: 0,
     },
     pageChoice: persisted('page-choice', {
         workPage: WorkPage.Intro,

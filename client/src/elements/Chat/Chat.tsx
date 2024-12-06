@@ -42,7 +42,10 @@ const Chat = () => {
                 return;
             }
             const data = await response.json();
-            setState(draft => { draft.currentChat.chat = data });
+            setState(draft => {
+                draft.currentChat.chat = data
+                draft.triggers.timeLastLessonMod = Date.now();
+            });
         } catch (error) {
             toast.error(`Error fetching course`);
             console.error('Error fetching course:', error);

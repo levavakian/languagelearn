@@ -7,6 +7,7 @@ import { produce } from 'immer';
 import { useQuery } from '@tanstack/react-query'
 import { LessonPlanModal } from '../LessonPlanModal/LessonPlanModal';
 import { LessonEditModal } from '../LessonEditModal/LessonEditModal';
+import { createAssessment } from '../../api/assessment';
 
 const QuickPrompts = () => {
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
@@ -807,6 +808,7 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
         setState(draft => {
             draft.pageChoice.workPage = WorkPage.Chat;
             draft.pageChoice.selectedLesson = lesson.id;
+            draft.triggers.timeLastLessonMod = Date.now();
         });
     }
 
@@ -829,6 +831,7 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
 
         setState(draft => {
             draft.currentCourse.lessons = draft.currentCourse.lessons.filter(lesson => lesson.id !== lessonId);
+            draft.triggers.timeLastLessonMod = Date.now();
         });
     }
 
@@ -907,20 +910,44 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
     );
 };
 
-const Assessment = () => {
-    const lessons = useStateValue(state => state.currentCourse.lessons);
+const Assessment = ({ lessons }: { lessons: Lesson[] }) => {
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
+    const setState = useSetStateValue();
+    const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
     
-    const noLessons = useMemo(() => lessons.filter(lesson => !lesson.free_practice).length === 0, [lessons]);
+    const handleNewAssessment = useCallback(async () => {
+        if (!selectedCourseId) {
+            toast.error("No course selected, please select a course to create an assessment.");
+            return;
+        }
+
+        const response = await createAssessment(jwt, selectedCourseId, lessons.length === 0 ? "Initial Assessment" : "Review Assessment");
+
+        if (!response.ok) {
+            onRequestError(response, "Failed to create assessment", "course-view-assessment-new");
+            return;
+        }
+
+        const newLesson = await response.json();
+
+        setState(draft => {
+            draft.pageChoice.workPage = WorkPage.Chat;
+            draft.pageChoice.selectedLesson = newLesson.id;
+            draft.triggers.timeLastLessonMod = Date.now();
+        });
+    }, [jwt, onRequestError, selectedCourseId, setState, lessons]);
     
     return (
         <div className="flex flex-col gap-3 mt-4">
             <div className="text-[18px]">
-                {noLessons 
+                {lessons.length === 0 
                     ? "Do an initial assessment to determine your current level"
                     : "Ready to check your progress? Do a review assessment to see how you've improved!"}
             </div>
             <button 
                 className="px-4 py-2 bg-coral font-semibold text-baby-powder border-2 text-nowrap border-indigo-dye rounded-xl transform active:translate-y-[4px] active:shadow-none shadow-[0_4px_0_var(--indigo-dye)] transition-all self-start"
+                onClick={handleNewAssessment}
             >
                 Take an Assessment
             </button>
@@ -1001,7 +1028,7 @@ const CourseView: React.FC = () => {
             <span className="course-title">{currentCourse?.name}</span>
             <div className="course-content-container">
                 <div className="course-content-left">
-                    <Assessment />
+                    <Assessment lessons={lessons.filter(lesson => !lesson.free_practice)}/>
                     <LessonList lessons={lessons.filter(lesson => !lesson.free_practice)} />
                     <div style={{marginTop: '20px'}}>
                         <LessonPlanList />

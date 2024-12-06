@@ -300,14 +300,8 @@ func createLesson(w http.ResponseWriter, r *http.Request) {
 	// Create chat with meaningful name and lesson ID
 	chatID := uuid.New().String()
 	chatName := request.Title
-	baseChatName := "Lesson #%d"
 	if request.FreePractice {
-		baseChatName = "Practice #%d"
-	}
-	if chatName == "" {
-		chatName = fmt.Sprintf(baseChatName, orderIndex+1)
-	} else {
-		chatName = fmt.Sprintf(baseChatName + ": %s", orderIndex+1, chatName)
+		chatName = fmt.Sprintf("Practice #%d", orderIndex+1)
 	}
 	
 	chat := &Chat{

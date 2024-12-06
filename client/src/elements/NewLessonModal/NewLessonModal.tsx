@@ -126,6 +126,7 @@ export const NewLessonModal = () => {
             drift.pageChoice.workPage = WorkPage.Chat;
             drift.pageChoice.selectedLesson = newLesson.id;
             drift.modalSelector = ModalSelector.None;
+            drift.triggers.timeLastLessonMod = Date.now();
         });
     }, [jwt, selectedCourseId, onRequestError, preferredInstructorStyle, title, lessonPlanText, setState]);
 
