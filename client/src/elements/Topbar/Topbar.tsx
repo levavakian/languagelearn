@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import './Topbar.css';
-import { useSetStateValue, ModalSelector, useStateValue } from '../../state/state';
+import { useSetStateValue, ModalSelector, useStateValue, WorkPage } from '../../state/state';
 import { ShowModal } from '../Modal/Modal';
 import { PaymentForm, CreditCard, GooglePay } from 'react-square-web-payments-sdk';
 import toast from 'react-hot-toast';
+import { IconName } from '../../utils/icons';
 
 export const GetBuyModal = () => {
     const setState = useSetStateValue();
@@ -233,11 +234,67 @@ export const CoinCount = () => {
     </div>
 }
 
+const UserDropdown = ({ onClose, iconRef }: { onClose: () => void, iconRef: React.RefObject<HTMLDivElement> }) => {
+    const setState = useSetStateValue();
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const handleClickOutside = (event: MouseEvent) => {
+        if (dropdownRef.current && 
+            !dropdownRef.current.contains(event.target as Node) && 
+            !iconRef.current?.contains(event.target as Node)) {
+            onClose();
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [onClose]);
+
+    return (
+        <div 
+            ref={dropdownRef}
+            className="absolute right-2 mt-2 rounded-md min-w-[200px] bg-[var(--indigo-dye)] text-indigo-dye text-xl 
+                border-[1px] border-solid border-[--indigo-dye] flex flex-col-reverse shadow-[0_4px_0_var(--indigo-dye)]"
+        >
+            {[
+                { label: "Log Out", onClick: () => {
+                    setState(draft => { draft.auth.token = "" });
+                    onClose();
+                }},
+                { label: "Contact Us", onClick: () => {
+                    setState(draft => { draft.pageChoice.workPage = WorkPage.Contact });
+                    onClose();
+                }},
+                { label: "FAQ", onClick: () => {
+                    setState(draft => { draft.pageChoice.workPage = WorkPage.FAQ });
+                    onClose();
+                }},
+            ].map((item, index) => (
+                <div
+                    key={index}
+                    className="relative isolate"
+                >
+                    <div 
+                        onClick={item.onClick}
+                        className="px-2 py-1 cursor-pointer text-right text-indigo-dye text-[16px]
+                            border-[2px] border-solid border-[--indigo-dye] relative rounded-md
+                            bg-baby-powder hover:bg-gray-200"
+                    >
+                        {item.label}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
 export const Topbar = () => {
     const setState = useSetStateValue();
     const modalSelector = useStateValue(state => state.modalSelector);
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const userIconRef = useRef<HTMLDivElement>(null);
 
-    const coins = 95;
     return (
         <div>
             {modalSelector === ModalSelector.BuyCoins && <GetBuyModal />}
@@ -248,13 +305,18 @@ export const Topbar = () => {
                 padding: '10px 20px',
                 gap: '15px',
             }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="topbar-icon">
-                <CoinCount />
-                <Icon name="profit" scale={24} />
-            </div>
-            <button className="buy-button" onClick={() => setState(draft => { draft.modalSelector = ModalSelector.BuyCoins })}>Buy Coins</button>
-            <div className="topbar-icon">
-                <Icon name="user" scale={24} onClick={() => setState(draft => { draft.auth.token = "" })}/>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="topbar-icon">
+                    <CoinCount />
+                    <Icon name="profit" scale={24} />
+                </div>
+                <button className="buy-button" onClick={() => setState(draft => { draft.modalSelector = ModalSelector.BuyCoins })}>Buy Coins</button>
+                <div ref={userIconRef} className="topbar-icon relative cursor-pointer">
+                    <Icon 
+                        name="user" 
+                        scale={24} 
+                        onClick={() => setShowUserDropdown(!showUserDropdown)}
+                    />
+                    {showUserDropdown && <UserDropdown onClose={() => setShowUserDropdown(false)} iconRef={userIconRef} />}
                 </div>
             </div>
         </div>

@@ -738,6 +738,7 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
 
         setState(draft => {
             draft.currentCourse.lessons = draft.currentCourse.lessons.filter(lesson => lesson.id !== lessonId);
+            draft.triggers.timeLastLessonMod = Date.now();
         });
     }
 

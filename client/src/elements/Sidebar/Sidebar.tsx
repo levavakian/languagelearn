@@ -239,7 +239,12 @@ const Sidebar = () => {
 
     return (
         <div className="sidebar">
-            <div className="sidebar-title">
+            <div className="sidebar-title cursor-pointer"
+                onClick={() => setState(draft => {
+                    draft.pageChoice.workPage = WorkPage.Intro
+                    draft.triggers.key += 1
+                })}
+            >
                 <span className="sidebar-title-text">ARATTA</span>
             </div>
             

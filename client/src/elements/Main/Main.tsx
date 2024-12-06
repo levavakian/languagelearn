@@ -15,6 +15,7 @@ const queryClient = new QueryClient();
 const Main = () => {
     const jwt = useStateValue((state: State) => state.auth.token);
     const setState = useSetStateValue();
+    const key = useStateValue((state: State) => state.triggers.key);
 
     useEffect(() => {
         setState(draft => {
@@ -52,7 +53,7 @@ const Main = () => {
     };
 
     return (
-        <div className="main-container">
+        <div key={key} className="main-container">
             <QueryClientProvider client={queryClient}>
                 <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
                     <div>

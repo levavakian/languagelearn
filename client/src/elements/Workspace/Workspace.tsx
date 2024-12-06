@@ -8,6 +8,8 @@ import CourseView from '../CourseView/CourseView';
 import Chat from '../Chat/Chat';
 import { CourseList } from '../CourseList/CourseList';
 import { NewLessonModal } from '../NewLessonModal/NewLessonModal';
+import { Contact } from '../Contact/Contact';
+import { FAQ } from '../FAQ/FAQ';
 
 const Workspace = () => {
     const pageChoice = useStateValue(state => state.pageChoice);
@@ -23,9 +25,10 @@ const Workspace = () => {
                 <div className="workspace-content">
                     {pageChoice.workPage === WorkPage.Course && <CourseView />}
                     {pageChoice.workPage === WorkPage.AllCourses && <CourseList />}
-                    {pageChoice.workPage === WorkPage.Lesson && <span>Lesson</span>}
                     {pageChoice.workPage === WorkPage.Chat && <Chat />}
                     {pageChoice.workPage === WorkPage.Intro && <span>Intro</span>}
+                    {pageChoice.workPage === WorkPage.Contact && <Contact />}
+                    {pageChoice.workPage === WorkPage.FAQ && <FAQ />}
                 </div>
             </div>
         </div>

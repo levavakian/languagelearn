@@ -25,11 +25,12 @@ export enum AlwaysOnMode {
 }
 
 export enum WorkPage {
-    Lesson = 'lesson',
     Chat = 'chat',
     AllCourses = 'all-courses',
     Course = 'course',
-    Intro = 'intro'
+    Intro = 'intro',
+    Contact = 'contact',
+    FAQ = 'faq',
 }
 
 export enum MessageType {
@@ -122,6 +123,7 @@ export type WrappedState = {
         onRequestError: (response: any, msg?: string, id?: string) => void
     }
     triggers: {
+        key: number
         timeLastPayment: number
         timeLastLessonMod: number
     }
@@ -168,6 +170,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
         onRequestError: (response: any, msg?: string) => { console.log("Request error handler unset",response,msg) },
     },
     triggers: {
+        key: 0,
         timeLastPayment: 0,
         timeLastLessonMod: 0,
     },
