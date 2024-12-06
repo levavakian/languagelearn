@@ -48,6 +48,34 @@ const CourseBox = ({ course }: { course: Course }) => {
         fetchCourse();
     }, [fetchCourse, lastFailed, selectedLesson]);
 
+    const handleNewPractice = useCallback(async () => {
+        const response = await fetch(`/api/course/${course.id}/lesson`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${jwt}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: "",
+                free_practice: true,
+                lesson_plan_content: "Let's have a casual conversation to review what you've learned so far. I'll reference your vocabulary list for context, but feel free to explore any topics or concepts you'd like to practice. We can focus on strengthening your communication skills while naturally incorporating previous material.",
+            })
+        });
+
+        if (!response.ok) {
+            onRequestError(response, "Failed to create practice lesson", "course-view-practice-new");
+            return;
+        }
+
+        const newLesson = await response.json();
+
+        setState(draft => {
+            draft.pageChoice.workPage = WorkPage.Chat;
+            draft.pageChoice.selectedCourse = course.id;
+            draft.pageChoice.selectedLesson = newLesson.id;
+        });
+    }, [jwt, onRequestError, course.id, setState]);
+
     const getFirstItem = () => {
         if (latestLesson) {
             return {
@@ -82,7 +110,7 @@ const CourseBox = ({ course }: { course: Course }) => {
         { 
             icon: <Icon scale={12} name="mic" />, 
             label: 'Quick Practice',
-            onClick: () => console.log('Free Practice for:', course.name)
+            onClick: handleNewPractice
         }
     ];
     
@@ -151,7 +179,6 @@ const Sidebar = () => {
     const jwt = useStateValue((state: State) => state.auth.token);
     const onRequestError = useStateValue((state: State) => state.auth.onRequestError);
     const courses = useStateValue((state: State) => state.courses);
-    const currentCourse = useStateValue(state => state.currentCourse.content);
     const sendMessage = useStateValue(state => state.currentChat.ws.sendMessage);
 
     const coursesElements = useMemo(() => {
@@ -184,7 +211,7 @@ const Sidebar = () => {
     }, [jwt, setState, onRequestError]);
 
     useQuery({
-        queryKey: ['side-bar-courses', currentCourse, sendMessage],
+        queryKey: ['side-bar-courses', sendMessage],
         queryFn: fetchCourses
     });
 

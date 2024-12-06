@@ -221,23 +221,24 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
                         {lesson.lesson_plan || "No lesson plan available"}
                     </div>
                     
-                    <textarea
-                        value={summary || ""}
-                        onChange={(e) => {
-                            setSummary(e.target.value);
-                        }}
-                        className="w-[95%] min-h-[200px] p-2 resize-y font-nobel text-indigo-dye text-[16px] bg-white border-2 border-indigo-dye rounded-lg outline-none shadow-[0_4px_0_0_var(--indigo-dye)]"
-                        placeholder="Add a summary..."
-                    />
-
-                    <div className="mt-4">
-                        <button 
-                            className="bg-alice-blue border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel font-semibold text-[16px] px-2 py-1 shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3"
-                            onClick={() => {fetchSummaryUpdates()}}
-                        >
-                            <Icon name="ai" style={{ marginTop: '1px' }} scale={18} />
-                            Generate Summary
-                        </button>
+                    <div className="relative w-[95%]">
+                        <textarea
+                            value={summary || ""}
+                            onChange={(e) => {
+                                setSummary(e.target.value);
+                            }}
+                            className="w-full min-h-[200px] p-2 px-6 pt-6 pb-16 resize-y font-nobel text-indigo-dye text-[16px] bg-white border-2 border-indigo-dye rounded-lg outline-none shadow-[0_4px_0_0_var(--indigo-dye)]"
+                            placeholder="Add a summary..."
+                        />
+                        <div className="absolute bottom-4 left-2">
+                            <button 
+                                className="bg-alice-blue border-solid ml-4 border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel font-semibold text-[16px] px-2 py-1 shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3"
+                                onClick={() => {fetchSummaryUpdates()}}
+                            >
+                                <Icon name="ai" style={{ marginTop: '1px' }} scale={18} />
+                                Generate Summary
+                            </button>
+                        </div>
                     </div>
                 </div>
 

@@ -219,8 +219,8 @@
 }
 
 .lesson-plan-item.add-new-lesson-plan {
-    color: var(--baby-powder);
-    background-color: var(--coral);
+    color: var(--indigo-dye);
+    background-color: var(--baby-powder);
 }
 
 .lesson-plan-item.add-new-lesson-plan:hover {

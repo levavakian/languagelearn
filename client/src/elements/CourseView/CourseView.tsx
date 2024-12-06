@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useRef } from 'react';
+import React, { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import './CourseView.css';
 import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan, NoteNode, VocabItem, ModalSelector } from '../../state/state';
 import toast from 'react-hot-toast';
@@ -731,7 +731,7 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
         });
 
         if (!response.ok) {
-            onRequestError(response, "Failed to delete practice lesson", "course-view-practice-delete");
+            onRequestError(response, "Failed to delete lesson", "course-view-lesson-delete");
             return;
         }
 
@@ -907,6 +907,27 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
     );
 };
 
+const Assessment = () => {
+    const lessons = useStateValue(state => state.currentCourse.lessons);
+    
+    const noLessons = useMemo(() => lessons.filter(lesson => !lesson.free_practice).length === 0, [lessons]);
+    
+    return (
+        <div className="flex flex-col gap-3 mt-4">
+            <div className="text-[18px]">
+                {noLessons 
+                    ? "Do an initial assessment to determine your current level"
+                    : "Ready to check your progress? Do a review assessment to see how you've improved!"}
+            </div>
+            <button 
+                className="px-4 py-2 bg-coral font-semibold text-baby-powder border-2 text-nowrap border-indigo-dye rounded-xl transform active:translate-y-[4px] active:shadow-none shadow-[0_4px_0_var(--indigo-dye)] transition-all self-start"
+            >
+                Take an Assessment
+            </button>
+        </div>
+    );
+};
+
 const CourseView: React.FC = () => {
     const setState = useSetStateValue();
     
@@ -980,6 +1001,7 @@ const CourseView: React.FC = () => {
             <span className="course-title">{currentCourse?.name}</span>
             <div className="course-content-container">
                 <div className="course-content-left">
+                    <Assessment />
                     <LessonList lessons={lessons.filter(lesson => !lesson.free_practice)} />
                     <div style={{marginTop: '20px'}}>
                         <LessonPlanList />

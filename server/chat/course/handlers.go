@@ -437,19 +437,19 @@ func updateLesson(w http.ResponseWriter, r *http.Request) {
 
 func deleteLesson(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	courseID := vars["id"]
 	lessonID := vars["lessonId"]
 	userEmail := r.Header.Get("X-User-Email")
 
-	if err := verifyOwnership(courseID, userEmail); err != nil {
-		http.Error(w, err.Error(), http.StatusForbidden)
+	// Get the lesson first to get its courseID and chatID
+	lesson, err := getLessonFromDB(lessonID)
+	if err != nil {
+		http.Error(w, "Lesson not found", http.StatusNotFound)
 		return
 	}
 
-	// Get the lesson to find its chat ID
-	lesson, err := getLessonFromDB(lessonID)
-	if err != nil || lesson.CourseID != courseID {
-		http.Error(w, "Lesson not found", http.StatusNotFound)
+	// Verify ownership using the lesson's courseID
+	if err := verifyOwnership(lesson.CourseID, userEmail); err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 
