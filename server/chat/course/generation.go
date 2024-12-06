@@ -247,7 +247,8 @@ func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
 			Content: `You are an AI language tutor responsible for maintaining a vocabulary and grammar reference list. 
 					 Analyze the lesson content and identify important vocabulary words, grammar concepts, idioms, or 
 					 language patterns that should be added to or updated in the reference list. Keep entries concise 
-					 and information-dense. Each entry should be categorized by type (word, verb, tense, idiom, etc.).`,
+					 and information-dense. The word and definition should each be as few words as possible, preferably one or two max.
+					 Each entry should be categorized by type (word, verb, tense, idiom, etc.).`,
 		},
 	}
 
@@ -397,27 +398,9 @@ func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update vocab items in settings
-	for _, update := range vocabResponse.VocabUpdates {
-		key := update.Word
-			settings.VocabItems[key] = VocabItem{
-				Type:       update.Type,
-				Word:       update.Word,
-				Definition: update.Definition,
-				Notes:      update.Notes,
-				LastUsed:   time.Now(),
-				UsageCount: settings.VocabItems[key].UsageCount + 1,
-			}
-	}
-
-	// Save updated settings
-	saveCourseSettingsToDB(*settings)
-
 	// Add success response
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"status": "success",
-	})
+	json.NewEncoder(w).Encode(vocabResponse)
 }
 
 func ptr(b bool) *bool {

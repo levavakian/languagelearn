@@ -34,6 +34,7 @@ export const IconPaths = {
     micwhite: '/icons/micwhite.svg',
     timeinfwhite: '/icons/timeinfwhite.svg',
     aicream: '/icons/aicream.svg',
+    ai: '/icons/ai.svg',
   } as const;
   
   export type IconName = keyof typeof IconPaths;

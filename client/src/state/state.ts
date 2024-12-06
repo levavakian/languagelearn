@@ -87,6 +87,8 @@ export type Lesson = {
     name: string
     chat_id: string
     updated_at: string
+    summary: string
+    lesson_plan: string
     free_practice: boolean
     order_index: number
 }

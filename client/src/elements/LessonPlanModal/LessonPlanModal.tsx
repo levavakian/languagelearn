@@ -191,10 +191,10 @@ export const LessonPlanModal = ({lessonTemplateExisting}: {lessonTemplateExistin
 
                     <div className="space-y-6">
                         <div className="bg-indigo-dye mt-4 rounded-xl w-fit p-3 px-5 flex flex-row cursor-pointer hover:brightness-125 transition-all duration-300" onClick={onLessonGenerate}>
+                            <Icon name="aicream" scale={18} style={{ marginBottom: '-4px', marginRight: '10px' }} />
                             <div className="text-baby-powder font-semibold text-[18px]">
                                 Generate Plan
                             </div>
-                            <Icon name="shuttle" scale={18} style={{ marginBottom: '-4px', filter: 'invert(100%) sepia(0%) saturate(0%) hue-rotate(180deg) brightness(125%) contrast(100%)', marginLeft: '15px' }} />
                         </div>
                         <div>
                             Or

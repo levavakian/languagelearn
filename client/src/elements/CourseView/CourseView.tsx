@@ -6,6 +6,7 @@ import { Icon } from '../Icon/Icon';
 import { produce } from 'immer';
 import { useQuery } from '@tanstack/react-query'
 import { LessonPlanModal } from '../LessonPlanModal/LessonPlanModal';
+import { LessonEditModal } from '../LessonEditModal/LessonEditModal';
 
 const QuickPrompts = () => {
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
@@ -703,6 +704,8 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
     const onRequestError = useStateValue(state => state.auth.onRequestError);
     const [viewAll, setViewAll] = useState(false);
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
+    const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
+    const modalSelector = useStateValue(state => state.modalSelector);
 
     useEffect(() => {
         setViewAll(false);
@@ -739,6 +742,7 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
 
     return (
         <div className="course-lesson-list">
+            {lessonToEdit && modalSelector === ModalSelector.LessonEdit && <LessonEditModal lesson={lessonToEdit} />}
             <div className="course-lesson-list-title">Lessons</div>
             <div className="course-lesson-list-add-lesson"
                 onClick={() => setState(draft => { draft.modalSelector = ModalSelector.NewLesson })}
@@ -761,7 +765,8 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
                                 style={{ cursor: 'pointer', marginRight: '10px' }} 
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    toast.success(`Edit lesson: ${lesson.name}`);
+                                    setLessonToEdit(lesson);
+                                    setState(draft => { draft.modalSelector = ModalSelector.LessonEdit });
                                 }}
                             />
                             <Icon 
