@@ -13,6 +13,10 @@ export const FAQ = () => {
             answer: "Summaries are a way for the AI tutor to give you a quick overview of the lesson you just completed. They are used when generating new lessons and lesson plans to provide a consistent learning experience. Generate summaries by clicking on the edit lesson icon, or by clicking the save icon in the chat."
         },
         {
+            question: "What are lesson templates?",
+            answer: "Lesson templates are an easy way to be able to create a repeatable structure for types of lessons you find most helpful, and then use them as a starting point for new lessons."
+        },
+        {
             question: "How is coin pricing and usage determined?",
             answer: "Arrata is built around OpenAI's Realtime Voice API, and pricing is a fixed percent based off of the price of how many API tokens your request consumed. As OpenAI's models and pricing improve, expect those savings to be reflected in Arrata as well."
         },
