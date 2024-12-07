@@ -30,9 +30,9 @@ export const Landing = () => {
                     alt=""
                     style={{
                         position: 'absolute',
-                        left: '750px',
-                        bottom: '100px',
-                        height: '800px',
+                        left: '46.875rem',
+                        bottom: '6.25rem',
+                        height: '50rem',
                         width: 'auto'
                     }}
                 />
@@ -41,9 +41,9 @@ export const Landing = () => {
                     alt=""
                     style={{
                         position: 'absolute',
-                        left: '1300px',
-                        bottom: '-120px',
-                        height: '800px',
+                        left: '81.25rem',
+                        bottom: '-7.5rem',
+                        height: '50rem',
                         transform: 'rotate(10deg)',
                         width: 'auto'
                     }}
@@ -53,38 +53,38 @@ export const Landing = () => {
                     alt=""
                     style={{
                         position: 'absolute',
-                        bottom: '550px',
-                        left: '1550px',
+                        bottom: '34.375rem',
+                        left: '96.875rem',
                         transform: 'translateX(-50%)',
-                        height: '600px',
+                        height: '37.5rem',
                         width: 'auto'
                     }}
                 />
             </div>
         </div>
         <div className="overflow-y-auto max-h-[calc(100vh)]">
-            <div className="mt-[200px] ml-[120px]">
-                <div className="text-[128px] font-ancorli font-regular tracking-tight">
+            <div className="mt-[10vh] ml-[7.5rem] mb-[10vh]">
+                <div className="text-[8rem] font-ancorli font-regular tracking-tight">
                     ARATTA
                 </div>
-                <div className="text-[54px] mt-[160px] font-nobel font-semibold">
+                <div className="text-[3.375rem] mt-[10rem] font-nobel font-semibold">
                     Language learning,
                 </div>
-                <div className="text-[54px] font-nobel font-semibold text-coral">
+                <div className="text-[3.375rem] font-nobel font-semibold text-coral">
                     reimagined<span className="text-indigo-dye">.</span>
                 </div>
-                <div className="text-[32px] mt-[20px] max-w-[550px] font-nobel font-regular">
-                Experience personalized language learning powered by AI. Have natural conversations, get instant feedback, and progress at your own pace.
+                <div className="text-[2rem] mt-[1.25rem] max-w-[34.375rem] font-nobel font-regular">
+                    Experience personalized language learning powered by AI. Have natural conversations, get instant feedback, and progress at your own pace.
                 </div>
-                <div className="mt-[20px] flex items-center gap-2">
-                    <div className="text-[20px] font-nobel font-regular mr-2">Sign in to start learning</div>
+                <div className="mt-[1.25rem] flex items-center gap-2">
+                    <div className="text-[1.25rem] font-nobel font-regular mr-2">Sign in to start learning</div>
                     <GoogleLogin
                         onSuccess={handleLoginSuccess}
                         onError={handleLoginFailure}
                         type="standard"
                         text="continue_with"
                         size="large"
-                        width="200px"
+                        width="12.5rem"
                         shape="circle"
                     />
                 </div>

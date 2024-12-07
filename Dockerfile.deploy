@@ -53,8 +53,10 @@ EXPOSE 8080
 # Copy the database script and make it executable
 WORKDIR /app
 COPY db.sh /app/db.sh
+COPY credits.sh /app/credits.sh
 COPY prod.sh /app/prod.sh
 RUN chmod +x /app/db.sh
+RUN chmod +x /app/credits.sh
 RUN chmod +x /app/prod.sh
 
 # Change the CMD to use the startup script
