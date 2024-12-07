@@ -9,6 +9,10 @@ set -o pipefail
 DATA_DIR="${DB_PATH:-/app/dbdata/postgres}"
 mkdir -p "$DATA_DIR"
 
+# Remove any stale PID file
+rm -f "$DATA_DIR/postmaster.pid"
+rm -f "$DATA_DIR/postgres/*.lock"
+
 # Configure PostgreSQL if postgresql.conf doesn't exist
 if [ ! -f "$DATA_DIR/postgresql.conf" ]; then
     # Configure PostgreSQL to listen on all interfaces
