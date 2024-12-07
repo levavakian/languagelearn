@@ -370,7 +370,6 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *OpenA
 					Type:    "error",
 					CreatedAt: time.Now(),
 				}
-				addMessageToChat(errorMsg)
 				broadcastMessage(chatConns, errorMsg)
 				continue
 			}
@@ -412,7 +411,7 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *OpenA
 							// Add message if:
 							// 1. No recent transcript (>500ms old) exists, or
 							// 2. More than 2 seconds have passed since start
-							if lastTranscriptTime.After(startTime.Add(-500*time.Millisecond)) || 
+							if lastTranscriptTime.After(startTime.Add(-2000*time.Millisecond)) || 
 							   timeSinceStart > 2*time.Second {
 								addMessageToChat(msg)
 								broadcastMessage(chatConns, msg)

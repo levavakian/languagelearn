@@ -5,6 +5,10 @@ export const FAQ = () => {
             answer: "Arrata is a tool that can help you learn a language by providing you with personalized lessons and exercises. However, it is not a standalone language learning tool and will not be able to teach you everything you need to know about a language. It is meant to supplement your learning journey with a personalized tutor or language course that adapts to your learning style and progress."
         },
         {
+            question: "Why is the transcript from what I said unavailable or incorrect?",
+            answer: "The model that generates the transcript for your speech is different than the one that powers the tutor's speech. Not to worry, even if the transcript seems very wrong the more powerful tutor model will likely have heard and understood you correctly."
+        },
+        {
             question: "Sometimes there is no audio output, or it comes out with an echo, what's going on?",
             answer: "Arrata is built around OpenAI's Realtime Voice API, which is still in beta and may not always work as expected. Try refreshing the page or starting a new lesson. If the issue persists, please reach out to us via our contact page."
         },
