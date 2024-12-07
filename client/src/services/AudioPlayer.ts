@@ -12,9 +12,11 @@ class AudioPlayer {
     if (!this.audioContext || this.audioContext.state === 'closed') {
       try {
         this.audioContext = new AudioContext({ sampleRate: this.SAMPLE_RATE });
+        await this.audioContext.resume();
       } catch (e) {
         await this.requestUserInteraction();
         this.audioContext = new AudioContext({ sampleRate: this.SAMPLE_RATE });
+        await this.audioContext.resume();
       }
     }
     

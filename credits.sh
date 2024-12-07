@@ -26,7 +26,7 @@ EMAIL=$2
 
 case $ACTION in
     "get")
-        NANOCREDITS=$(psql -p $PGPORT -h $PGHOST postgres -t -c "SELECT nanocredits FROM user_credits WHERE email = '$EMAIL';")
+        NANOCREDITS=$(psql -p $PGPORT -h $PGHOST -U $USER postgres -t -c "SELECT nanocredits FROM user_credits WHERE email = '$EMAIL';")
         if [ -z "$NANOCREDITS" ]; then
             echo "0"
         else
@@ -43,7 +43,7 @@ case $ACTION in
         CREDITS=$3
         # Convert credits to nanocredits (multiply by 1e9) using awk for floating point arithmetic
         NANOCREDITS=$(echo "$CREDITS" | awk '{printf "%.0f\n", $1 * 1000000000}')
-        psql -p $PGPORT -h $PGHOST postgres -t -c "INSERT INTO user_credits (email, nanocredits) 
+        psql -p $PGPORT -h $PGHOST -U $USER postgres -t -c "INSERT INTO user_credits (email, nanocredits) 
             VALUES ('$EMAIL', $NANOCREDITS) 
             ON CONFLICT (email) 
             DO UPDATE SET nanocredits = $NANOCREDITS;"
