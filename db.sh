@@ -25,6 +25,7 @@ fi
 
 # Remove any stale PID file
 rm -f "$DATA_DIR/postmaster.pid"
+rm -f "$DATA_DIR/postgres/*.lock"
 
 # Start postgres in foreground
 echo "Starting PostgreSQL in foreground. Press Ctrl+C to stop."
