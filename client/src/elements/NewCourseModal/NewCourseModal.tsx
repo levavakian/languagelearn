@@ -53,7 +53,7 @@ export const NewCourseModal = () => {
                     <input 
                         type="text" 
                         id="course-title" 
-                        className="box-border text-[20px] w-full border border-gray-200 rounded-lg p-2 text-gray-400 focus:outline-none" 
+                        className="box-border font-semibold text-indigo-dye text-[20px] w-full border border-gray-200 rounded-lg p-2 text-gray-400 focus:outline-none" 
                         placeholder="Title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -63,7 +63,7 @@ export const NewCourseModal = () => {
                     <input 
                         type="text" 
                         id="course-language" 
-                        className="box-border text-[20px] w-full border border-gray-200 rounded-lg p-2 text-gray-400 focus:outline-none" 
+                        className="box-border font-regular text-indigo-dye text-[20px] w-full border border-gray-200 rounded-lg p-2 text-gray-400 focus:outline-none" 
                         placeholder="What language do you want to learn?"
                         value={language}
                         onChange={(e) => setLanguage(e.target.value)}

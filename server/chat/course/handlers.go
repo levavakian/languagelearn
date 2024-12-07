@@ -548,19 +548,37 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create initial lesson plan
-	lessonPlanID := uuid.New().String()
-	initialPlan := LessonPlan{
-		ID:        lessonPlanID,
-		CourseID:  courseID,
-		Title:     fmt.Sprintf("Initial %s Assessment", req.TargetLanguage),
-		Content:   fmt.Sprintf("Initial assessment for %s language learning. Have a conversation with the student to gauge their current level of %s. Start with basic greetings and gradually increase complexity based on their responses.", req.TargetLanguage, req.TargetLanguage),
-		CreatedAt: time.Now(),
+	// Create initial lesson plans
+	lessonPlans := []LessonPlan{
+		{
+			ID:        uuid.New().String(),
+			CourseID:  courseID,
+			Title:     "Past and Future Adventures",
+			Content:   fmt.Sprintf("Practice using past and future tenses in %s. Start by asking the student about their weekend (past tense). Then discuss their plans for next weekend (future tense). Gradually introduce more complex scenarios like childhood memories and future career goals. Correct any tense-related mistakes and explain the proper usage.", req.TargetLanguage),
+			CreatedAt: time.Now(),
+		},
+		{
+			ID:        uuid.New().String(),
+			CourseID:  courseID,
+			Title:     "Reading Together",
+			Content:   fmt.Sprintf("Guide the student through reading and discussing a short story in %s. Start by introducing a simple story appropriate for their level. Read together, helping with pronunciation and explaining new vocabulary. Ask comprehension questions and encourage the student to predict what happens next. Help them understand context clues and cultural references.", req.TargetLanguage),
+			CreatedAt: time.Now(),
+		},
+		{
+			ID:        uuid.New().String(),
+			CourseID:  courseID,
+			Title:     "Movie Chat",
+			Content:   fmt.Sprintf("Have a casual conversation about movies in %s. Ask the student about a recent movie they've watched. Guide the discussion with questions about the plot, characters, and their opinions. Help them express their thoughts using appropriate vocabulary and expressions. Topics can include: favorite scenes, actor performances, similar movies, and whether they'd recommend it to others.", req.TargetLanguage),
+			CreatedAt: time.Now(),
+		},
 	}
 
-	if err := insertLessonPlan(initialPlan); err != nil {
-		http.Error(w, "Failed to create lesson plan", http.StatusInternalServerError)
-		return
+	// Insert all lesson plans
+	for _, plan := range lessonPlans {
+		if err := insertLessonPlan(plan); err != nil {
+			http.Error(w, "Failed to create lesson plans", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// Create lesson ID first
@@ -590,22 +608,6 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create initial lesson with the same lesson ID
-	lesson := Lesson{
-		ID:         lessonID,  // Use the pre-generated lesson ID
-		CourseID:   courseID,
-		ChatID:     chatID,
-		Name:      fmt.Sprintf("Initial %s Assessment", req.TargetLanguage),
-		LessonPlan: initialPlan.Content,
-		OrderIndex: 0,
-		CreatedAt:  time.Now(),
-	}
-
-	if err := insertLesson(lesson); err != nil {
-		http.Error(w, "Failed to create lesson", http.StatusInternalServerError)
-		return
-	}
-
 	// Return the created course with its initial lesson plan and lesson
 	response := struct {
 		Course     Course     `json:"course"`
@@ -613,7 +615,7 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 		Lesson     Lesson     `json:"lesson"`
 	}{
 		Course:     course,
-		LessonPlan: initialPlan,
+		LessonPlan: lessonPlans[0],
 		Lesson:     lesson,
 	}
 

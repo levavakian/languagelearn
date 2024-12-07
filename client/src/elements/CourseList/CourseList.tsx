@@ -27,7 +27,7 @@ export const CourseList= () => {
                 }
 
                 const data: CourseDetails[] = await response.json();
-                setCourseDetails(data);
+                setCourseDetails(data || []);
             } catch (error) {
                 toast.error("Error fetching course details");
                 console.error("Error fetching course details:", error);

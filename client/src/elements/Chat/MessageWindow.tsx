@@ -233,7 +233,7 @@ export const MessageWindow: React.FC = () => {
 
     return (
         <div 
-            className={`message-window ${hiddenText ? 'hidden-text' : ''} relative`} 
+            className={`pt-6 message-window ${hiddenText ? 'hidden-text' : ''} relative`} 
             ref={messageWindowRef}
         >
             {uuid in onMessageCallbacks && <Connection />}

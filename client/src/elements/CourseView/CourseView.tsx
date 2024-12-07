@@ -1006,7 +1006,6 @@ const CourseView: React.FC = () => {
         if (!response.ok) {
             onRequestError(response, "Failed to fetch lessons", "course-view-lessons");
             throw new Error("Failed to fetch lessons");
-            return;
         }
 
         return response.json();
@@ -1018,8 +1017,8 @@ const CourseView: React.FC = () => {
     })
 
     useEffect(() => {
-        if (dataLessons) {
-            setState(draft => { draft.currentCourse.lessons = dataLessons });
+        if (!isPendingLessons && !errorLessons) {
+            setState(draft => { draft.currentCourse.lessons = dataLessons || [] });
         }
     }, [dataLessons, setState]);
 

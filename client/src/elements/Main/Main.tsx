@@ -9,6 +9,7 @@ import {
     QueryClient,
     QueryClientProvider,
   } from '@tanstack/react-query'
+import { Landing } from '../Landing/Landing';
   
 const queryClient = new QueryClient();
 
@@ -42,16 +43,6 @@ const Main = () => {
         });
     }, [setState]);
 
-    const handleLoginSuccess = (response: any) => {
-        console.log('Login Success:', response);
-        const newJwt = response.credential;
-        setState(draft => { draft.auth.token = newJwt });
-    };
-
-    const handleLoginFailure = () => {
-        toast.error('There was an error logging in');
-    };
-
     return (
         <div key={key} className="main-container">
             <QueryClientProvider client={queryClient}>
@@ -71,16 +62,7 @@ const Main = () => {
                             max={3}
                         />
                         {!jwt ? (
-                            <header style={{
-                                padding: '0px',
-                                display: 'flex',
-                                justifyContent: 'flex-end'
-                            }}>
-                                <GoogleLogin
-                                    onSuccess={handleLoginSuccess}
-                                    onError={handleLoginFailure}
-                                />
-                            </header>
+                            <Landing />
                         ) : (
                             <div>
                                 <Workspace />

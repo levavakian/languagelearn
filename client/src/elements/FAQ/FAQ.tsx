@@ -1,6 +1,18 @@
 export const FAQ = () => {
     const faqItems = [
         {
+            question: "Can I learn a language with Aratta alone?",
+            answer: "Arrata is a tool that can help you learn a language by providing you with personalized lessons and exercises. However, it is not a standalone language learning tool and will not be able to teach you everything you need to know about a language. It is meant to supplement your learning journey with a personalized tutor or language course that adapts to your learning style and progress."
+        },
+        {
+            question: "Sometimes there is no audio output, or it comes out with an echo, what's going on?",
+            answer: "Arrata is built around OpenAI's Realtime Voice API, which is still in beta and may not always work as expected. Try refreshing the page or starting a new lesson. If the issue persists, please reach out to us via our contact page."
+        },
+        {
+            question: "My coins are depleting quickly, what's going on?",
+            answer: "Long lessons will deplete coins faster than short ones as the context gets longer. Prefer smaller, more focused lessons and save your progress in between by relying on summaries. Open Mic mode will also lead to increased token usage, so using push to talk will help you save coins."
+        },
+        {
             question: "What are tooltip prompts?",
             answer: "Tooltip prompts are a way to be able to quickly ask clarifying questions without breaking up the flow of your conversation. Just click on a word and ask away!"
         },
@@ -14,20 +26,16 @@ export const FAQ = () => {
         },
         {
             question: "What are lesson templates?",
-            answer: "Lesson templates are an easy way to be able to create a repeatable structure for types of lessons you find most helpful, and then use them as a starting point for new lessons."
+            answer: "Lesson templates are an easy way to be able to create a repeatable structure for the types of excercises you find most helpful, and then use them as a starting point for new lessons."
         },
         {
             question: "How is coin pricing and usage determined?",
             answer: "Arrata is built around OpenAI's Realtime Voice API, and pricing is a fixed percent based off of the price of how many API tokens your request consumed. As OpenAI's models and pricing improve, expect those savings to be reflected in Arrata as well."
         },
-        {
-            question: "My coins are depleting quickly, what's going on?",
-            answer: "Long lessons will deplete coins faster than short ones as the context gets longer. Prefer smaller, more focused lessons and save your progress in between by relying on summaries."
-        },
     ];
 
     return (
-        <div className="flex flex-col max-w-[800px] mx-auto px-2 py-2">
+        <div className="flex flex-col max-w-[800px] mx-auto px-2 py-2 pb-6">
             <div className="rounded-lg">
                 <h1 className="font-nobel text-[32px] font-bold mb-6">
                     FAQ

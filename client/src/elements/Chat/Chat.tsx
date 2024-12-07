@@ -14,6 +14,7 @@ const Chat = () => {
     const jwt = useStateValue(state => state.auth.token);
     const onRequestError = useStateValue(state => state.auth.onRequestError);
     const selectedLesson = useStateValue(state => state.pageChoice.selectedLesson);
+    const chat = useStateValue(state => state.currentChat.chat);
 
     const fetchChat = useCallback(async () => {
         if (!selectedLesson) {
@@ -58,6 +59,9 @@ const Chat = () => {
 
     return (
         <div className="chat-container">
+            <div className="font-nobel truncate max-w-[800px] text-[32px] ml-10 font-semibold">
+                {chat?.name}
+            </div>
             <AudioInput />
             <AudioOutput />
             <MessageWindow />

@@ -245,7 +245,7 @@ const Sidebar = () => {
                     draft.triggers.key += 1
                 })}
             >
-                <span className="sidebar-title-text">ARATTA</span>
+                <span className="sidebar-title-text tracking-tight">ARATTA</span>
             </div>
             
             <div>
