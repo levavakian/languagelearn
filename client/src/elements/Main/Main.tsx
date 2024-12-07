@@ -46,7 +46,7 @@ const Main = () => {
     return (
         <div key={key} className="main-container">
             <QueryClientProvider client={queryClient}>
-                <GoogleOAuthProvider clientId="1074499601910-rpc6qtu7lpv5e8pfc08sagqa5t3rihhh.apps.googleusercontent.com">
+                <GoogleOAuthProvider clientId="1056661477394-8rm7us9g7di3k4t51dpbegkp3ahuorrk.apps.googleusercontent.com">
                     <div>
                         <ToasterWithMax 
                             position="top-center"

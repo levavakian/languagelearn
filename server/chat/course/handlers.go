@@ -571,6 +571,13 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 			Content:   fmt.Sprintf("Lesson Objective: Practice conversational skills in %s through movie discussions.\n\nLesson Flow:\n1. Opening Discussion:\n- Ask about their movie-watching habits\n- Discuss what they've watched recently\n- Introduce useful movie-related vocabulary\n\n2. Movie Analysis:\n- Guide discussion about plot elements\n- Explore character motivations\n- Encourage personal opinions\n\n3. Extended Discussion:\n- Draw connections to other movies\n- Share favorite moments\n- Practice giving recommendations\n\nTeaching Notes:\n- Keep conversation natural and engaging\n- Help with expressing opinions clearly\n- Introduce new expressions organically\n- Support student in forming detailed responses", req.TargetLanguage),
 			CreatedAt: time.Now(),
 		},
+		{
+			ID:        uuid.New().String(),
+			CourseID:  courseID,
+			Title:     "Social Scenario Roleplay",
+			Content:   fmt.Sprintf("Lesson Objective: Practice real-world conversational skills in %s through dynamic roleplaying scenarios.\n\nLesson Flow:\n1. Scene Setup:\n- Choose an engaging social scenario (e.g., coffee shop, doctor's office, job interview, grocery shopping, meeting neighbors, restaurant ordering, public transportation, etc.)\n- Establish the context and any relevant background\n- Introduce essential vocabulary for the chosen setting\n\n2. Interactive Roleplay:\n- Take on a character appropriate for the scene\n- Guide the conversation naturally while staying in character\n- Create small complications or challenges to handle\n- Introduce new characters or plot twists as appropriate\n\n3. Scenario Development:\n- Adapt the conversation based on student responses\n- Present realistic problems to solve\n- Create opportunities for different types of interactions\n\nTeaching Notes:\n- Stay in character throughout the roleplay\n- Introduce cultural elements naturally\n- Provide corrections without breaking character when possible\n- Adjust language complexity based on student level\n- Focus on authentic, practical dialogue\n- Create opportunities for both routine and unexpected exchanges", req.TargetLanguage),
+			CreatedAt: time.Now(),
+		},
 	}
 
 	// Insert all lesson plans
