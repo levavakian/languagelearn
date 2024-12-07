@@ -252,7 +252,7 @@ const UserDropdown = ({ onClose, iconRef }: { onClose: () => void, iconRef: Reac
     return (
         <div 
             ref={dropdownRef}
-            className="absolute right-2 mt-2 rounded-md min-w-[200px] bg-[var(--indigo-dye)] text-indigo-dye text-xl 
+            className="absolute right-0 mt-2 rounded-md min-w-[200px] bg-[var(--indigo-dye)] text-indigo-dye text-xl 
                 border-[1px] border-solid border-[--indigo-dye] flex flex-col-reverse shadow-[0_4px_0_var(--indigo-dye)]"
         >
             {[
