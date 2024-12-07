@@ -682,18 +682,6 @@ func getDefaultSettings(ID string) *Settings {
 		ID: ID,
 		Notes: []NoteNode{
 			{
-				ID:         "welcome-folder",
-				Name:       "Getting Started",
-				Type:       "folder",
-				Children: []NoteNode{
-					{
-						ID:   "welcome-note",
-						Name: "Welcome! Create notes and folders to organize your language learning materials. Click the edit button (✎) to modify content, or use the folder (📁) and plus (➕) buttons to add new items. Use @word to insert a clicked word and @sentence to insert a clicked message.",
-						Type: "note",
-					},
-				},
-			},
-			{
 				ID:         "common-phrases",
 				Name:       "Common Phrases",
 				Type:       "folder",
