@@ -1,4 +1,3 @@
-import toast from "react-hot-toast";
 import { createAssessment } from "../../api/assessment";
 import { useSetStateValue, useStateValue, State, Lesson, WorkPage, ModalSelector } from "../../state/state";
 import { useCallback, useEffect, useState } from "react";
@@ -172,7 +171,7 @@ className="
     transition-all duration-100
     active:shadow-none active:translate-y-1
 "
-onClick={() => setState(draft => { draft.pageChoice.workPage = WorkPage.Chat })}
+onClick={handleNewPractice}
 >
 Quick Practice
 </button>;

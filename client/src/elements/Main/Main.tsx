@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import './Main.css';
 import { State, useStateValue, useSetStateValue } from '../../state/state';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { toast } from 'react-hot-toast';
 import { ToasterWithMax } from '../Toast/Toast';
 import Workspace from '../Workspace/Workspace';

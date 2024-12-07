@@ -5,7 +5,6 @@ import { useSetStateValue, ModalSelector, useStateValue, WorkPage } from '../../
 import { ShowModal } from '../Modal/Modal';
 import { PaymentForm, CreditCard, GooglePay } from 'react-square-web-payments-sdk';
 import toast from 'react-hot-toast';
-import { IconName } from '../../utils/icons';
 
 export const GetBuyModal = () => {
     const setState = useSetStateValue();
@@ -54,7 +53,6 @@ export const GetBuyModal = () => {
                 return;
             }
             
-            const data = await response.json();
             toast.success("Payment successful");
             setState(draft => { draft.modalSelector = ModalSelector.None });
             setState(draft => { draft.triggers.timeLastPayment = Date.now() });
@@ -227,7 +225,7 @@ export const CoinCount = () => {
             fetchCoins();
         }, 30000);
         return () => clearInterval(interval);
-    }, [timeLastPayment]);
+    }, [timeLastPayment, jwt, onRequestError]);
 
     return <div className="text-[var(--indigo-dye)] text-[20px] font-[800] font-['Nobel_Uno',Arial,sans-serif] -mt-1 -ml-1 gap-1">
         {coins}
@@ -238,18 +236,18 @@ const UserDropdown = ({ onClose, iconRef }: { onClose: () => void, iconRef: Reac
     const setState = useSetStateValue();
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = useCallback((event: MouseEvent) => {
         if (dropdownRef.current && 
             !dropdownRef.current.contains(event.target as Node) && 
             !iconRef.current?.contains(event.target as Node)) {
             onClose();
         }
-    };
+    }, [onClose, dropdownRef, iconRef]);
 
     useEffect(() => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [onClose]);
+    }, [handleClickOutside]);
 
     return (
         <div 

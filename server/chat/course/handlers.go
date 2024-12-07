@@ -554,21 +554,21 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 			ID:        uuid.New().String(),
 			CourseID:  courseID,
 			Title:     "Past and Future Adventures",
-			Content:   fmt.Sprintf("Practice using past and future tenses in %s. Start by asking the student about their weekend (past tense). Then discuss their plans for next weekend (future tense). Gradually introduce more complex scenarios like childhood memories and future career goals. Correct any tense-related mistakes and explain the proper usage.", req.TargetLanguage),
+			Content:   fmt.Sprintf("Lesson Objective: Help the student practice past and future tenses in %s.\n\nLesson Flow:\n1. Warm-up:\n- Begin by asking about their recent weekend activities (past tense)\n- Naturally transition to discussing upcoming weekend plans (future tense)\n\n2. Deeper Exploration:\n- Guide conversation toward childhood memories\n- Discuss future dreams and career aspirations\n- Take note of any tense-related mistakes\n\n3. Learning Reinforcement:\n- Revisit any observed grammar mistakes\n- Explain correct tense usage with examples\n- Encourage practice with the corrected forms\n\nTeaching Notes:\n- Maintain a conversational and encouraging tone\n- Provide gentle corrections when needed\n- Use follow-up questions to encourage longer responses", req.TargetLanguage),
 			CreatedAt: time.Now(),
 		},
 		{
 			ID:        uuid.New().String(),
 			CourseID:  courseID,
 			Title:     "Reading Together",
-			Content:   fmt.Sprintf("Guide the student through reading and discussing a short story in %s. Start by introducing a simple story appropriate for their level. Read together, helping with pronunciation and explaining new vocabulary. Ask comprehension questions and encourage the student to predict what happens next. Help them understand context clues and cultural references.", req.TargetLanguage),
+			Content:   fmt.Sprintf("Lesson Objective: Develop reading comprehension skills in %s through interactive storytelling.\n\nLesson Flow:\n1. Story Preparation:\n- Ask about student's reading interests\n- Introduce key vocabulary they'll encounter\n- Set the context for the story\n\n2. Interactive Reading:\n- Present the story in manageable segments\n- Check pronunciation as you progress\n- Explain new words and phrases naturally\n\n3. Story Discussion:\n- Ask about characters and plot points\n- Encourage predictions about what happens next\n- Discuss any cultural elements present\n\nTeaching Notes:\n- Adapt to student's reading pace\n- Use questions to check understanding\n- Connect story elements to student's experiences", req.TargetLanguage),
 			CreatedAt: time.Now(),
 		},
 		{
 			ID:        uuid.New().String(),
 			CourseID:  courseID,
 			Title:     "Movie Chat",
-			Content:   fmt.Sprintf("Have a casual conversation about movies in %s. Ask the student about a recent movie they've watched. Guide the discussion with questions about the plot, characters, and their opinions. Help them express their thoughts using appropriate vocabulary and expressions. Topics can include: favorite scenes, actor performances, similar movies, and whether they'd recommend it to others.", req.TargetLanguage),
+			Content:   fmt.Sprintf("Lesson Objective: Practice conversational skills in %s through movie discussions.\n\nLesson Flow:\n1. Opening Discussion:\n- Ask about their movie-watching habits\n- Discuss what they've watched recently\n- Introduce useful movie-related vocabulary\n\n2. Movie Analysis:\n- Guide discussion about plot elements\n- Explore character motivations\n- Encourage personal opinions\n\n3. Extended Discussion:\n- Draw connections to other movies\n- Share favorite moments\n- Practice giving recommendations\n\nTeaching Notes:\n- Keep conversation natural and engaging\n- Help with expressing opinions clearly\n- Introduce new expressions organically\n- Support student in forming detailed responses", req.TargetLanguage),
 			CreatedAt: time.Now(),
 		},
 	}
@@ -616,7 +616,6 @@ func createDefaultCourse(w http.ResponseWriter, r *http.Request) {
 	}{
 		Course:     course,
 		LessonPlan: lessonPlans[0],
-		Lesson:     lesson,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

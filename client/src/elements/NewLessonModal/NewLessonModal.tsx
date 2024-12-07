@@ -86,7 +86,6 @@ export const NewLessonModal = () => {
         if (!response.ok) {
             onRequestError(response, "Failed to fetch lesson plans", "lesson-plans-new-lesson-modal");
             throw new Error("Failed to fetch lesson plans");
-            return;
         }
 
         return response.json();

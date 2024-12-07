@@ -85,7 +85,6 @@ export const LessonPlanModal = ({lessonTemplateExisting}: {lessonTemplateExistin
         if (!response.ok) {
             onRequestError(response, "Failed to fetch lesson plans", "lesson-plans-new-lesson-modal");
             throw new Error("Failed to fetch lesson plans");
-            return;
         }
 
         return response.json();
@@ -114,11 +113,10 @@ export const LessonPlanModal = ({lessonTemplateExisting}: {lessonTemplateExistin
             return;
         }
 
-        const newLessonTemplate = await response.json();
         setState(drift => {
             drift.modalSelector = ModalSelector.None;
         });
-    }, [jwt, selectedCourseId, onRequestError, title, lessonPlanText, setState]);
+    }, [jwt, selectedCourseId, onRequestError, title, lessonPlanText, setState, lessonTemplateExisting]);
 
     const {isPending: isPendingLessonPlans, error: errorLessonPlans, data: dataLessonPlans} = useQuery({
         queryKey: ['lesson-plans-lesson-plan-modal'],

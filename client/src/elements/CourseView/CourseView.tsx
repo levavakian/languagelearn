@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import './CourseView.css';
 import { useStateValue, useSetStateValue, WorkPage, Lesson, LessonPlan, NoteNode, VocabItem, ModalSelector } from '../../state/state';
 import toast from 'react-hot-toast';
@@ -158,7 +158,7 @@ const QuickPrompts = () => {
             setTmpText(previousTmpText);
             toast.error('Error updating notes');
         }
-    }, [jwt, selectedCourseId, onRequestError, editingId, tmpText, tempNotes]);
+    }, [jwt, selectedCourseId, onRequestError, editingId, tmpText, tempNotes, setState]);
 
     const highlight = (text: string) => {
         const parts = text.split(/(@(?:word|sentence)\b)/g);
@@ -1020,7 +1020,7 @@ const CourseView: React.FC = () => {
         if (!isPendingLessons && !errorLessons) {
             setState(draft => { draft.currentCourse.lessons = dataLessons || [] });
         }
-    }, [dataLessons, setState]);
+    }, [dataLessons, setState, isPendingLessons, errorLessons]);
 
     return (
         <div className="course-view">

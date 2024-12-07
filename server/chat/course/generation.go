@@ -288,7 +288,7 @@ func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
 	// Add final instruction
 	messages = append(messages, ChatMessage{
 		Role: "user",
-		Content: "Based on this lesson, provide updates or additions to the vocabulary list. Suggestions should be concise and information-dense. They do not have to be only vocab words and their definitions, they can be tenses, idioms, conjunctions, etc. Anything that would be helpful during language learning. Focus on things that seemed new or tough for the student, or things they seemed to be particularly curious or interested in. The word should be in the language the user is trying to learn, and the definition should be in the languate the user speaks natively." +
+		Content: "Based on this lesson, provide updates or additions to the vocabulary list. Suggestions should be concise and information-dense. They do not have to be only vocab words and their definitions, they can be tenses, idioms, conjunctions, etc. Anything that would be helpful during language learning. Focus on things that seemed new or tough for the student, or things they seemed to be particularly curious or interested in. The word should be in the language the user is trying to learn, and the definition should be in the languate the user speaks natively. Be comphrehensive in capturing all of the important words, tenses, concepts, and grammar structures covered, as this vocabulary list is passed from instructor to instructor for subsequent lessons, and this vocab list is the only reference they have for what the student has covered thus far." +
 		"Return the response in the specified JSON format.",
 	})
 

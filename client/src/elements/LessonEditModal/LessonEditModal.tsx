@@ -1,9 +1,8 @@
-import { ModalSelector, AlwaysOnMode, useStateValue, Lesson, VocabItem } from "../../state/state";
+import { ModalSelector, useStateValue, Lesson, VocabItem } from "../../state/state";
 import { Icon } from "../Icon/Icon";
 import { ShowModal } from "../Modal/Modal";
 import { useSetStateValue } from "../../state/state";
 import { useState, useRef, useEffect, useCallback } from "react";
-import toast from "react-hot-toast";
 import { produce } from "immer";
 
 export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: Lesson, summaryInput?: string, vocabEdit?: Record<string, VocabItem>}) => {
@@ -72,7 +71,7 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
         });
 
         setVocab(newVocabItems);
-    }, [jwt, onRequestError]);
+    }, [jwt, onRequestError, lesson.id]);
 
     const fetchSummaryUpdates = useCallback(async () => {
         setIsGenerating(true);
@@ -92,7 +91,7 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
 
         const data = await response.json();
         setSummary(data.summary);
-    }, [jwt, onRequestError]);
+    }, [jwt, onRequestError, lesson.id]);
 
     const saveLesson = useCallback(async () => {
         setIsGenerating(true);
@@ -157,7 +156,7 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
         }
 
         setState(draft => { draft.modalSelector = ModalSelector.None; });
-    }, [jwt, onRequestError, settings, vocab, title, summary]);
+    }, [jwt, onRequestError, settings, vocab, title, summary, lesson, selectedCourseId, setState]);
 
     return ShowModal(
         ModalSelector.LessonEdit,

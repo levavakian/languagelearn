@@ -27,6 +27,7 @@ export const Landing = () => {
             }}>
                 <img 
                     src="/leftgirl.png"
+                    alt=""
                     style={{
                         position: 'absolute',
                         left: '750px',
@@ -37,6 +38,7 @@ export const Landing = () => {
                 />
                 <img 
                     src="/rightboy.png"
+                    alt=""
                     style={{
                         position: 'absolute',
                         left: '1300px',
@@ -48,6 +50,7 @@ export const Landing = () => {
                 />
                 <img 
                     src="/toplap.png"
+                    alt=""
                     style={{
                         position: 'absolute',
                         bottom: '550px',

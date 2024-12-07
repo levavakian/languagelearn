@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import './MessageWindow.css';
 import { Message, NoteNode, useSetStateValue, useStateValue } from '../../state/state';
 import { Connection } from './Connection';
@@ -70,7 +70,7 @@ const UserMessage = ({ messages, messageWindowRef }: {
                 };
             });
         }
-    }, [setState, onChatInputChange]);
+    }, [setState, onChatInputChange, messageWindowRef]);
 
     return (
         <div className="message-container user-message">
@@ -111,7 +111,7 @@ const AssistantMessage = ({ messages, messageWindowRef }: {
                 };
             });
         }
-    }, [setState, onChatInputChange]);
+    }, [setState, onChatInputChange, messageWindowRef]);
 
     return (
         <div className="message-container assistant-message">
@@ -161,7 +161,7 @@ export const MessageWindow: React.FC = () => {
         }
         const data = await response.json();
         setState(draft => { draft.currentCourse.settings = data; });
-    }, [jwt, selectedCourseId, onRequestError]);
+    }, [jwt, selectedCourseId, onRequestError, setState]);
 
     useEffect(() => {
         fetchSettings();

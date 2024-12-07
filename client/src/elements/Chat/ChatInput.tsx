@@ -1,11 +1,10 @@
 import './Chat.css';
 import './ChatInput.css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useStateValue, useSetStateValue, Message, MessageType, PreferredResponseType, ModalSelector, AlwaysOnMode, VocabItem, Lesson } from '../../state/state';
 import { Icon } from '../Icon/Icon';
 import { AlwaysOnModal } from './AlwaysOnModal';
 import { LessonEditModal } from '../LessonEditModal/LessonEditModal';
-import toast from 'react-hot-toast';
 
 const ChatInput = () => {
     const setState = useSetStateValue();
