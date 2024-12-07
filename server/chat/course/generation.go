@@ -183,17 +183,31 @@ func generateLessonSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(completionResponse.Choices) == 0 {
+		// Check for insufficient quota error
+		var openAIError struct {
+			Error struct {
+				Message string `json:"message"`
+				Type    string `json:"type"`
+			} `json:"error"`
+		}
+		if json.Unmarshal(respBody, &openAIError) == nil && 
+		   openAIError.Error.Type == "insufficient_quota" {
+			fmt.Println("Error: OpenAI quota exceeded")
+			http.Error(w, "OpenAI quota exceeded", 520)
+			return
+		}
+		
+		fmt.Println("Error: OpenAI returned no choices")
+		http.Error(w, "No response from OpenAI", http.StatusInternalServerError)
+		return
+	}
+
 	// Calculate and deduct credits
 	creditCost := calculateCompletionCreditUsage(completionResponse.Usage)
 	if err := DeductCredits(userEmail, creditCost); err != nil {
 		fmt.Printf("Error deducting credits: %v\n", err)
 		http.Error(w, "Failed to deduct credits", http.StatusInternalServerError)
-		return
-	}
-
-	if len(completionResponse.Choices) == 0 {
-		fmt.Println("Error: OpenAI returned no choices")
-		http.Error(w, "No response from OpenAI", http.StatusInternalServerError)
 		return
 	}
 
@@ -371,17 +385,31 @@ func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(completionResponse.Choices) == 0 {
+		// Check for insufficient quota error
+		var openAIError struct {
+			Error struct {
+				Message string `json:"message"`
+				Type    string `json:"type"`
+			} `json:"error"`
+		}
+		if json.Unmarshal(respBody, &openAIError) == nil && 
+		   openAIError.Error.Type == "insufficient_quota" {
+			fmt.Println("Error: OpenAI quota exceeded")
+			http.Error(w, "OpenAI quota exceeded", 520)
+			return
+		}
+		
+		fmt.Println("Error: OpenAI returned no choices")
+		http.Error(w, "No response from OpenAI", http.StatusInternalServerError)
+		return
+	}
+
 	// Calculate and deduct credits
 	creditCost := calculateCompletionCreditUsage(completionResponse.Usage)
 	if err := DeductCredits(userEmail, creditCost); err != nil {
 		fmt.Printf("Error deducting credits: %v\n", err)
 		http.Error(w, "Failed to deduct credits", http.StatusInternalServerError)
-		return
-	}
-
-	if len(completionResponse.Choices) == 0 {
-		fmt.Println("Error: OpenAI returned no choices")
-		http.Error(w, "No response from OpenAI", http.StatusInternalServerError)
 		return
 	}
 
@@ -578,17 +606,31 @@ func generateNextLessonPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(completionResponse.Choices) == 0 {
+		// Check for insufficient quota error
+		var openAIError struct {
+			Error struct {
+				Message string `json:"message"`
+				Type    string `json:"type"`
+			} `json:"error"`
+		}
+		if json.Unmarshal(respBody, &openAIError) == nil && 
+		   openAIError.Error.Type == "insufficient_quota" {
+			fmt.Println("Error: OpenAI quota exceeded")
+			http.Error(w, "OpenAI quota exceeded", 520)
+			return
+		}
+		
+		fmt.Println("Error: OpenAI returned no choices")
+		http.Error(w, "No response from OpenAI", http.StatusInternalServerError)
+		return
+	}
+
 	// Calculate and deduct credits
 	creditCost := calculateCompletionCreditUsage(completionResponse.Usage)
 	if err := DeductCredits(userEmail, creditCost); err != nil {
 		fmt.Printf("Error deducting credits: %v\n", err)
 		http.Error(w, "Failed to deduct credits", http.StatusInternalServerError)
-		return
-	}
-
-	if len(completionResponse.Choices) == 0 {
-		fmt.Println("Error: OpenAI returned no choices")
-		http.Error(w, "No response from OpenAI", http.StatusInternalServerError)
 		return
 	}
 

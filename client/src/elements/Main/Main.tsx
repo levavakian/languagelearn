@@ -35,6 +35,11 @@ const Main = () => {
                     return;
                 }
 
+                if (response.status === 520) {
+                    toast.error('Global rate limits hit, please try again later', {id: "openai-quota-exceeded"});
+                    return;
+                }
+
                 console.log("Got response error", response);
                 if (msg) {
                     toast.error(msg, {id: id});

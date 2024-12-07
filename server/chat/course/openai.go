@@ -338,9 +338,9 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *OpenA
 				if errorCount >= maxConsecutiveErrors {
 					errorMsg := Message{
 					ChatID: chatID,
-						Sender:  "Assistant @OpenAI Realtime",
-						Content: "<Error in receiving response from Tutor>",
-						Type:    "text",
+						Sender:  "system",
+						Content: "Error in receiving response from Tutor",
+						Type:    "error",
 						CreatedAt: time.Now(),
 					}
 					addMessageToChat(errorMsg)
@@ -359,6 +359,22 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *OpenA
 				}
 				continue
 			}
+
+			// Check for insufficient quota
+			if doneMsg.Response.Status == "failed" &&
+				doneMsg.Response.StatusDetails.Error.Type == "insufficient_quota" {
+				errorMsg := Message{
+					ChatID: chatID,
+					Sender:  "system",
+					Content: "Hit global rate limits, please try again later.",
+					Type:    "error",
+					CreatedAt: time.Now(),
+				}
+				addMessageToChat(errorMsg)
+				broadcastMessage(chatConns, errorMsg)
+				continue
+			}
+			
 
 			// Reset error count on successful response
 			chatConns.ErrorState.Mutex.Lock()

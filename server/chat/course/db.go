@@ -309,8 +309,8 @@ func InsertChat(chat *Chat) error {
 
 func InsertMessage(msg *Message) error {
 	_, err := db.DB.Exec(
-		"INSERT INTO messages (chat_id, sender, content, type, response_id, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
-		msg.ChatID, msg.Sender, msg.Content, msg.Type, msg.ResponseID, msg.CreatedAt,
+		"INSERT INTO messages (chat_id, sender, content, type, response_id, created_at) VALUES ($1, $2, $3, $4, $5, NOW())",
+		msg.ChatID, msg.Sender, msg.Content, msg.Type, msg.ResponseID,
 	)
 	return err
 }
