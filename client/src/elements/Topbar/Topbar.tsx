@@ -233,7 +233,9 @@ export const CoinCount = () => {
         return () => clearInterval(interval);
     }, [timeLastPayment, jwt, onRequestError]);
 
-    return <div className="text-[var(--indigo-dye)] text-[20px] font-[800] font-['Nobel_Uno',Arial,sans-serif] -mt-1 -ml-1 gap-1">
+    return <div className={`text-[20px] font-[800] font-['Nobel_Uno',Arial,sans-serif] -mt-1 -ml-1 gap-1 ${
+        coins < 100 ? 'text-[var(--warn-red)]' : 'text-[var(--indigo-dye)]'
+    }`}>
         {coins}
     </div>
 }
