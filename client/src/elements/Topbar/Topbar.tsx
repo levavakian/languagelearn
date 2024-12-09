@@ -117,9 +117,15 @@ export const GetBuyModal = () => {
                     <input 
                         type="number" 
                         placeholder="$" 
+                        max={20000}
                         className="mt-[50px] min-h-[25px] min-w-[75px] rounded-lg bg-white text-center w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none outline-none focus:outline-none focus:ring-0 border-none ring-0 ring-offset-0 focus:border-none focus:ring-offset-0"
                         value={customAmount}
-                        onChange={(e) => {setCustomAmount(parseInt(e.target.value)); setSelectedId(3)}}
+                        onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            const limitedValue = Math.min(value, 20000);
+                            setCustomAmount(limitedValue);
+                            setSelectedId(3);
+                        }}
                     />
                     <div className="text-xl font-semibold text-center">${(isNaN(customAmount) ? 0 : customAmount / 100.0).toFixed(2)}</div>
                 </div>
