@@ -192,8 +192,10 @@ const ChatInput = () => {
                     >
                         <Icon scale={24} name="eyebrow" />
                     </div>
-                    <div className="icon" title="Generate a summary and save your progress"
-                        onClick={() => doSave()}
+                    <div 
+                        className={`icon ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                        title="Generate a summary and save your progress"
+                        onClick={() => !isSaving && doSave()}
                     >
                         <Icon scale={24} name="save" />
                     </div>

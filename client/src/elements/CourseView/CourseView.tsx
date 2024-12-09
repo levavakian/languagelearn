@@ -764,7 +764,18 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
                             <Icon 
                                 name="pencil" 
                                 scale={14} 
-                                style={{ cursor: 'pointer', marginRight: '10px' }} 
+                                style={{ 
+                                    cursor: 'pointer', 
+                                    marginRight: '10px',
+                                    opacity: '0.5',
+                                    transition: 'opacity 200ms'
+                                }} 
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.opacity = '1';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.opacity = '0.5';
+                                }}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setLessonToEdit(lesson);
@@ -774,7 +785,17 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
                             <Icon 
                                 name="bin" 
                                 scale={14} 
-                                style={{ cursor: 'pointer' }} 
+                                style={{ 
+                                    cursor: 'pointer',
+                                    opacity: '0.5',
+                                    transition: 'opacity 200ms'
+                                }} 
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.opacity = '1';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.opacity = '0.5';
+                                }}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     handleDelete(lesson.id);
@@ -800,6 +821,8 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
     const jwt = useStateValue(state => state.auth.token);
     const onRequestError = useStateValue(state => state.auth.onRequestError);
+    const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
+    const modalSelector = useStateValue(state => state.modalSelector);
 
     useEffect(() => {
         setViewAll(false);
@@ -865,6 +888,7 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
 
     return (
         <div className="practice-lesson-list">
+            {lessonToEdit && modalSelector === ModalSelector.LessonEdit && <LessonEditModal lesson={lessonToEdit} />}
             <div className="practice-lesson-list-title">Quick Practice</div>
             <div className="practice-lesson-list-add-lesson" onClick={handleNewPractice}>
                 + Start New Practice
@@ -882,16 +906,38 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
                             <Icon 
                                 name="pencil" 
                                 scale={14} 
-                                style={{ cursor: 'pointer', marginRight: '10px' }} 
+                                style={{ 
+                                    cursor: 'pointer', 
+                                    marginRight: '10px',
+                                    opacity: '0.5',
+                                    transition: 'opacity 200ms'
+                                }} 
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.opacity = '1';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.opacity = '0.5';
+                                }}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    toast.success(`Edit practice: ${lesson.name}`);
+                                    setLessonToEdit(lesson);
+                                    setState(draft => { draft.modalSelector = ModalSelector.LessonEdit });
                                 }}
                             />
                             <Icon 
                                 name="bin" 
                                 scale={14} 
-                                style={{ cursor: 'pointer' }} 
+                                style={{ 
+                                    cursor: 'pointer',
+                                    opacity: '0.5',
+                                    transition: 'opacity 200ms'
+                                }} 
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.opacity = '1';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.opacity = '0.5';
+                                }}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     handleDelete(lesson.id);
