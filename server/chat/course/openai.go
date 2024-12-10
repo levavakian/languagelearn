@@ -412,7 +412,7 @@ func handleOpenAIMessages(chatID string, chatConns *ChatConnections, conn *OpenA
 							// 1. No recent transcript (>500ms old) exists, or
 							// 2. More than 2 seconds have passed since start
 							if lastTranscriptTime.After(startTime.Add(-2000*time.Millisecond)) || 
-							   timeSinceStart > 2*time.Second {
+							   timeSinceStart > 5*time.Second {
 								addMessageToChat(msg)
 								broadcastMessage(chatConns, msg)
 								return
