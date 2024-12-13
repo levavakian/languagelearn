@@ -1,6 +1,7 @@
 import { atom } from 'jotai'
 import { persisted, unwrapState, createPersistedAtom, Persistable } from './storage'
 import { createAtomHooks } from './statehooks'
+import { smallScreen } from '../utils/globals'
 
 export enum ModalSelector {
     None = 'none',
@@ -162,6 +163,7 @@ export type WrappedState = {
     courses: Course[]
     modalSelector: ModalSelector
     preferredInstructorStyle: Persistable<PreferredInstructorStyle>
+    sidebarOpen: boolean
 }
 
 const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
@@ -209,6 +211,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     courses: [],
     modalSelector: ModalSelector.None,
     preferredInstructorStyle: persisted('preferred-instructor-style', PreferredInstructorStyle.Neutral),
+    sidebarOpen: !smallScreen()
 })
 
 export type State = typeof initialState

@@ -201,6 +201,7 @@ const Sidebar = () => {
     const onRequestError = useStateValue((state: State) => state.auth.onRequestError);
     const courses = useStateValue((state: State) => state.courses);
     const sendMessage = useStateValue(state => state.currentChat.ws.sendMessage);
+    const sidebarOpen = useStateValue(state => state.sidebarOpen);
 
     const coursesElements = useMemo(() => {
         return [...courses]
@@ -237,17 +238,20 @@ const Sidebar = () => {
     });
 
     return (
-        <div className="min-w-[250px] bg-alice-blue min-h-screen m-0 p-0 top-0 overflow-y-auto scrollbar-none">
-            <div className="text-center text-indigo-dye py-[30px] cursor-pointer"
-                onClick={() => setState(draft => {
-                    draft.pageChoice.workPage = WorkPage.Intro
-                    draft.triggers.key += 1
-                })}
-            >
-                <span className="font-ancorli font-extralight text-[30pt] tracking-tight">ARATTA</span>
-            </div>
-            
-            <div>
+        <div className={`
+            min-w-0 bg-alice-blue min-h-screen m-0 p-0 top-0 overflow-visible scrollbar-none relative
+            transition-all duration-300 ease-in-out
+        `}>
+            <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-[250px] opacity-100' : 'w-0 opacity-0'}`}>
+                <div className="text-center text-indigo-dye py-[30px] cursor-pointer"
+                    onClick={() => setState(draft => {
+                        draft.pageChoice.workPage = WorkPage.Intro
+                        draft.triggers.key += 1
+                    })}
+                >
+                    <span className="font-ancorli font-extralight text-[30pt] tracking-tight">ARATTA</span>
+                </div>
+                
                 <div>
                     <div>
                         <h2 className="font-nobeluno font-semibold text-half-grey mx-[12.5%] flex justify-between items-center">
@@ -260,6 +264,11 @@ const Sidebar = () => {
                         </div>
                     </div>
                 </div>
+            </div>
+            <div className="absolute -right-6 top-1 z-10"
+                onClick={() => setState(draft => { draft.sidebarOpen = !draft.sidebarOpen })}
+            >
+                <Icon scale={24} name="bars" className="opacity-100" />
             </div>
         </div>
     );
