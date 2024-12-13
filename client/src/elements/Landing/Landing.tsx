@@ -1,6 +1,7 @@
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "react-hot-toast";
 import { useSetStateValue } from "../../state/state";
+import { smallScreen, useWindowSize } from "../../utils/globals";
 
 export const Landing = () => {
     const setState = useSetStateValue();
@@ -12,10 +13,42 @@ export const Landing = () => {
     const handleLoginFailure = () => {
         toast.error('There was an error logging in');
     };
+
+    useWindowSize();
     
-    // Define a coordinate system large enough to fit all images
-    // Here, we're using `viewBox="0 0 2000 1200"` as an example.
-    // Adjust these values based on your layout needs.
+    if (window.innerWidth < 1500) {
+        return (
+            <div className="bg-baby-powder h-screen w-screen flex flex-col">
+                <div className="pt-[10%] mb-[0em] text-[500%] items-center justify-center flex font-ancorli font-regular tracking-tight">
+                    ARATTA
+                </div>
+                <div className="pl-[5%] flex-1 flex flex-col">
+                    <div className="text-[250%] mt-[15%] font-nobel font-semibold">
+                        Language learning,
+                    </div>
+                    <div className="text-[250%] font-nobel font-semibold text-coral">
+                        reimagined<span className="text-indigo-dye">.</span>
+                    </div>
+                    <div className="text-[175%] mt-[1.25rem] max-w-[34.375rem] font-nobel font-regular">
+                        Experience personalized language learning powered by AI. Have natural conversations, get instant feedback, and progress at your own pace.
+                    </div>
+                    <div className="mt-auto mb-[2rem] mr-[1rem] ml-auto flex flex-col items-rights justify-right gap-2">
+                        <div className="text-[1.25rem] font-nobel font-regular">Sign in to start learning</div>
+                        <GoogleLogin
+                            onSuccess={handleLoginSuccess}
+                            onError={handleLoginFailure}
+                            type="standard"
+                            text="continue_with"
+                            size="large"
+                            width="12.5rem"
+                            shape="circle"
+                        />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <>
             <div className="w-full h-full bg-baby-powder">
@@ -93,8 +126,8 @@ export const Landing = () => {
                     <div className="text-[2rem] mt-[1.25rem] max-w-[34.375rem] font-nobel font-regular">
                         Experience personalized language learning powered by AI. Have natural conversations, get instant feedback, and progress at your own pace.
                     </div>
-                    <div className="mt-[1.25rem] flex items-center gap-2">
-                        <div className="text-[1.25rem] font-nobel font-regular mr-2">Sign in to start learning</div>
+                    <div className="mt-[1.25rem] flex flex-col items-center gap-2">
+                        <div className="text-[1.25rem] font-nobel font-regular">Sign in to start learning</div>
                         <GoogleLogin
                             onSuccess={handleLoginSuccess}
                             onError={handleLoginFailure}
