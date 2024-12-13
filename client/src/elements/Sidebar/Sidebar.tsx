@@ -265,10 +265,23 @@ const Sidebar = () => {
                     </div>
                 </div>
             </div>
-            <div className="absolute -right-6 top-1 z-10"
+            <div 
+                className={`
+                    absolute top-1 z-10
+                    transition-all duration-300 ease-in-out
+                    ${sidebarOpen ? 'right-1' : '-right-6'}
+                `}
                 onClick={() => setState(draft => { draft.sidebarOpen = !draft.sidebarOpen })}
             >
-                <Icon scale={24} name="bars" className="opacity-100" />
+                <Icon 
+                    scale={24} 
+                    name="bars" 
+                    className={`
+                        opacity-100 
+                        transition-transform duration-300 ease-in-out
+                        ${sidebarOpen ? 'transform -scale-x-100' : ''}
+                    `}
+                />
             </div>
         </div>
     );
