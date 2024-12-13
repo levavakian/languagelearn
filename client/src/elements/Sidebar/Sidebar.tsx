@@ -1,6 +1,5 @@
 import React, { useEffect, useCallback, useState, useMemo } from 'react';
 import { Icon } from '../Icon/Icon';
-import './Sidebar.css';
 import { Course, Lesson, State, useSetStateValue, useStateValue, WorkPage, ModalSelector } from '../../state/state';
 import { useQuery } from '@tanstack/react-query';
 import { createAssessment } from '../../api/assessment';
@@ -137,9 +136,9 @@ const CourseBox = ({ course }: { course: Course }) => {
     ];
     
     return (
-        <div className="course-box">
-            <div className="course-header">
-                <span className="course-name text-truncate" title={course.name}>
+        <div className="bg-alice-dark rounded-xl p-1 px-4 font-nobeluno mx-[12.5%] my-4">
+            <div className="flex w-full justify-between items-center pt-4 mb-2.5">
+                <span className="text-lg font-semibold text-indigo-dye flex-1 max-w-[150px] truncate" title={course.name}>
                     {course.name}
                 </span>
                 <Icon scale={20} name="learning" />
@@ -149,7 +148,7 @@ const CourseBox = ({ course }: { course: Course }) => {
                 {standardItems.map((item, itemIndex) => (
                     <button
                         key={itemIndex}
-                        className="course-button"
+                        className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-indigo-dye text-sm transition-colors hover:bg-alice-blue border-none bg-transparent"
                         onClick={item.onClick}
                     >
                         {item.icon}
@@ -178,12 +177,12 @@ const NewCourseButton = () => {
     ];
     
     return (
-        <div className="course-box">
+        <div className="bg-alice-dark rounded-xl p-1 px-4 font-nobeluno mx-[12.5%] my-4">
             <div>
                 {newCourseItems.map((item, itemIndex) => (
                     <button
                         key={itemIndex}
-                        className="course-button"
+                        className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-indigo-dye text-sm transition-colors hover:bg-alice-blue border-none bg-transparent"
                         onClick={item.onClick}
                     >
                         {item.icon}
@@ -238,20 +237,20 @@ const Sidebar = () => {
     });
 
     return (
-        <div className="sidebar">
-            <div className="sidebar-title cursor-pointer"
+        <div className="min-w-[250px] bg-alice-blue min-h-screen m-0 p-0 top-0 overflow-y-auto scrollbar-none">
+            <div className="text-center text-indigo-dye py-[30px] cursor-pointer"
                 onClick={() => setState(draft => {
                     draft.pageChoice.workPage = WorkPage.Intro
                     draft.triggers.key += 1
                 })}
             >
-                <span className="sidebar-title-text tracking-tight">ARATTA</span>
+                <span className="font-ancorli font-extralight text-[30pt] tracking-tight">ARATTA</span>
             </div>
             
             <div>
                 <div>
                     <div>
-                        <h2 className="courses-title courses-header">
+                        <h2 className="font-nobeluno font-semibold text-half-grey mx-[12.5%] flex justify-between items-center">
                             My Courses
                         </h2>
                         
