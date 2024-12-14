@@ -1,0 +1,158 @@
+.notes-editor-title {
+    font-size: 24px;
+    font-weight: 800;
+    margin-top: 40px;
+    font-family: 'Nobel Uno', sans-serif !important;
+    color: var(--indigo-dye);
+    margin-bottom: 10px;
+}
+
+.notes-editor-info {
+    font-size: 12px;
+    font-weight: 400;
+    margin-top: 10px;
+    font-family: 'Nobel Uno', sans-serif !important;
+    color: var(--indigo-dye);
+    margin-bottom: 10px;
+}
+
+.notes-editor {
+    border: 1.5px solid var(--indigo-dye);
+    background-color: white;
+    border-radius: 12px;
+    margin-top: 20px;
+    width: 100%;
+    height: max-content;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 0 var(--indigo-dye);
+    position: relative;
+    overflow-y: auto;
+    max-height: 600px;
+    overflow-x: hidden;
+    padding-bottom: 20px;
+    min-width: 0px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+}
+
+.notes-editor::-webkit-scrollbar {
+    width: 4px;  /* width of the scrollbar */
+    height: 95%; /* height of the scrollbar */
+}
+
+.notes-editor::-webkit-scrollbar-track {
+    margin: 10px 0;  /* This creates space at top and bottom */
+}
+
+.notes-editor::-webkit-scrollbar-thumb {
+    background: var(--quarter-grey);
+    border-radius: 4px;
+    padding-right: 0px;
+    height: 95%;
+}
+
+.notes-list {
+    padding-left: 20px;
+}
+
+.folder-item {
+    border: none;
+    font-family: 'Nobel Uno';
+    color: var(--indigo-dye);
+    font-size: 16px;
+    font-weight: 600;
+    outline: none;
+    align-items: 'center';
+    padding: 5px 0px;
+    padding-left: 20px;
+    justify-content: flex-start;
+}
+
+.folder-title {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    
+}
+
+.folder-item.input {
+    align-items: 'center';
+    padding: 0px;
+    margin: 0px;
+    justify-content: flex-start;
+    opacity: 0.75;
+    outline: none;
+}
+
+.note-item {
+    border: none;
+    font-family: 'Nobel Uno';
+    color: var(--indigo-dye);
+    font-size: 14px;
+    font-weight: 400;
+    padding: 5px 0px;
+    padding-left: 20px;
+    outline: none;
+    align-items: 'center';
+    justify-content: flex-start;
+}
+
+.note-item.input {
+    padding: 0px;
+    margin: 0px;
+    opacity: 0.75;
+    width: 100%;
+    outline: none;
+    height: auto;
+    display: block;
+    box-sizing: border-box;
+    min-height: 24px;
+    resize: none;
+    outline: none;
+}
+
+.item-actions {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    justify-content: flex-end;
+    white-space: nowrap;
+    padding-right: 8px;
+    margin-left: auto;
+}
+
+.individual-item-actions {
+    opacity: 0.7;
+}
+
+.individual-item-actions:hover {
+    opacity: 1;
+}
+
+.root-note-item {
+    padding-left: 0px;
+    padding-top: 10px;
+}
+
+.note-title:hover .item-actions {
+    opacity: 1;
+}
+
+.folder-title:hover .item-actions {
+    opacity: 1;
+}
+
+.item-actions.always-on {
+    opacity: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-left: auto;
+    padding-right: 8px;
+}
+
+.individual-item-actions {
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+}

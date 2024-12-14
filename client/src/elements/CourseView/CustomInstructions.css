@@ -1,0 +1,43 @@
+.custom-instructions-container {
+    padding: 0px 30px;
+    border: none;
+    margin-top: 40px;
+    width: 100%;
+}
+
+.custom-instructions {
+    border: none;
+    margin-top: 20px;
+    width: 100%;
+    font-size: 14px;
+    min-height: 100px;
+    padding: 8px;
+}
+
+.custom-instructions-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--indigo-dye);
+    margin-top: 0px;
+}
+
+.custom-instructions-input {
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--indigo-dye);
+    background-color: white;
+    width: 100%;
+    min-height: 300px;
+    max-height: 600px;
+    padding: 8px;
+    margin-top: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--quarter-grey);
+    background-color: var(--porcelain);
+    resize: vertical;
+}
+
+.custom-instructions-input:focus {
+    outline: none;
+    border-color: var(--coral);
+}

@@ -7,6 +7,7 @@ import { MessageWindow } from './MessageWindow';
 import { ChatInput } from './ChatInput';
 import { AudioInput } from './AudioInput';
 import { AudioOutput } from './AudioOutput';
+import { Icon } from '../Icon/Icon';
 
 const Chat = () => {
     const setState = useSetStateValue();
@@ -59,8 +60,11 @@ const Chat = () => {
 
     return (
         <div className="chat-container">
-            <div className="font-nobel truncate max-w-[800px] text-[32px] ml-10 font-semibold">
-                {chat?.name}
+            <div className="flex items-center">
+                <Icon className="ml-10 mt-2 cursor-pointer" name="learning" scale={24} onClick={() => setState(draft => { draft.pageChoice.workPage = WorkPage.Course })} />
+                <div className="font-nobel truncate max-w-[800px] text-[32px] ml-3 font-semibold">
+                    {chat?.name}
+                </div>
             </div>
             <AudioInput />
             <AudioOutput />
