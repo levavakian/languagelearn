@@ -13,6 +13,14 @@ export enum ModalSelector {
     LessonEdit = 'lesson-edit',
 }
 
+export enum TabSelection {
+    Lessons = 'lessons',
+    Practice = 'practice',
+    Vocab = 'vocab',
+    CustomInstructions = 'custom-instructions',
+    Tooltip = 'tooltip',
+}
+
 export enum PreferredInstructorStyle {
     Neutral = 'neutral',
     Strict = 'strict',
@@ -164,6 +172,7 @@ export type WrappedState = {
     modalSelector: ModalSelector
     preferredInstructorStyle: Persistable<PreferredInstructorStyle>
     sidebarOpen: boolean
+    tabSelection: TabSelection
 }
 
 const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
@@ -211,7 +220,8 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     courses: [],
     modalSelector: ModalSelector.None,
     preferredInstructorStyle: persisted('preferred-instructor-style', PreferredInstructorStyle.Neutral),
-    sidebarOpen: !smallScreen()
+    sidebarOpen: !smallScreen(),
+    tabSelection: TabSelection.Lessons,
 })
 
 export type State = typeof initialState

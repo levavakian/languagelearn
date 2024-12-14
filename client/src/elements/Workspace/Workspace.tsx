@@ -11,6 +11,7 @@ import { Contact } from '../Contact/Contact';
 import { FAQ } from '../FAQ/FAQ';
 import { Intro } from '../Intro/Intro';
 import { smallScreen, useWindowSize } from '../../utils/globals';
+import { CourseViewMobile } from '../CourseViewMobile/CourseViewMobile';
 
 const Workspace = () => {
     const pageChoice = useStateValue(state => state.pageChoice);
@@ -33,7 +34,8 @@ const Workspace = () => {
                 }`}>
                 <Topbar />
                 <div className="flex-1 overflow-y-auto">
-                    {pageChoice.workPage === WorkPage.Course && <CourseView />}
+                    {pageChoice.workPage === WorkPage.Course && !smallScreen() && <CourseView />}
+                    {pageChoice.workPage === WorkPage.Course && smallScreen() && <CourseViewMobile />}
                     {pageChoice.workPage === WorkPage.AllCourses && <CourseList />}
                     {pageChoice.workPage === WorkPage.Chat && <Chat />}
                     {pageChoice.workPage === WorkPage.Intro && <Intro />}
