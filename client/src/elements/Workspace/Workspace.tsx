@@ -10,12 +10,14 @@ import { NewLessonModal } from '../NewLessonModal/NewLessonModal';
 import { Contact } from '../Contact/Contact';
 import { FAQ } from '../FAQ/FAQ';
 import { Intro } from '../Intro/Intro';
-import { smallScreen } from '../../utils/globals';
+import { smallScreen, useWindowSize } from '../../utils/globals';
 
 const Workspace = () => {
     const pageChoice = useStateValue(state => state.pageChoice);
     const modalSelector = useStateValue(state => state.modalSelector);
     const sidebarOpen = useStateValue(state => state.sidebarOpen);
+
+    useWindowSize()
     
     return (
         <div className="flex h-screen overflow-hidden">

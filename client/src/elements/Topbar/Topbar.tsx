@@ -316,7 +316,7 @@ export const Topbar = () => {
                     <CoinCount />
                     <Icon name="profit" scale={24} />
                 </div>
-                <button className="buy-button" onClick={() => setState(draft => { draft.modalSelector = ModalSelector.BuyCoins })}>Buy Coins</button>
+                <button className="buy-button text-nowrap" onClick={() => setState(draft => { draft.modalSelector = ModalSelector.BuyCoins })}>Buy Coins</button>
                 <div ref={userIconRef} className="topbar-icon relative cursor-pointer">
                     <Icon 
                         name="user" 
