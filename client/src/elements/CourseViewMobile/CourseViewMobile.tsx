@@ -8,11 +8,13 @@ export const CourseViewMobile = () => {
     useCourseInfo();
 
     return (
-        <div className="flex w-full">
-            <div className="ml-2 mt-2 flex-1 min-w-0">
-                {tabSelection === TabSelection.Lessons && <LessonListMobile />}
+        <div className="flex w-full relative">
+            <div className="flex-1 min-w-0 pr-16">
+                <div className="ml-2 mt-2">
+                    {tabSelection === TabSelection.Lessons && <LessonListMobile />}
+                </div>
             </div>
-            <div className="flex-shrink-0">
+            <div className="fixed right-0 top-[20vh]">
                 <TabSelector />
             </div>
         </div>
