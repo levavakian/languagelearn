@@ -126,8 +126,8 @@ export const Landing = () => {
                     <div className="text-[2rem] mt-[1.25rem] max-w-[34.375rem] font-nobel font-regular">
                         Experience personalized language learning powered by AI. Have natural conversations, get instant feedback, and progress at your own pace.
                     </div>
-                    <div className="mt-[1.25rem] flex flex-col items-center gap-2">
-                        <div className="text-[1.25rem] font-nobel font-regular">Sign in to start learning</div>
+                    <div className="mt-[1.25rem] flex items-center gap-2">
+                        <div className="text-[1.25rem] font-nobel font-regular mr-2">Sign in to start learning</div>
                         <GoogleLogin
                             onSuccess={handleLoginSuccess}
                             onError={handleLoginFailure}

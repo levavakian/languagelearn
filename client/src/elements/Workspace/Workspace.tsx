@@ -30,7 +30,12 @@ const Workspace = () => {
                 'before:absolute before:inset-0 before:pointer-events-none before:z-50 ' +
                 'before:content-[""] before:block before:h-full before:w-full ' +
                 'before:[background:linear-gradient(90deg,rgb(255,252,249)_0%,rgb(255,252,249)_20%,transparent_100%)] ' +
-                'pointer-events-none' : ''
+                'before:transition-[opacity] before:duration-300 ' +
+                'pointer-events-none' : 
+                'before:absolute before:inset-0 before:pointer-events-none before:z-50 ' +
+                'before:content-[""] before:block before:h-full before:w-full ' +
+                'before:[background:linear-gradient(90deg,rgb(255,252,249)_0%,rgb(255,252,249)_20%,transparent_100%)] ' +
+                'before:transition-[opacity] before:duration-300 before:opacity-0'
                 }`}>
                 <Topbar />
                 <div className="flex-1 overflow-y-auto">

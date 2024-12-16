@@ -141,6 +141,7 @@ export type WrappedState = {
         selectedCourse: string | null
         selectedLesson: string | null
     }>
+    courseInfo: Record<string, {content: Course | null, lessons: Lesson[], settings: CourseSettings | null}>
     currentCourse: {
         content: Course | null
         lessons: Lesson[]
@@ -190,6 +191,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
         selectedCourse: null,
         selectedLesson: null,
     }),
+    courseInfo: {},
     currentCourse: {
         content: null,
         lessons: [],

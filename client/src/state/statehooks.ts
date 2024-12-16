@@ -4,9 +4,15 @@ import { useCallback } from 'react'
 import { WritableAtom } from 'jotai'
 
 export function createAtomHooks<T, Update, Result>(atom: WritableAtom<T, Update[], Result>, selectorMap: Record<string, any>) {
-  function useAtomGetter<Selected>(selector: (state: T) => Selected) {
-    const selectorKey = selector.toString()
-    
+  function useAtomGetter<Selected>(
+    selector: (state: T) => Selected,
+    ...additionalInputs: any[]
+  ) {
+    const selectorKey = [
+      selector.toString(),
+      ...additionalInputs.map(input => String(input))
+    ].join('::')
+
     if (!(selectorKey in selectorMap)) {
       selectorMap[selectorKey] = selectAtom(atom, selector)
     }
