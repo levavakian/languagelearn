@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useStateValue } from '../../state/state';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Lesson, useStateValue } from '../../state/state';
 import { Icon } from '../Icon/Icon';
 import { useWindowSize } from '../../utils/globals';
 
@@ -8,9 +8,12 @@ interface LessonDropdownProps {
     iconRef: React.RefObject<HTMLDivElement>;
     position: { x: number; y: number };
     screenHeight: number;
+    lesson: Lesson;
+    onEdit: (lesson: Lesson) => void;
+    onDelete: (lesson: Lesson) => void;
 }
 
-const LessonDropdown: React.FC<LessonDropdownProps> = ({ onClose, iconRef, position, screenHeight }) => {
+const LessonDropdown: React.FC<LessonDropdownProps> = ({ onClose, iconRef, position, screenHeight, lesson, onEdit, onDelete }) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const handleClickOutside = useCallback((event: MouseEvent) => {
@@ -48,11 +51,11 @@ const LessonDropdown: React.FC<LessonDropdownProps> = ({ onClose, iconRef, posit
         >
             {[
                 { label: "Delete", onClick: () => {
-                    console.log("Delete clicked");
+                    onDelete(lesson);
                     onClose();
                 }},
                 { label: "Edit", onClick: () => {
-                    console.log("Edit clicked");
+                    onEdit(lesson);
                     onClose();
                 }},
             ].map((item, index) => (
@@ -76,15 +79,23 @@ const LessonDropdown: React.FC<LessonDropdownProps> = ({ onClose, iconRef, posit
     );
 };
 
-export const LessonListMobile: React.FC = () => {
+export const UnifiedListMobile: React.FC<{
+    filterFn: (lesson: Lesson) => boolean;
+    title: string;
+    newTitle: string;
+    onNew: () => void;
+    onEdit: (lesson: Lesson) => void;
+    onDelete: (lesson: Lesson) => void;
+}> = ({ filterFn, title, newTitle, onNew, onEdit, onDelete }) => {
     const [showDropdown, setShowDropdown] = useState(false);
     const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
+    const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
     const iconRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleResize = () => {
             console.log("Main component resize detected");
-            setShowDropdown(false);
+            setSelectedLesson(null);
         };
 
         window.addEventListener('resize', handleResize);
@@ -99,12 +110,19 @@ export const LessonListMobile: React.FC = () => {
         selectedCourseId
     );
 
+    const filtered = useMemo(() => {
+        return lessons.filter(filterFn).sort((a, b) => a.updated_at.localeCompare(b.updated_at));
+    }, [lessons, filterFn]);
+
     return (
         <div className="mr-3 mb-5">
             <div className="text-[32px] font-bold">
-                Lessons
+                {"Lessons"}
             </div>
-            {lessons.map((lesson) => {
+            <div className="mt-5 rounded-lg w-fit bg-coral text-baby-powder  border-indigo-dye border-solid border-[1px] shadow-[0_4px_0_var(--indigo-dye)] p-2 transition-all duration-200 active:translate-y-1 active:shadow-none" onClick={onNew}>
+                + {newTitle}
+            </div>
+            {filtered.map((lesson) => {
                 return (
                     <div key={lesson.id} className="mt-5 flex flex-row w-full">
                         <div className="w-full flex flex-row justify-between min-w-0 bg-alice-blue border-indigo-dye border-solid border-[1px] shadow-[0_4px_0_var(--indigo-dye)] rounded-lg p-2 transition-all duration-200 active:translate-y-1 active:shadow-none" onClick={() => console.log("hello")}>
@@ -129,7 +147,7 @@ export const LessonListMobile: React.FC = () => {
                                         x: rect.right, 
                                         y: rect.top 
                                     });
-                                    setShowDropdown(!showDropdown);
+                                    setSelectedLesson(selectedLesson?.id === lesson.id ? null : lesson);
                                 }}
                             >
                                 <Icon name="gear" scale={16} />
@@ -138,16 +156,53 @@ export const LessonListMobile: React.FC = () => {
                     </div>
                 );
             })}
-            {showDropdown && (
+            {selectedLesson && (
                 <LessonDropdown 
-                    onClose={() => setShowDropdown(false)} 
+                    onClose={() => setSelectedLesson(null)} 
                     iconRef={iconRef}
                     position={dropdownPosition}
                     screenHeight={window.innerHeight}
+                    lesson={selectedLesson}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
                 />
             )}
         </div>
     );
+};
+
+export const LessonListMobile = () => {
+    const filterFn = (lesson: Lesson) => !lesson.free_practice;
+    const title = "Lessons";
+    const newTitle = "New Lesson";
+    const onNew = () => {
+        console.log("New lesson clicked");
+    };
+    const onEdit = (lesson: Lesson) => {
+        console.log("Edit lesson clicked", lesson.id);
+    };
+    const onDelete = (lesson: Lesson) => {
+        console.log("Delete lesson clicked", lesson.id);
+    };
+
+    return <UnifiedListMobile filterFn={filterFn} title={title} newTitle={newTitle} onNew={onNew} onEdit={onEdit} onDelete={onDelete} />;
+};
+
+export const PracticeListMobile = () => {
+    const filterFn = (lesson: Lesson) => lesson.free_practice;
+    const title = "Practice";
+    const newTitle = "New Practice";
+    const onNew = () => {
+        console.log("New practice clicked");
+    };
+    const onEdit = (lesson: Lesson) => {
+        console.log("Edit practice clicked", lesson.id);
+    };
+    const onDelete = (lesson: Lesson) => {
+        console.log("Delete practice clicked", lesson.id);
+    };
+
+    return <UnifiedListMobile filterFn={filterFn} title={title} newTitle={newTitle} onNew={onNew} onEdit={onEdit} onDelete={onDelete} />;
 };
 
 export default LessonListMobile;
