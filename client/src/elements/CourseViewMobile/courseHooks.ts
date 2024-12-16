@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from "react";
-import { useSetStateValue, useStateValue } from "../../state/state";
+import { useSetStateValue, useStateValue, WorkPage } from "../../state/state";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 
 export const useCourseInfo = () => {
     const setState = useSetStateValue();
@@ -42,4 +43,42 @@ export const useCourseInfo = () => {
             });
         }
     }, [dataLessons, setState, isPendingLessons, errorLessons, selectedCourseId]);
+    
+    const fetchCourse = useCallback(async () => {
+        try {
+            const response = await fetch(`/api/course/${selectedCourseId}`, {
+                headers: {
+                    'Authorization': `Bearer ${jwt}`
+                }
+            });
+            
+            if (!response.ok) {
+                setState(draft => {
+                    draft.currentCourse.content = null;
+                    draft.pageChoice.workPage = WorkPage.AllCourses;
+                });
+                if (response.status === 404) {
+                    setState(draft => { draft.pageChoice.selectedCourse = null });
+                }
+                onRequestError(response, "Error fetching course");
+                return;
+            }
+            
+            return response.json();
+        } catch (error) {
+            toast.error(`Error fetching course`);
+            console.error('Error fetching course:', error);
+        }
+    }, [jwt, selectedCourseId, onRequestError, setState]);
+
+    const {isPending: isPendingCourse, error: errorCourse, data: dataCourse} = useQuery({
+        queryKey: ['use-course-info-course-' + selectedCourseId],
+        queryFn: fetchCourse
+    })
+
+    useEffect(() => {
+        if (!isPendingCourse && !errorCourse && selectedCourseId) {
+            setState(draft => { draft.courseInfo[selectedCourseId].content = dataCourse });
+        }
+    }, [dataCourse, setState, isPendingCourse, errorCourse, selectedCourseId]);
 }

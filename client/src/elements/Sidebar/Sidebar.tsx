@@ -3,6 +3,7 @@ import { Icon } from '../Icon/Icon';
 import { Course, Lesson, State, useSetStateValue, useStateValue, WorkPage, ModalSelector } from '../../state/state';
 import { useQuery } from '@tanstack/react-query';
 import { createAssessment } from '../../api/assessment';
+import { smallScreen } from '../../utils/globals';
 
 const CourseBox = ({ course }: { course: Course }) => {
     const setState = useSetStateValue();
@@ -126,7 +127,13 @@ const CourseBox = ({ course }: { course: Course }) => {
         { 
             icon: <Icon scale={12} name="color" />, 
             label: 'View Course',
-            onClick: () => setState(draft => { draft.pageChoice.workPage = WorkPage.Course; draft.pageChoice.selectedCourse = course.id })
+            onClick: () => setState(draft => {
+                draft.pageChoice.workPage = WorkPage.Course;
+                draft.pageChoice.selectedCourse = course.id
+                if (smallScreen()) {
+                    draft.sidebarOpen = false;
+                }
+            })
         },
         { 
             icon: <Icon scale={12} name="mic" />, 
