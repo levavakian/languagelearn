@@ -239,28 +239,35 @@ const Sidebar = () => {
 
     return (
         <div className={`
-            min-w-0 bg-alice-blue min-h-screen m-0 p-0 top-0 overflow-visible scrollbar-none relative
+            min-w-0 bg-alice-blue min-h-screen m-0 p-0 pb-10 top-0 overflow-visible scrollbar-none relative
             transition-all duration-300 ease-in-out
         `}>
-            <div className={`transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-[250px] opacity-100' : 'w-0 opacity-0'}`}>
-                <div className="text-center text-indigo-dye py-[30px] cursor-pointer"
-                    onClick={() => setState(draft => {
-                        draft.pageChoice.workPage = WorkPage.Intro
-                        draft.triggers.key += 1
-                    })}
-                >
-                    <span className="font-ancorli font-extralight text-[30pt] tracking-tight">ARATTA</span>
-                </div>
-                
-                <div>
+            <div className={`
+                transition-all duration-300 ease-in-out 
+                ${sidebarOpen ? 'w-[250px] opacity-100' : 'w-0 opacity-0'}
+                h-screen overflow-y-auto scrollbar-none
+            `}>
+                <div className="h-full">
+                    <div className="text-center text-indigo-dye py-[30px] cursor-pointer"
+                        onClick={() => setState(draft => {
+                            draft.pageChoice.workPage = WorkPage.Intro
+                            draft.triggers.key += 1
+                        })}
+                    >
+                        <span className="font-ancorli font-extralight text-[30pt] tracking-tight">ARATTA</span>
+                    </div>
+                    
                     <div>
-                        <h2 className="font-nobeluno font-semibold text-half-grey mx-[12.5%] flex justify-between items-center">
-                            My Courses
-                        </h2>
-                        
                         <div>
-                            {coursesElements}
-                            <NewCourseButton />
+                            <h2 className="font-nobeluno font-semibold text-half-grey mx-[12.5%] flex justify-between items-center">
+                                My Courses
+                            </h2>
+                            
+                            <div>
+                                {coursesElements}
+                                <NewCourseButton />
+                                <div className="pb-5"></div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useStateValue, State } from '../../state/state';
+import { useStateValue } from '../../state/state';
 import { Icon } from '../Icon/Icon';
 import { useWindowSize } from '../../utils/globals';
 
@@ -23,8 +23,13 @@ const LessonDropdown: React.FC<LessonDropdownProps> = ({ onClose, iconRef, posit
 
     useEffect(() => {
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [handleClickOutside]);
+        document.addEventListener('scroll', onClose);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('scroll', onClose);
+        };
+    }, [handleClickOutside, onClose]);
 
     const isBottomHalf = position.y > screenHeight / 2;
 
@@ -33,9 +38,9 @@ const LessonDropdown: React.FC<LessonDropdownProps> = ({ onClose, iconRef, posit
             ref={dropdownRef}
             style={{
                 position: 'fixed',
-                left: `${position.x - 130}px`,  // 200px is the min-width of the dropdown
-                top: isBottomHalf ? 'auto' : `${position.y + 30}px`,
-                bottom: isBottomHalf ? `${screenHeight - position.y}px` : `${position.y}px`,
+                left: `${position.x - 130}px`,
+                top: isBottomHalf ? 'auto' : `${position.y + 25}px`,
+                bottom: isBottomHalf ? `${screenHeight - position.y - 2.5}px` : 'auto',
             }}
             className="rounded-md min-w-[100px] bg-[var(--indigo-dye)] text-indigo-dye text-xl 
                 border-[1px] border-solid border-[--indigo-dye)] flex flex-col-reverse shadow-[0_4px_0_var(--indigo-dye)]
@@ -75,7 +80,16 @@ export const LessonListMobile: React.FC = () => {
     const [showDropdown, setShowDropdown] = useState(false);
     const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
     const iconRef = useRef<HTMLDivElement>(null);
-    const [screenHeight, setScreenHeight] = useState(window.innerHeight);
+
+    useEffect(() => {
+        const handleResize = () => {
+            console.log("Main component resize detected");
+            setShowDropdown(false);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useWindowSize();
 
@@ -86,7 +100,7 @@ export const LessonListMobile: React.FC = () => {
     );
 
     return (
-        <div className="mr-3">
+        <div className="mr-3 mb-5">
             <div className="text-[32px] font-bold">
                 Lessons
             </div>

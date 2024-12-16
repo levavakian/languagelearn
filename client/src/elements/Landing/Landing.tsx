@@ -1,7 +1,7 @@
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "react-hot-toast";
 import { useSetStateValue } from "../../state/state";
-import { smallScreen, useWindowSize } from "../../utils/globals";
+import { useWindowSize } from "../../utils/globals";
 
 export const Landing = () => {
     const setState = useSetStateValue();
