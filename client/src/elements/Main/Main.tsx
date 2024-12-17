@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import './Main.css';
-import { State, useStateValue, useSetStateValue } from '../../state/state';
+import { State, useStateValue, useSetStateValue, ModalSelector, PageChoice } from '../../state/state';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { toast } from 'react-hot-toast';
 import { ToasterWithMax } from '../Toast/Toast';
@@ -17,6 +17,9 @@ const Main = () => {
     const jwt = useStateValue((state: State) => state.auth.token);
     const setState = useSetStateValue();
     const key = useStateValue((state: State) => state.triggers.key);
+    const pageChoice = useStateValue((state: State) => state.pageChoice);
+    const modalSelector = useStateValue((state: State) => state.modalSelector);
+    const deletedOrNotFoundIDs = useStateValue((state: State) => state.deletedOrNotFoundIDs);
 
     useEffect(() => {
         setState(draft => {
@@ -47,6 +50,45 @@ const Main = () => {
             };
         });
     }, [setState]);
+
+    useEffect(() => {
+        const currentState = window.history.state;
+        if (pageChoice === null) {
+            return;
+        }
+
+        if (currentState &&
+            currentState.selectedCourse === pageChoice.selectedCourse &&
+            currentState.selectedLesson === pageChoice.selectedLesson &&
+            currentState.workPage === pageChoice.workPage) {
+            return;
+        }
+
+        window.history.pushState(pageChoice, '', window.location.pathname);
+    }, [pageChoice]);
+
+    useEffect(() => {
+        const handleBackButton = (event: PopStateEvent) => {
+            if (modalSelector !== ModalSelector.None) {
+                setState(draft => { draft.modalSelector = ModalSelector.None });
+                window.history.pushState(pageChoice, '', window.location.pathname);
+                return;
+            }
+
+            if (event.state === null) {
+                window.history.back();
+                return;
+            }
+
+            setState(draft => { draft.pageChoice = event.state})
+            return;
+        };
+
+        window.addEventListener('popstate', handleBackButton);
+        return () => {
+            window.removeEventListener('popstate', handleBackButton);
+        };
+    }, [jwt, setState, pageChoice, modalSelector, deletedOrNotFoundIDs]);
 
     return (
         <div key={key} className="main-container">

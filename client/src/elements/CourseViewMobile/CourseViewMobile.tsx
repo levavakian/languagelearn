@@ -7,12 +7,12 @@ export const CourseViewMobile = () => {
     const tabSelection = useStateValue(state => state.tabSelection)
     useCourseInfo();
     const courseInfo = useStateValue(state => state.courseInfo[state.pageChoice.selectedCourse || ""]);
-    
+
     return (
         <div className="flex flex-col w-full">
             <div className="w-full text-right text-semibold text-[20px]">
                 <div className="mr-3">
-                    {courseInfo.content?.name}
+                    {courseInfo ? courseInfo.content?.name : "Course"}
                 </div>
             </div>
             <div className="flex w-full relative">

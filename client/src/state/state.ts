@@ -126,6 +126,12 @@ export type Message = {
     response_id: string;
 }
 
+export type PageChoice = {
+    workPage: WorkPage
+    selectedCourse: string | null
+    selectedLesson: string | null
+}
+
 export type WrappedState = {
     auth: {
         token: Persistable<string>
@@ -136,11 +142,7 @@ export type WrappedState = {
         timeLastPayment: number
         timeLastLessonMod: number
     }
-    pageChoice: Persistable<{
-        workPage: WorkPage
-        selectedCourse: string | null
-        selectedLesson: string | null
-    }>
+    pageChoice: Persistable<PageChoice>
     courseInfo: Record<string, {content: Course | null, lessons: Lesson[], settings: CourseSettings | null}>
     currentCourse: {
         content: Course | null
@@ -174,6 +176,7 @@ export type WrappedState = {
     preferredInstructorStyle: Persistable<PreferredInstructorStyle>
     sidebarOpen: boolean
     tabSelection: TabSelection
+    deletedOrNotFoundIDs: Record<string, boolean>
 }
 
 const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
@@ -224,6 +227,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     preferredInstructorStyle: persisted('preferred-instructor-style', PreferredInstructorStyle.Neutral),
     sidebarOpen: !smallScreen(),
     tabSelection: TabSelection.Lessons,
+    deletedOrNotFoundIDs: {},
 })
 
 export type State = typeof initialState
