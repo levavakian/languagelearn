@@ -129,11 +129,13 @@ export type Message = {
 
 export type PageChoice = {
     workPage: WorkPage
+    tabSelection: TabSelection
     selectedCourse: string | null
     selectedLesson: string | null
 }
 
 export type WrappedState = {
+    backspaceFn: ((event: PopStateEvent) => void) | null
     auth: {
         token: Persistable<string>
         onRequestError: (response: any, msg?: string, id?: string) => void
@@ -176,10 +178,10 @@ export type WrappedState = {
     modalSelector: ModalSelector
     preferredInstructorStyle: Persistable<PreferredInstructorStyle>
     sidebarOpen: boolean
-    tabSelection: TabSelection
 }
 
 const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
+    backspaceFn: null,
     auth: {
         token: persisted('login-token', ''),
         onRequestError: (response: any, msg?: string) => { console.log("Request error handler unset",response,msg) },
@@ -191,6 +193,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     },
     pageChoice: persisted('page-choice', {
         workPage: WorkPage.Intro,
+        tabSelection: TabSelection.Lessons,
         selectedCourse: null,
         selectedLesson: null,
     }),
@@ -226,7 +229,6 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     modalSelector: ModalSelector.None,
     preferredInstructorStyle: persisted('preferred-instructor-style', PreferredInstructorStyle.Neutral),
     sidebarOpen: !smallScreen(),
-    tabSelection: TabSelection.Lessons,
 })
 
 export type State = typeof initialState

@@ -10,6 +10,7 @@ import {
     QueryClientProvider,
   } from '@tanstack/react-query'
 import { Landing } from '../Landing/Landing';
+import _ from 'lodash';
   
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const Main = () => {
     const key = useStateValue((state: State) => state.triggers.key);
     const pageChoice = useStateValue((state: State) => state.pageChoice);
     const modalSelector = useStateValue((state: State) => state.modalSelector);
+    const backspaceFn = useStateValue((state: State) => state.backspaceFn);
 
     useEffect(() => {
         setState(draft => {
@@ -56,10 +58,8 @@ const Main = () => {
             return;
         }
 
-        if (currentState &&
-            currentState.selectedCourse === pageChoice.selectedCourse &&
-            currentState.selectedLesson === pageChoice.selectedLesson &&
-            currentState.workPage === pageChoice.workPage) {
+        if (_.isEqual(currentState, pageChoice)) {
+            console.log("was equal")
             return;
         }
 
@@ -68,9 +68,14 @@ const Main = () => {
 
     useEffect(() => {
         const handleBackButton = (event: PopStateEvent) => {
+            if (backspaceFn) {
+                backspaceFn(event);
+                return;
+            }
+
             if (modalSelector !== ModalSelector.None) {
                 setState(draft => { draft.modalSelector = ModalSelector.None });
-                window.history.pushState(pageChoice, '', window.location.pathname);
+                window.history.replaceState(pageChoice, '', window.location.pathname);
                 return;
             }
 
@@ -88,10 +93,11 @@ const Main = () => {
         };
 
         window.addEventListener('popstate', handleBackButton);
+
         return () => {
             window.removeEventListener('popstate', handleBackButton);
         };
-    }, [jwt, setState, pageChoice, modalSelector]);
+    }, [jwt, setState, pageChoice, modalSelector, backspaceFn]);
 
     return (
         <div key={key} className="main-container">

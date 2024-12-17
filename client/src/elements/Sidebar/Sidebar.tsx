@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useMemo } from 'react';
+import React, { useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { Icon } from '../Icon/Icon';
 import { Course, Lesson, State, useSetStateValue, useStateValue, WorkPage, ModalSelector } from '../../state/state';
 import { useQuery } from '@tanstack/react-query';
@@ -203,12 +203,26 @@ const NewCourseButton = () => {
 
 const Sidebar = () => {
     const setState = useSetStateValue();
+    const sidebarRef = useRef<HTMLDivElement>(null);
 
     const jwt = useStateValue((state: State) => state.auth.token);
     const onRequestError = useStateValue((state: State) => state.auth.onRequestError);
     const courses = useStateValue((state: State) => state.courses);
     const sendMessage = useStateValue(state => state.currentChat.ws.sendMessage);
     const sidebarOpen = useStateValue(state => state.sidebarOpen);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (smallScreen() && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+                setState(draft => { draft.sidebarOpen = false });
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [setState]);
 
     const coursesElements = useMemo(() => {
         return [...courses]
@@ -245,7 +259,7 @@ const Sidebar = () => {
     });
 
     return (
-        <div className={`
+        <div ref={sidebarRef} className={`
             min-w-0 bg-alice-blue min-h-screen m-0 p-0 pb-10 top-0 overflow-visible scrollbar-none relative
             transition-all duration-300 ease-in-out
         `}>
