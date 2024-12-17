@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import './Main.css';
-import { State, useStateValue, useSetStateValue, ModalSelector, PageChoice } from '../../state/state';
+import { State, useStateValue, useSetStateValue, ModalSelector, PageChoice, WorkPage } from '../../state/state';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { toast } from 'react-hot-toast';
 import { ToasterWithMax } from '../Toast/Toast';
@@ -77,6 +77,10 @@ const Main = () => {
 
             if (event.state === null) {
                 window.history.back();
+                return;
+            }
+
+            if (event.state.pageChoice === WorkPage.Intro) {
                 return;
             }
 
