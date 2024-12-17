@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Lesson, useStateValue } from '../../state/state';
+import { Lesson, ModalSelector, useSetStateValue, useStateValue, WorkPage } from '../../state/state';
 import { Icon } from '../Icon/Icon';
 import { useWindowSize } from '../../utils/globals';
+import { LessonEditModal } from '../LessonEditModal/LessonEditModal';
+import { useHandleNewPractice } from '../../utils/requests';
 
 interface LessonDropdownProps {
     onClose: () => void;
@@ -122,7 +124,7 @@ export const UnifiedListMobile: React.FC<{
             <div className="mt-5 rounded-lg w-fit bg-coral text-baby-powder  border-indigo-dye border-solid border-[1px] shadow-[0_4px_0_var(--indigo-dye)] p-2 transition-all duration-200 active:translate-y-1 active:shadow-none" onClick={onNew}>
                 + {newTitle}
             </div>
-            {filtered.map((lesson) => {
+            {filtered.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).map((lesson) => {
                 return (
                     <div key={lesson.id} className="mt-5 flex flex-row w-full">
                         <div className="w-full flex flex-row justify-between min-w-0 bg-alice-blue border-indigo-dye border-solid border-[1px] shadow-[0_4px_0_var(--indigo-dye)] rounded-lg p-2 transition-all duration-200 active:translate-y-1 active:shadow-none" onClick={() => console.log("hello")}>
@@ -172,37 +174,54 @@ export const UnifiedListMobile: React.FC<{
 };
 
 export const LessonListMobile = () => {
-    const filterFn = (lesson: Lesson) => !lesson.free_practice;
+    const setState = useSetStateValue();
+    const modalSelector = useStateValue(state => state.modalSelector);
+    const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
+
     const title = "Lessons";
     const newTitle = "New Lesson";
+    const filterFn = (lesson: Lesson) => !lesson.free_practice;
     const onNew = () => {
-        console.log("New lesson clicked");
+        setState(draft => { draft.modalSelector = ModalSelector.NewLesson })
     };
     const onEdit = (lesson: Lesson) => {
-        console.log("Edit lesson clicked", lesson.id);
+        setState(draft => { draft.modalSelector = ModalSelector.NewLesson; setLessonToEdit(lesson) })
     };
     const onDelete = (lesson: Lesson) => {
         console.log("Delete lesson clicked", lesson.id);
     };
 
-    return <UnifiedListMobile filterFn={filterFn} title={title} newTitle={newTitle} onNew={onNew} onEdit={onEdit} onDelete={onDelete} />;
+    return <div>
+        {modalSelector === ModalSelector.NewLesson && lessonToEdit && <LessonEditModal lesson={lessonToEdit} />}
+        <UnifiedListMobile filterFn={filterFn} title={title} newTitle={newTitle} onNew={onNew} onEdit={onEdit} onDelete={onDelete} />;
+    </div>
 };
 
 export const PracticeListMobile = () => {
+    const setState = useSetStateValue();
+    const modalSelector = useStateValue(state => state.modalSelector);
+    const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
+    const jwt = useStateValue(state => state.auth.token);
+    const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
+
+    const handleNewPractice = useHandleNewPractice();
+
     const filterFn = (lesson: Lesson) => lesson.free_practice;
     const title = "Practice";
     const newTitle = "New Practice";
-    const onNew = () => {
-        console.log("New practice clicked");
-    };
+    const onNew = handleNewPractice;
     const onEdit = (lesson: Lesson) => {
-        console.log("Edit practice clicked", lesson.id);
+        setState(draft => { draft.modalSelector = ModalSelector.NewLesson; setLessonToEdit(lesson) })
     };
     const onDelete = (lesson: Lesson) => {
         console.log("Delete practice clicked", lesson.id);
     };
 
-    return <UnifiedListMobile filterFn={filterFn} title={title} newTitle={newTitle} onNew={onNew} onEdit={onEdit} onDelete={onDelete} />;
+    return <div>
+        {modalSelector === ModalSelector.NewLesson && lessonToEdit && <LessonEditModal lesson={lessonToEdit} />}
+        <UnifiedListMobile filterFn={filterFn} title={title} newTitle={newTitle} onNew={onNew} onEdit={onEdit} onDelete={onDelete} />;
+    </div>
 };
 
 export default LessonListMobile;
