@@ -10,7 +10,7 @@ import { createAssessment } from '../../api/assessment';
 import { VocabList } from './VocabList';
 import { QuickPrompts } from './QuickPrompts';
 import { CustomInstructions } from './CustomInstructions';
-import { useHandleNewPractice } from '../../utils/requests';
+import { useHandleDeleteLesson, useHandleNewPractice } from '../../utils/requests';
 
 const SettingsLoader = () => {
     const jwt = useStateValue(state => state.auth.token);
@@ -110,28 +110,7 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
         });
     }
 
-    const handleDelete = async (lessonId: string) => {
-        if (!window.confirm('Are you sure you want to delete this lesson? This action cannot be undone.')) {
-            return;
-        }
-
-        const response = await fetch(`/api/lesson/${lessonId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${jwt}`
-            }
-        });
-
-        if (!response.ok) {
-            onRequestError(response, "Failed to delete lesson", "course-view-lesson-delete");
-            return;
-        }
-
-        setState(draft => {
-            draft.currentCourse.lessons = draft.currentCourse.lessons.filter(lesson => lesson.id !== lessonId);
-            draft.triggers.timeLastLessonMod = Date.now();
-        });
-    }
+    const handleDeleteLesson = useHandleDeleteLesson();
 
     return (
         <div className="course-lesson-list">
@@ -189,7 +168,7 @@ const LessonList = ({ lessons }: { lessons: Lesson[] }) => {
                                 }}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDelete(lesson.id);
+                                    handleDeleteLesson(lesson);
                                 }}
                             />
                         </div>
@@ -227,29 +206,7 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
         });
     }
 
-    const handleDelete = async (lessonId: string) => {
-        if (!window.confirm('Are you sure you want to delete this practice? This action cannot be undone.')) {
-            return;
-        }
-
-        const response = await fetch(`/api/lesson/${lessonId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${jwt}`
-            }
-        });
-
-        if (!response.ok) {
-            onRequestError(response, "Failed to delete practice lesson", "course-view-practice-delete");
-            return;
-        }
-
-        setState(draft => {
-            draft.currentCourse.lessons = draft.currentCourse.lessons.filter(lesson => lesson.id !== lessonId);
-            draft.triggers.timeLastLessonMod = Date.now();
-        });
-    }
-
+    const handleDelete = useHandleDeleteLesson();
     const handleNewPractice = useHandleNewPractice();
 
     return (
@@ -306,7 +263,7 @@ const PracticeList = ({ lessons }: { lessons: Lesson[] }) => {
                                 }}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDelete(lesson.id);
+                                    handleDelete(lesson);
                                 }}
                             />
                         </div>

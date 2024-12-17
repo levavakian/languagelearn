@@ -101,6 +101,7 @@ export type Lesson = {
     lesson_plan: string
     free_practice: boolean
     order_index: number
+    course_id: string
 }
 
 export type LessonPlan = {
@@ -176,7 +177,6 @@ export type WrappedState = {
     preferredInstructorStyle: Persistable<PreferredInstructorStyle>
     sidebarOpen: boolean
     tabSelection: TabSelection
-    deletedOrNotFoundIDs: Record<string, boolean>
 }
 
 const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
@@ -227,7 +227,6 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
     preferredInstructorStyle: persisted('preferred-instructor-style', PreferredInstructorStyle.Neutral),
     sidebarOpen: !smallScreen(),
     tabSelection: TabSelection.Lessons,
-    deletedOrNotFoundIDs: {},
 })
 
 export type State = typeof initialState

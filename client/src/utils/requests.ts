@@ -1,4 +1,4 @@
-import { WorkPage } from "../state/state";
+import { Lesson, WorkPage } from "../state/state";
 
 import { useCallback } from "react";
 import { useSetStateValue, useStateValue } from "../state/state";
@@ -37,4 +37,39 @@ export const useHandleNewPractice = () => {
     }, [setState, jwt, onRequestError, selectedCourseId]);
 
     return handleNewPractice;
+}
+
+export const useHandleDeleteLesson = () => {
+    const setState = useSetStateValue();
+    const jwt = useStateValue(state => state.auth.token);
+    const onRequestError = useStateValue(state => state.auth.onRequestError);
+
+    const handleDelete = useCallback(async (lesson: Lesson) => {
+        if (!window.confirm('Are you sure you want to delete this practice? This action cannot be undone.')) {
+            return;
+        }
+
+        const response = await fetch(`/api/lesson/${lesson.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${jwt}`
+            }
+        });
+
+        if (!response.ok) {
+            onRequestError(response, "Failed to delete practice lesson", "course-view-practice-delete");
+            return;
+        }
+
+        setState(draft => {
+            draft.currentCourse.lessons = draft.currentCourse.lessons.filter(l => l.id !== lesson.id);
+            draft.triggers.timeLastLessonMod = Date.now();
+
+            if (lesson.course_id in draft.courseInfo) {
+                draft.courseInfo[lesson.course_id].lessons = draft.courseInfo[lesson.course_id].lessons.filter(l => l.id !== lesson.id);
+            }
+        });
+    }, [setState, jwt, onRequestError]);
+
+    return handleDelete;
 }

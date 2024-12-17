@@ -19,7 +19,6 @@ const Main = () => {
     const key = useStateValue((state: State) => state.triggers.key);
     const pageChoice = useStateValue((state: State) => state.pageChoice);
     const modalSelector = useStateValue((state: State) => state.modalSelector);
-    const deletedOrNotFoundIDs = useStateValue((state: State) => state.deletedOrNotFoundIDs);
 
     useEffect(() => {
         setState(draft => {
@@ -92,7 +91,7 @@ const Main = () => {
         return () => {
             window.removeEventListener('popstate', handleBackButton);
         };
-    }, [jwt, setState, pageChoice, modalSelector, deletedOrNotFoundIDs]);
+    }, [jwt, setState, pageChoice, modalSelector]);
 
     return (
         <div key={key} className="main-container">

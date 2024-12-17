@@ -3,7 +3,7 @@ import { Lesson, ModalSelector, useSetStateValue, useStateValue, WorkPage } from
 import { Icon } from '../Icon/Icon';
 import { useWindowSize } from '../../utils/globals';
 import { LessonEditModal } from '../LessonEditModal/LessonEditModal';
-import { useHandleNewPractice } from '../../utils/requests';
+import { useHandleNewPractice, useHandleDeleteLesson } from '../../utils/requests';
 
 interface LessonDropdownProps {
     onClose: () => void;
@@ -178,6 +178,8 @@ export const LessonListMobile = () => {
     const modalSelector = useStateValue(state => state.modalSelector);
     const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
 
+    const handleDeleteLesson = useHandleDeleteLesson();
+
     const title = "Lessons";
     const newTitle = "New Lesson";
     const filterFn = (lesson: Lesson) => !lesson.free_practice;
@@ -188,7 +190,7 @@ export const LessonListMobile = () => {
         setState(draft => { draft.modalSelector = ModalSelector.NewLesson; setLessonToEdit(lesson) })
     };
     const onDelete = (lesson: Lesson) => {
-        console.log("Delete lesson clicked", lesson.id);
+        handleDeleteLesson(lesson);
     };
 
     return <div>
@@ -206,6 +208,7 @@ export const PracticeListMobile = () => {
     const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
 
     const handleNewPractice = useHandleNewPractice();
+    const handleDeletePractice = useHandleDeleteLesson();
 
     const filterFn = (lesson: Lesson) => lesson.free_practice;
     const title = "Practice";
@@ -215,7 +218,7 @@ export const PracticeListMobile = () => {
         setState(draft => { draft.modalSelector = ModalSelector.NewLesson; setLessonToEdit(lesson) })
     };
     const onDelete = (lesson: Lesson) => {
-        console.log("Delete practice clicked", lesson.id);
+        handleDeletePractice(lesson);
     };
 
     return <div>
