@@ -118,8 +118,8 @@ export const UnifiedListMobile: React.FC<{
 
     return (
         <div className="mr-3 mb-5">
-            <div className="text-[28px] font-bold">
-                {"Lessons"}
+            <div className="text-2xl font-semibold">
+                {title}
             </div>
             <div className="mt-5 rounded-lg w-fit bg-coral text-baby-powder  border-indigo-dye border-solid border-[1px] shadow-[0_4px_0_var(--indigo-dye)] p-2 transition-all duration-200 active:translate-y-1 active:shadow-none" onClick={onNew}>
                 + {newTitle}

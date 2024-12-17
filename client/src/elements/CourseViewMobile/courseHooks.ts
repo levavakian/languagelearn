@@ -81,4 +81,30 @@ export const useCourseInfo = () => {
             setState(draft => { draft.courseInfo[selectedCourseId].content = dataCourse });
         }
     }, [dataCourse, setState, isPendingCourse, errorCourse, selectedCourseId]);
+
+    const fetchSettings = useCallback(async () => {
+        const response = await fetch(`/api/course/${selectedCourseId}/settings`, {
+            headers: {
+                'Authorization': `Bearer ${jwt}`
+            }
+        });
+
+        if (!response.ok) {
+            onRequestError(response, "Error fetching course settings");
+            return;
+        }
+
+        return response.json();
+    }, [jwt, selectedCourseId, onRequestError]);
+
+    const {isPending: isPendingSettings, error: errorSettings, data: dataSettings} = useQuery({
+        queryKey: ['use-course-info-settings-' + selectedCourseId],
+        queryFn: fetchSettings
+    })
+
+    useEffect(() => {
+        if (!isPendingSettings && !errorSettings && selectedCourseId) {
+            setState(draft => { draft.courseInfo[selectedCourseId].settings = dataSettings });
+        }
+    }, [dataSettings, setState, isPendingSettings, errorSettings, selectedCourseId]);
 }
