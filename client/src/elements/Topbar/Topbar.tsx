@@ -213,17 +213,21 @@ export const CoinCount = () => {
 
     useEffect(() => {
         const fetchCoins = async () => {
-            const response = await fetch('/api/user/credits', {
-                headers: {
-                    'Authorization': `Bearer ${jwt}`,
-                },
-            });
-            if (!response.ok) {
-                onRequestError(response, "Error fetching coins");
-                return;
+            try {
+                const response = await fetch('/api/user/credits', {
+                    headers: {
+                        'Authorization': `Bearer ${jwt}`,
+                    },
+                });
+                if (!response.ok) {
+                    onRequestError(response, "Error fetching coins");
+                    return;
+                }
+                const data = await response.json();
+                setCoins(data.credits);
+            } catch (error) {
+                toast.error("Failed to fetch coins. Please check your connection.");
             }
-            const data = await response.json();
-            setCoins(data.credits);
         };
         fetchCoins();
 
