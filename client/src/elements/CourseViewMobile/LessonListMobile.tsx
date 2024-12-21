@@ -187,14 +187,14 @@ export const LessonListMobile = () => {
         setState(draft => { draft.modalSelector = ModalSelector.NewLesson })
     };
     const onEdit = (lesson: Lesson) => {
-        setState(draft => { draft.modalSelector = ModalSelector.NewLesson; setLessonToEdit(lesson) })
+        setState(draft => { draft.modalSelector = ModalSelector.LessonEdit; setLessonToEdit(lesson) })
     };
     const onDelete = (lesson: Lesson) => {
         handleDeleteLesson(lesson);
     };
 
     return <div>
-        {modalSelector === ModalSelector.NewLesson && lessonToEdit && <LessonEditModal lesson={lessonToEdit} />}
+        {modalSelector === ModalSelector.LessonEdit && lessonToEdit && <LessonEditModal lesson={lessonToEdit} />}
         <UnifiedListMobile filterFn={filterFn} title={title} newTitle={newTitle} onNew={onNew} onEdit={onEdit} onDelete={onDelete} />;
     </div>
 };
@@ -215,14 +215,14 @@ export const PracticeListMobile = () => {
     const newTitle = "New Practice";
     const onNew = handleNewPractice;
     const onEdit = (lesson: Lesson) => {
-        setState(draft => { draft.modalSelector = ModalSelector.NewLesson; setLessonToEdit(lesson) })
+        setState(draft => { draft.modalSelector = ModalSelector.LessonEdit; setLessonToEdit(lesson) })
     };
     const onDelete = (lesson: Lesson) => {
         handleDeletePractice(lesson);
     };
 
     return <div>
-        {modalSelector === ModalSelector.NewLesson && lessonToEdit && <LessonEditModal lesson={lessonToEdit} />}
+        {modalSelector === ModalSelector.LessonEdit && lessonToEdit && <LessonEditModal lesson={lessonToEdit} />}
         <UnifiedListMobile filterFn={filterFn} title={title} newTitle={newTitle} onNew={onNew} onEdit={onEdit} onDelete={onDelete} />;
     </div>
 };

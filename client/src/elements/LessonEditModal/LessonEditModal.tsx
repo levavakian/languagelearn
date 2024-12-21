@@ -1,15 +1,18 @@
 import { ModalSelector, useStateValue, Lesson, VocabItem } from "../../state/state";
 import { Icon } from "../Icon/Icon";
-import { ShowModal } from "../Modal/Modal";
+import { ShowMobileModal, ShowModal } from "../Modal/Modal";
 import { useSetStateValue } from "../../state/state";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { produce } from "immer";
+import { smallScreen, useWindowSize } from "../../utils/globals";
+import { MobileNav, Tab } from "../Sidebar/MobileNav";
+import { IconName } from "../../utils/icons";
 
 export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: Lesson, summaryInput?: string, vocabEdit?: Record<string, VocabItem>}) => {
     const setState = useSetStateValue();
     const settings = useStateValue(state => state.currentCourse.settings);
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
-    const [title, setTitle] = useState(lesson.name || "Untitled Lesson");
+    const [titleText, setTitleText] = useState(lesson.name || "Untitled Lesson");
     const [isEditing, setIsEditing] = useState(false);
     const [summary, setSummary] = useState(summaryInput || lesson.summary || "");
     const [vocab, setVocab] = useState(vocabEdit || {});
@@ -33,7 +36,7 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
             const width = spanRef.current.offsetWidth;
             inputRef.current.style.width = `${width + 20}px`;
         }
-    }, [title, isEditing]);
+    }, [titleText, isEditing]);
 
     const fetchVocabUpdates = useCallback(async () => {
         setIsGenerating(true);
@@ -96,7 +99,7 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
     const saveLesson = useCallback(async () => {
         setIsGenerating(true);
         const updatedLesson = produce(lesson, draft => {
-            draft.name = title;
+            draft.name = titleText;
             draft.summary = summary;
         });
 
@@ -156,62 +159,97 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
         }
 
         setState(draft => { draft.modalSelector = ModalSelector.None; });
-    }, [jwt, onRequestError, settings, vocab, title, summary, lesson, selectedCourseId, setState]);
+    }, [jwt, onRequestError, settings, vocab, titleText, summary, lesson, selectedCourseId, setState]);
+
+    useWindowSize();
+
+    const renderTitle = () => (
+        isEditing ? (
+            <div className="flex items-start">
+                <div className="relative inline-block">
+                    <span
+                        ref={spanRef}
+                        className="invisible text-nowrap absolute text-[32px] font-bold font-nobel"
+                    >
+                        {titleText}
+                    </span>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={titleText}
+                        onChange={(e) => setTitleText(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                setIsEditing(false);
+                            }
+                        }}
+                        className="text-[32px] font-bold text-indigo-dye font-nobel bg-transparent outline-none border-none p-0 mr-4"
+                        autoFocus
+                    />
+                </div>
+                <div className="mt-2 mr-auto">
+                    <Icon 
+                        name="check" 
+                        scale={20} 
+                        className="opacity-100 group-hover:opacity-100 transition-opacity" 
+                        onClick={() => {
+                            setIsEditing(false);
+                        }}
+                    />
+                </div>
+            </div>
+        ) : (
+            <div className="flex items-start group" onClick={(e) => {
+                if (!isEditing) {
+                    setIsEditing(true)
+                }
+            }}>
+                <div className="text-[32px] font-bold text-indigo-dye text-nowrap font-nobel p-0" title={titleText}>{titleText}</div>
+                <div className="mt-3 ml-10 mr-auto">
+                    <Icon 
+                        name="pencil" 
+                        scale={16} 
+                        className="opacity-20 group-hover:opacity-100 transition-opacity" 
+                        />
+                </div>
+            </div>
+        )
+    );
+
+    if (smallScreen()) {
+        const labels: Tab[] = [
+            { icon: "chat" as IconName, onClick: () => {console.log("chat")} },
+            { icon: "altchat" as IconName, onClick: () => {console.log("altchat")} },
+            { icon: "dictionary" as IconName, onClick: () => {console.log("dictionary")} },
+            { icon: "writing" as IconName, onClick: () => {console.log("writing")} },
+        ];
+    
+        return ShowMobileModal(
+            ModalSelector.LessonEdit,
+            <div className="h-full flex flex-col">
+                {/* {renderTitle()} */}
+                <span className="flex-none">1</span>
+                <div className="flex-1 overflow-hidden">
+                    <MobileNav 
+                        labels={labels} 
+                        content={
+                            <div className="h-full">
+                                Hello
+                            </div>
+                        }
+                    />
+                </div>
+                <span className="flex-none">22222222222222222</span>
+            </div>,
+            () => { return true; }
+        )
+    }
 
     return ShowModal(
         ModalSelector.LessonEdit,
         <div className="flex flex-col max-w-[1200px]">
             <div style={{ cursor: 'pointer' }}>
-                {isEditing ? (
-                    <div className="flex items-start">
-                        <div className="relative inline-block">
-                            <span
-                                ref={spanRef}
-                                className="invisible text-nowrap absolute text-[32px] font-bold font-nobel"
-                            >
-                                {title}
-                            </span>
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        setIsEditing(false);
-                                    }
-                                }}
-                                className="text-[32px] font-bold text-indigo-dye font-nobel bg-transparent outline-none border-none p-0 mr-4"
-                                autoFocus
-                            />
-                        </div>
-                        <div className="mt-2 mr-auto">
-                            <Icon 
-                                name="check" 
-                                scale={20} 
-                                className="opacity-100 group-hover:opacity-100 transition-opacity" 
-                                onClick={() => {
-                                    setIsEditing(false);
-                                }}
-                            />
-                        </div>
-                    </div>
-                ) : (
-                    <div className="flex items-start group" onClick={(e) => {
-                        if (!isEditing) {
-                            setIsEditing(true)
-                        }
-                    }}>
-                        <div className="text-[32px] font-bold text-indigo-dye text-nowrap font-nobel p-0" title={title}>{title}</div>
-                        <div className="mt-3 ml-10 mr-auto">
-                            <Icon 
-                                name="pencil" 
-                                scale={16} 
-                                className="opacity-20 group-hover:opacity-100 transition-opacity" 
-                                />
-                        </div>
-                    </div>
-                )}
+                {renderTitle()}
             </div>
 
             <div className="flex mt-6 relative">

@@ -25,3 +25,5 @@ export const Icon: React.FC<IconProps> = ({ name, alt, scale, flipX, rotation, .
     </div>
   );
 };
+
+export type { IconName } from '../../utils/icons';
