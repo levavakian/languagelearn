@@ -13,7 +13,7 @@ const Selector = ({ labels }: {labels: Tab[]}) => {
     return <div className="flex flex-col gap-4 w-full mt-16">
         <div className="mr-2">
             {labels.map((label, i) => (
-                <div onClick={() => { setSelected(i); label.onClick() }} className={`rounded-lg p-2 ${selected === i ? 'bg-baby-powder-dark' : ''}`}>
+                <div key={i} onClick={() => { setSelected(i); label.onClick() }} className={`rounded-lg p-2 ${selected === i ? 'bg-baby-powder-dark' : ''}`}>
                     <Icon name={label.icon} scale={24}/>
                 </div>
             ))}
@@ -22,10 +22,10 @@ const Selector = ({ labels }: {labels: Tab[]}) => {
 }
 
 export const MobileNav = ({ content, labels }: { content: React.ReactNode, labels: Tab[] }) => {
-    return <div>
-        <div className="flex w-full relative">
-            <div className="flex-1 min-w-0 pr-16">
-                <div className="ml-2 mt-2">
+    return <div className="h-full">
+        <div className="flex flex-col w-full h-full relative">
+            <div className="flex-1 h-full min-w-0 pr-16">
+                <div className="mt-2 flex-1 h-full">
                     {content}
                 </div>
             </div>

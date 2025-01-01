@@ -77,7 +77,7 @@ export const useCourseInfo = () => {
     })
 
     useEffect(() => {
-        if (!isPendingCourse && !errorCourse && selectedCourseId) {
+        if (!isPendingCourse && !errorCourse && selectedCourseId && dataCourse) {
             setState(draft => { draft.courseInfo[selectedCourseId].content = dataCourse });
         }
     }, [dataCourse, setState, isPendingCourse, errorCourse, selectedCourseId]);

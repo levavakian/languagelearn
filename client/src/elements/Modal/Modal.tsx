@@ -78,9 +78,9 @@ export const ShowMobileModal = (selector: ModalSelector, children: React.ReactNo
         className="MobileModal"
         overlayClassName="Overlay"
     >
-        <div className="relative flex flex-col min-h-full">
+        <div className="h-full flex flex-col">
             <div 
-                className="absolute -top-[-5px] -right-[25px]"
+                className="ml-auto -mr-7"
                 onClick={() => { handleClose(true); }}
                 role="button"
                 tabIndex={0}
@@ -91,7 +91,7 @@ export const ShowMobileModal = (selector: ModalSelector, children: React.ReactNo
                     style={{ filter: 'brightness(0) saturate(100%) invert(95%) sepia(2%) saturate(150%) hue-rotate(182deg) brightness(97%) contrast(85%)' }}
                 />
             </div>
-            <div>
+            <div className="flex-1 flex flex-col min-h-0">
                 <div className="pt-8"></div>
                 {children}
             </div>

@@ -21,6 +21,7 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
     const jwt = useStateValue(state => state.auth.token);
     const onRequestError = useStateValue(state => state.auth.onRequestError);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [mobileSelection, setMobileSelection] = useState("summary");
 
     useEffect(() => {
         document.body.style.cursor = isGenerating ? 'wait' : 'default';
@@ -188,7 +189,7 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
                     />
                 </div>
                 <div className="mt-2 mr-auto">
-                    <Icon 
+                    <Icon
                         name="check" 
                         scale={20} 
                         className="opacity-100 group-hover:opacity-100 transition-opacity" 
@@ -216,30 +217,130 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
         )
     );
 
+    const renderButtons = () => {
+        const textSize = smallScreen() ? "16px" : "26px";
+        const iconSize = smallScreen() ? 18 : 22;
+        const basePadding = smallScreen() ? "14px" : "16px";
+        const basePaddingLarge = smallScreen() ? "18px" : "20px";
+        
+        return (
+            <div className="flex ml-2 justify-end gap-4 mt-8">
+                <button 
+                    style={{ paddingLeft: basePaddingLarge, paddingRight: basePaddingLarge }}
+                    className={`py-3 bg-alice-blue text-[${textSize}] hover:bg-alice-blue border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-1 transition-all duration-100`}
+                    onClick={() => setState(draft => draft.modalSelector = ModalSelector.None)}
+                >
+                    Cancel
+                </button>
+                <button 
+                    style={{ paddingLeft: basePadding, paddingRight: basePadding }}
+                    className={`py-3 bg-coral hover:bg-coral border-solid border-[1px] border-indigo-dye text-baby-powder rounded-xl font-nobel text-[${textSize}] shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-125 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3`}
+                    onClick={saveLesson}
+                >
+                    Save
+                    <Icon name="next" scale={iconSize} style={{ marginBottom: '-3px', filter: 'invert(100%) sepia(0%) saturate(0%) hue-rotate(180deg) brightness(125%) contrast(100%)' }} />
+                </button>
+            </div>
+        );
+    };
+
     if (smallScreen()) {
         const labels: Tab[] = [
-            { icon: "chat" as IconName, onClick: () => {console.log("chat")} },
-            { icon: "altchat" as IconName, onClick: () => {console.log("altchat")} },
-            { icon: "dictionary" as IconName, onClick: () => {console.log("dictionary")} },
-            { icon: "writing" as IconName, onClick: () => {console.log("writing")} },
+            { icon: "chat" as IconName, onClick: () => {setMobileSelection("summary")} },
+            { icon: "dictionary" as IconName, onClick: () => {setMobileSelection("vocab")} },
+            { icon: "writing" as IconName, onClick: () => {setMobileSelection("plan")} },
         ];
+
+        const renderPlan = () => {
+            return <div>
+                <div className="text-[20px] font-nobel font-semibold text-indigo-dye">Lesson Plan</div>
+                <div className="mt-4 font-nobel text-indigo-dye bg-transparent mb-6">
+                    {lesson.lesson_plan || "No lesson plan available"}
+                </div>
+            </div>
+        }
+
+        const renderSummary = () => {
+            return <div className="h-full flex flex-col">
+                <div className="flex-0 ml-[-16px] mb-[12px]">
+                    <button 
+                        className={`${isGenerating ? 'bg-gray-300 cursor-not-allowed' : 'bg-alice-blue hover:brightness-105 active:shadow-none active:translate-y-1'} text-nowrap border-solid ml-4 border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel font-semibold text-[16px] px-2 py-1 shadow-[0_4px_0_0_var(--indigo-dye)] transition-all duration-100 flex items-center gap-3`}
+                        onClick={() => {!isGenerating && fetchSummaryUpdates()}}
+                        disabled={isGenerating}
+                    >
+                        <Icon name="ai" style={{ marginTop: '1px' }} scale={18} />
+                        {isGenerating ? "Generating Summary..." : "Generate Summary"}
+                    </button>
+                </div>
+                <div className="flex-1 w-[90%] mb-12">
+                    <textarea
+                        value={summary || ""}
+                        onChange={(e) => {
+                            setSummary(e.target.value);
+                        }}
+                        className="h-full w-full p-2 px-6 pt-6 resize-none font-nobel text-indigo-dye text-[16px] bg-white border-2 border-indigo-dye rounded-lg outline-none shadow-[0_4px_0_0_var(--indigo-dye)]"
+                        placeholder="Add or edit a summary..."
+                    />
+                </div>
+            </div>
+        }
+
+        const renderVocab = () => {
+            return <div className="h-full flex flex-col">
+                <div className="flex-0 mt-4">
+                    <button 
+                        className={`${isGenerating ? 'bg-gray-300 cursor-not-allowed' : 'bg-alice-blue hover:brightness-105 active:shadow-none active:translate-y-1'} border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel font-semibold text-[16px] px-2 py-1 shadow-[0_4px_0_0_var(--indigo-dye)] transition-all duration-100 flex items-center gap-3`}
+                        onClick={() => {!isGenerating && fetchVocabUpdates()}}
+                        disabled={isGenerating}
+                    >
+                        <Icon name="ai" style={{ marginTop: '1px' }} scale={18} />
+                        <div className="text-nowrap">{isGenerating ? "Generating Vocab Updates..." : "Generate Vocab Updates"}</div>
+                    </button>
+                </div>
+                <div className="flex-1 mt-5 mb-5 overflow-y-auto">
+                    {Object.entries(vocab)
+                        .sort(([, a], [, b]) => new Date(b.last_used).getTime() - new Date(a.last_used).getTime())
+                        .map(([key, value]) => (
+                            <div key={key} className="vocab-item-container mt-4">
+                                <div className="vocab-item">
+                                    <div className="vocab-word" title={value.word}>{value.word}</div>
+                                    <div className="vocab-definition" title={value.definition}>{value.definition}</div>
+                                </div>
+                                <div className="vocab-item-actions">
+                                    <Icon name="bin" scale={12} style={{ cursor: 'pointer', marginTop: '8px', marginLeft: '8px' }}
+                                        onClick={() => {
+                                            setVocab(prev => {
+                                                const newVocab = {...prev};
+                                                delete newVocab[key];
+                                                return newVocab;
+                                            });
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                </div>
+            </div>
+        }
     
         return ShowMobileModal(
             ModalSelector.LessonEdit,
             <div className="h-full flex flex-col">
-                {/* {renderTitle()} */}
-                <span className="flex-none">1</span>
-                <div className="flex-1 overflow-hidden">
+                {renderTitle()}
+                <div className="flex-1 h-full overflow-hidden">
                     <MobileNav 
                         labels={labels} 
                         content={
                             <div className="h-full">
-                                Hello
+                                {mobileSelection === "plan" ? renderPlan() : null}
+                                {mobileSelection === "summary" ? renderSummary() : null}
+                                {mobileSelection === "vocab" ? renderVocab() : null}
                             </div>
                         }
                     />
                 </div>
-                <span className="flex-none">22222222222222222</span>
+                {renderButtons()}
+                <div className="pb-5" />
             </div>,
             () => { return true; }
         )
@@ -259,18 +360,19 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
                     </div>
                     
                     <div className="relative w-[95%]">
-                        <textarea
+                        {<textarea
                             value={summary || ""}
                             onChange={(e) => {
                                 setSummary(e.target.value);
                             }}
                             className="w-full min-h-[200px] p-2 px-6 pt-6 pb-16 resize-y font-nobel text-indigo-dye text-[16px] bg-white border-2 border-indigo-dye rounded-lg outline-none shadow-[0_4px_0_0_var(--indigo-dye)]"
                             placeholder="Add a summary..."
-                        />
+                        />}
                         <div className="absolute bottom-4 left-2">
                             <button 
-                                className="bg-alice-blue border-solid ml-4 border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel font-semibold text-[16px] px-2 py-1 shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3"
-                                onClick={() => {fetchSummaryUpdates()}}
+                                className={`${isGenerating ? 'bg-gray-300 cursor-not-allowed' : 'bg-alice-blue hover:brightness-105 active:shadow-none active:translate-y-1'} text-nowrap border-solid ml-4 border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel font-semibold text-[16px] px-2 py-1 shadow-[0_4px_0_0_var(--indigo-dye)] transition-all duration-100 flex items-center gap-3`}
+                                onClick={() => {!isGenerating && fetchSummaryUpdates()}}
+                                disabled={isGenerating}
                             >
                                 <Icon name="ai" style={{ marginTop: '1px' }} scale={18} />
                                 Generate Summary
@@ -310,31 +412,17 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
 
                     <div className="mt-4">
                         <button 
-                            className="bg-alice-blue border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel font-semibold text-[16px] px-2 py-1 shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3"
-                            onClick={() => {fetchVocabUpdates()}}
+                            className={`${isGenerating ? 'bg-gray-300 cursor-not-allowed' : 'bg-alice-blue hover:brightness-105 active:shadow-none active:translate-y-1'} border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel font-semibold text-[16px] px-2 py-1 shadow-[0_4px_0_0_var(--indigo-dye)] transition-all duration-100 flex items-center gap-3`}
+                            onClick={() => {!isGenerating && fetchVocabUpdates()}}
+                            disabled={isGenerating}
                         >
                             <Icon name="ai" style={{ marginTop: '1px' }} scale={18} />
-                            Generate Vocab Updates
+                            {isGenerating ? "Generating Vocab Updates..." : "Generate Vocab Updates"}
                         </button>
                     </div>
                 </div>
             </div>
-
-            <div className="flex justify-end gap-4 mt-8">
-                <button 
-                    className="px-20 py-3 bg-alice-blue hover:bg-alice-blue border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel text-[26px] shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-1 transition-all duration-100"
-                    onClick={() => setState(draft => draft.modalSelector = ModalSelector.None)}
-                >
-                    Cancel
-                </button>
-                <button 
-                    className="px-16 py-3 bg-coral hover:bg-coral border-solid border-[1px] border-indigo-dye text-baby-powder rounded-xl font-nobel text-[26px] shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-125 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3"
-                    onClick={saveLesson}
-                >
-                    Save
-                    <Icon name="next" scale={22} style={{ marginBottom: '-3px', filter: 'invert(100%) sepia(0%) saturate(0%) hue-rotate(180deg) brightness(125%) contrast(100%)' }} />
-                </button>
-            </div>
+            {renderButtons()}
         </div>,
         () => { return true; },
     );
