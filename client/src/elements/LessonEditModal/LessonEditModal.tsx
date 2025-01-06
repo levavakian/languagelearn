@@ -246,14 +246,14 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
 
     if (smallScreen()) {
         const labels: Tab[] = [
-            { icon: "chat" as IconName, onClick: () => {setMobileSelection("summary")} },
+            { icon: "ai" as IconName, onClick: () => {setMobileSelection("summary")} },
             { icon: "dictionary" as IconName, onClick: () => {setMobileSelection("vocab")} },
             { icon: "writing" as IconName, onClick: () => {setMobileSelection("plan")} },
         ];
 
         const renderPlan = () => {
             return <div>
-                <div className="text-[20px] font-nobel font-semibold text-indigo-dye">Lesson Plan</div>
+                <div className="text-[20px] font-nobel font-semibold text-indigo-dye mt-4">Lesson Plan</div>
                 <div className="mt-4 font-nobel text-indigo-dye bg-transparent mb-6">
                     {lesson.lesson_plan || "No lesson plan available"}
                 </div>
@@ -261,8 +261,8 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
         }
 
         const renderSummary = () => {
-            return <div className="h-full flex flex-col">
-                <div className="flex-0 ml-[-16px] mb-[12px]">
+            return <div className="h-full flex flex-col mr-[26px]">
+                <div className="flex-0 ml-[-16px] mb-[12px] mt-4">
                     <button 
                         className={`${isGenerating ? 'bg-gray-300 cursor-not-allowed' : 'bg-alice-blue hover:brightness-105 active:shadow-none active:translate-y-1'} text-nowrap border-solid ml-4 border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel font-semibold text-[16px] px-2 py-1 shadow-[0_4px_0_0_var(--indigo-dye)] transition-all duration-100 flex items-center gap-3`}
                         onClick={() => {!isGenerating && fetchSummaryUpdates()}}
@@ -286,7 +286,7 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
         }
 
         const renderVocab = () => {
-            return <div className="h-full flex flex-col">
+            return <div className="h-full flex flex-col pr-[0px]">
                 <div className="flex-0 mt-4">
                     <button 
                         className={`${isGenerating ? 'bg-gray-300 cursor-not-allowed' : 'bg-alice-blue hover:brightness-105 active:shadow-none active:translate-y-1'} border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel font-semibold text-[16px] px-2 py-1 shadow-[0_4px_0_0_var(--indigo-dye)] transition-all duration-100 flex items-center gap-3`}
@@ -307,7 +307,7 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
                                     <div className="vocab-definition" title={value.definition}>{value.definition}</div>
                                 </div>
                                 <div className="vocab-item-actions">
-                                    <Icon name="bin" scale={12} style={{ cursor: 'pointer', marginTop: '8px', marginLeft: '8px' }}
+                                    <Icon name="bin" scale={12} style={{ cursor: 'pointer', marginTop: '8px', marginLeft: '8px', marginRight: '8px' }}
                                         onClick={() => {
                                             setVocab(prev => {
                                                 const newVocab = {...prev};

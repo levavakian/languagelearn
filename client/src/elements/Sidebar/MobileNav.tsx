@@ -23,13 +23,14 @@ const Selector = ({ labels }: {labels: Tab[]}) => {
 
 export const MobileNav = ({ content, labels }: { content: React.ReactNode, labels: Tab[] }) => {
     return <div className="h-full">
-        <div className="flex flex-col w-full h-full relative">
-            <div className="flex-1 h-full min-w-0 pr-16">
+        <div className="flex flex-row w-full h-full relative">
+            <div className="flex-1 h-full min-w-0">
                 <div className="mt-2 flex-1 h-full">
                     {content}
                 </div>
             </div>
-            <div className="fixed right-0 top-[20vh]">
+            <div className="flex-0 pr-6"></div>
+            <div className="flex-0 fixed right-0 top-[20vh]">
                 <Selector labels={labels} />
             </div>
         </div>
