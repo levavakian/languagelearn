@@ -103,7 +103,12 @@ const CourseBox = ({ course }: { course: Course }) => {
             return {
                 icon: <Icon scale={12} name="next" />, 
                 label: 'Continue Lesson',
-                onClick: () => setState(draft => { draft.pageChoice.workPage = WorkPage.Chat; draft.pageChoice.selectedLesson = latestLesson; draft.pageChoice.selectedCourse = course.id })
+                onClick: () => {
+                    setState(draft => { draft.pageChoice.workPage = WorkPage.Chat; draft.pageChoice.selectedLesson = latestLesson; draft.pageChoice.selectedCourse = course.id });
+                    if (smallScreen()) {
+                        setState(draft => { draft.sidebarOpen = false });
+                    }
+                }
             };
         }
 
@@ -111,7 +116,12 @@ const CourseBox = ({ course }: { course: Course }) => {
             return {
                 icon: <Icon scale={12} name="next" />, 
                 label: 'Initial Assessment',
-                onClick: handleNewAssessment
+                onClick: () => {
+                    handleNewAssessment();
+                    if (smallScreen()) {
+                        setState(draft => { draft.sidebarOpen = false });
+                    }
+                }
             };
         }
 
@@ -138,7 +148,12 @@ const CourseBox = ({ course }: { course: Course }) => {
         { 
             icon: <Icon scale={12} name="mic" />, 
             label: 'Quick Practice',
-            onClick: handleNewPractice
+            onClick: () => {
+                handleNewPractice();
+                if (smallScreen()) {
+                    setState(draft => { draft.sidebarOpen = false });
+                }
+            }
         }
     ];
     
@@ -179,7 +194,7 @@ const NewCourseButton = () => {
         { 
             icon: <Icon scale={12} name="writing" />, 
             label: 'View All Courses',
-            onClick: () => setState(draft => { draft.pageChoice.workPage = WorkPage.AllCourses })
+            onClick: () => setState(draft => { draft.pageChoice.workPage = WorkPage.AllCourses; if (smallScreen()) { draft.sidebarOpen = false } })
         }
     ];
     
@@ -273,6 +288,9 @@ const Sidebar = () => {
                         onClick={() => setState(draft => {
                             draft.pageChoice.workPage = WorkPage.Intro
                             draft.triggers.key += 1
+                            if (smallScreen()) {
+                                draft.sidebarOpen = false;
+                            }
                         })}
                     >
                         <span className="font-ancorli font-extralight text-[30pt] tracking-tight">ARATTA</span>

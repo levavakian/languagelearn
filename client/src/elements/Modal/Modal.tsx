@@ -92,7 +92,6 @@ export const ShowMobileModal = (selector: ModalSelector, children: React.ReactNo
                 />
             </div>
             <div className="flex-1 flex flex-col min-h-0">
-                <div className="pt-8"></div>
                 {children}
             </div>
         </div>

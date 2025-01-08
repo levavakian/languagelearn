@@ -1,7 +1,9 @@
 import React, { useCallback } from 'react';
-import { ShowModal } from '../Modal/Modal';
+import { ShowMobileModal, ShowModal } from "../Modal/Modal";
+import { smallScreen, useWindowSize } from "../../utils/globals";
 import { useSetStateValue, ModalSelector, useStateValue, WorkPage } from '../../state/state';
 import { useState } from 'react';
+import { Icon } from "../Icon/Icon";
 import toast from 'react-hot-toast';
 
 export const NewCourseModal = () => {
@@ -42,6 +44,69 @@ export const NewCourseModal = () => {
             console.error('Error creating course:', error);
         }
     }, [jwt, onRequestError, setState]);
+
+    useWindowSize();
+    if (smallScreen()) {
+        const renderButtons = () => {
+            const textSize = "16px";
+            const basePadding = "14px";
+            const basePaddingLarge = "18px";
+            
+            return (
+                <div className="flex ml-2 justify-end gap-4 mt-8">
+                    <button 
+                        style={{ paddingLeft: basePaddingLarge, paddingRight: basePaddingLarge }}
+                        className={`py-3 bg-alice-blue text-[${textSize}] hover:bg-alice-blue border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-1 transition-all duration-100`}
+                        onClick={() => setState(draft => draft.modalSelector = ModalSelector.None)}
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        style={{ paddingLeft: basePadding, paddingRight: basePadding }}
+                        className={`py-3 bg-coral hover:bg-coral border-solid border-[1px] border-indigo-dye text-baby-powder rounded-xl font-nobel text-[${textSize}] shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-125 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3`}
+                        onClick={() => console.log("hello")}
+                    >
+                        Create Course
+                    </button>
+                </div>
+            );
+        };
+
+        return ShowMobileModal(
+            ModalSelector.NewCourse,
+            <div className="h-full flex flex-col">
+                <div className="text-[40px] font-bold text-nowrap">New Course</div>
+                <div className="bg-white border-[2px] border-[--indigo-dye] rounded-xl border-solid shadow-[0_4px_0_var(--indigo-dye)] p-4 mt-4">
+                <div className="mb-2">
+                    <div className="text-[16px] font-semibold text-indigo-dye">Course Name</div>
+                    <input 
+                        type="text" 
+                        id="course-title" 
+                        className="box-border font-regular text-indigo-dye text-[14px] w-full border border-gray-200 rounded-lg p-2 text-gray-400 focus:outline-none" 
+                        placeholder="What should your course be called?"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                    />
+                </div>
+                <div>
+                    <div className="text-[16px] font-semibold text-indigo-dye">Language</div>
+                    <input 
+                        type="text" 
+                        id="course-language" 
+                        className="box-border font-regular text-indigo-dye text-[14px] w-full border border-gray-200 rounded-lg p-2 text-gray-400 focus:outline-none" 
+                        placeholder="What language do you want to learn?"
+                        value={language}
+                        onChange={(e) => setLanguage(e.target.value)}
+                    />
+                    </div>
+                </div>
+                <div className="flex-1"></div>
+                {renderButtons()}
+                <div className="pb-5" />
+            </div>,
+            (iconPressed: boolean) => {return true}
+        );
+    }
 
     return ShowModal(
         ModalSelector.NewCourse,

@@ -162,8 +162,6 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
         setState(draft => { draft.modalSelector = ModalSelector.None; });
     }, [jwt, onRequestError, settings, vocab, titleText, summary, lesson, selectedCourseId, setState]);
 
-    useWindowSize();
-
     const renderTitle = () => (
         isEditing ? (
             <div className="flex items-start">

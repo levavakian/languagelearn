@@ -78,7 +78,16 @@ export const useCourseInfo = () => {
 
     useEffect(() => {
         if (!isPendingCourse && !errorCourse && selectedCourseId && dataCourse) {
-            setState(draft => { draft.courseInfo[selectedCourseId].content = dataCourse });
+            setState(draft => {
+                if (!(selectedCourseId in draft.courseInfo)) {
+                    draft.courseInfo[selectedCourseId] = {
+                        content: null,
+                        lessons: [],
+                        settings: null
+                    }
+                }
+                draft.courseInfo[selectedCourseId].content = dataCourse
+            });
         }
     }, [dataCourse, setState, isPendingCourse, errorCourse, selectedCourseId]);
 
@@ -104,7 +113,16 @@ export const useCourseInfo = () => {
 
     useEffect(() => {
         if (!isPendingSettings && !errorSettings && selectedCourseId) {
-            setState(draft => { draft.courseInfo[selectedCourseId].settings = dataSettings });
+            setState(draft => {
+                if (!(selectedCourseId in draft.courseInfo)) {
+                    draft.courseInfo[selectedCourseId] = {
+                        content: null,
+                        lessons: [],
+                        settings: null
+                    }
+                }
+                draft.courseInfo[selectedCourseId].settings = dataSettings;
+            });
         }
     }, [dataSettings, setState, isPendingSettings, errorSettings, selectedCourseId]);
 }

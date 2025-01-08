@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { useLayoutEffect } from "react";
 
-export const smallScreen = () =>window.innerWidth < 640;
+export const smallScreen = () => window.innerWidth < 640;
 
 export function useWindowSize() {
     const [size, setSize] = useState([0, 0]);
