@@ -19,6 +19,7 @@ export const Landing = () => {
     if (window.innerWidth < 1500) {
         return (
             <div className="bg-baby-powder h-screen w-screen flex flex-col">
+                <div className="absolute w-[100%] h-[100%] bg-baby-powder z-[-1]"></div>
                 <div className="pt-[10%] mb-[0em] text-[500%] items-center justify-center flex font-ancorli font-regular tracking-tight">
                     ARATTA
                 </div>
@@ -51,6 +52,7 @@ export const Landing = () => {
 
     return (
         <>
+            <div className="absolute w-[100%] h-[100%] bg-baby-powder z-[-1]"></div>
             <div className="w-full h-full bg-baby-powder">
                 {/* SVG "portal" background */}
                 <svg
