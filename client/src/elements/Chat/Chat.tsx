@@ -59,7 +59,7 @@ const Chat = () => {
     }, [fetchChat]);
 
     return (
-        <div className="chat-container">
+        <div className="chat-container h-[100dvh] flex flex-col">
             <div className="flex items-center">
                 <Icon className="ml-10 mt-2 cursor-pointer" name="learning" scale={24} onClick={() => setState(draft => { draft.pageChoice.workPage = WorkPage.Course })} />
                 <div className="font-nobel truncate max-w-[800px] text-[32px] ml-3 font-semibold">
@@ -68,8 +68,12 @@ const Chat = () => {
             </div>
             <AudioInput />
             <AudioOutput />
-            <MessageWindow />
-            <ChatInput />
+            <div className="flex-1 overflow-y-auto">
+                <MessageWindow />
+            </div>
+            <div className="flex-0">
+                <ChatInput />
+            </div>
         </div>
     );
 };

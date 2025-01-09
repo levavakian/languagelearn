@@ -149,10 +149,10 @@ const ChatInput = () => {
     }, [setState, jwt, onRequestError, selectedLesson]);
 
     return (
-        <div className="chat-input-container">
+        <div className="chat-input-container h-[100dvh]">
             {modalSelector === ModalSelector.LessonEdit && genLesson && <LessonEditModal lesson={genLesson} summaryInput={genSummary} vocabEdit={genVocab} />}
             {modalSelector === ModalSelector.AlwaysOn && <AlwaysOnModal />}
-            <div className="chat-input-top">
+            <div className="h-[50%] p-[0.5rem]">
                 <textarea 
                     placeholder="Type your message, or hold Alt or Option to speak"
                     className="chat-input-field"

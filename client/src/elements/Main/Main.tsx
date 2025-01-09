@@ -100,7 +100,7 @@ const Main = () => {
     }, [jwt, setState, pageChoice, modalSelector, backspaceFn]);
 
     return (
-        <div key={key} className="main-container">
+        <div key={key} className="main-container h-[100dvh]">
             <QueryClientProvider client={queryClient}>
                 <GoogleOAuthProvider clientId="1056661477394-8rm7us9g7di3k4t51dpbegkp3ahuorrk.apps.googleusercontent.com">
                     <div>
@@ -120,7 +120,7 @@ const Main = () => {
                         {!jwt ? (
                             <Landing />
                         ) : (
-                            <div>
+                            <div className="h-[100dvh]">
                                 <Workspace />
                             </div>
                         )}
