@@ -1,4 +1,3 @@
-import './Chat.css';
 import './ChatInput.css';
 import { useCallback, useEffect, useState } from 'react';
 import { useStateValue, useSetStateValue, Message, MessageType, PreferredResponseType, ModalSelector, AlwaysOnMode, VocabItem, Lesson } from '../../state/state';

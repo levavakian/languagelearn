@@ -1,4 +1,3 @@
-import './Chat.css';
 import './ChatInput.css';
 import { useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
@@ -59,7 +58,7 @@ const Chat = () => {
     }, [fetchChat]);
 
     return (
-        <div className="chat-container h-[100dvh] flex flex-col">
+        <div className="overflow-hidden relative h-[100%] flex flex-col">
             <div className="flex items-center">
                 <Icon className="ml-10 mt-2 cursor-pointer" name="learning" scale={24} onClick={() => setState(draft => { draft.pageChoice.workPage = WorkPage.Course })} />
                 <div className="font-nobel truncate max-w-[800px] text-[32px] ml-3 font-semibold">
