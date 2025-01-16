@@ -41,14 +41,14 @@ export const FAQ = () => {
     return (
         <div className="flex flex-col max-w-[800px] mx-auto px-2 py-2 pb-6">
             <div className="rounded-lg">
-                <h1 className="font-nobel text-[32px] font-bold mb-6">
+                <h1 className="font-nobel text-indigo-dye text-[32px] font-bold mb-6">
                     FAQ
                 </h1>
                 
                 <div className="flex flex-col gap-6">
                     {faqItems.map((item, index) => (
                         <div key={index} className="bg-alice-blue rounded-xl px-4 py-2 flex flex-col">
-                            <h2 className="text-[20px] font-semibold mb-2">
+                            <h2 className="text-[20px] text-indigo-dye font-semibold mb-2">
                                 {item.question}
                             </h2>
                             <p className="text-[16px] text-gray-700">

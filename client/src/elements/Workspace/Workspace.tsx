@@ -21,7 +21,7 @@ const Workspace = () => {
     useWindowSize()
     
     return (
-        <div className="flex h-screen overflow-hidden">
+        <div className="flex h-svh overflow-hidden">
             <Sidebar />
             {modalSelector === ModalSelector.NewCourse && <NewCourseModal />}
             {modalSelector === ModalSelector.NewLesson && <NewLessonModal />}
@@ -38,7 +38,7 @@ const Workspace = () => {
                 'before:transition-[opacity] before:duration-300 before:opacity-0'
                 }`}>
                 <Topbar />
-                <div className="flex-1 overflow-y-auto h-[100dvh]">
+                <div className="flex-1 overflow-y-auto h-svh">
                     {pageChoice.workPage === WorkPage.Course && !smallScreen() && <CourseView />}
                     {pageChoice.workPage === WorkPage.Course && smallScreen() && <CourseViewMobile />}
                     {pageChoice.workPage === WorkPage.AllCourses && <CourseList />}

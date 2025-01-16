@@ -148,7 +148,7 @@ const ChatInput = () => {
     }, [setState, jwt, onRequestError, selectedLesson]);
 
     return (
-        <div className="chat-input-container h-[100dvh]">
+        <div className="rounded-t-xl h-[7.25rem] bg-white">
             {modalSelector === ModalSelector.LessonEdit && genLesson && <LessonEditModal lesson={genLesson} summaryInput={genSummary} vocabEdit={genVocab} />}
             {modalSelector === ModalSelector.AlwaysOn && <AlwaysOnModal />}
             <div className="h-[50%] p-[0.5rem]">

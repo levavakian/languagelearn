@@ -93,7 +93,7 @@ export const CourseList= () => {
             <div className="h-[150px]">
                 {displayPlans.map((plan, index) => (
                     <div key={plan.id} className="rounded-md">
-                        <p className="text-gray-700 text-[19px]">{plan.title}</p>
+                        <p className="text-gray-700 text-indigo-dye text-[19px]">{plan.title}</p>
                         <p className="text-gray-500 text-sm mt-[-15px]">
                             Last Interaction: {new Date(plan.updated_at).toLocaleString()}
                         </p>

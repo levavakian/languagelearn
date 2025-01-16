@@ -163,12 +163,13 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
     }, [jwt, onRequestError, settings, vocab, titleText, summary, lesson, selectedCourseId, setState]);
 
     const renderTitle = () => (
-        isEditing ? (
-            <div className="flex items-start">
-                <div className="relative inline-block">
+        <div>
+            {isEditing ? (
+                <div className="flex items-start">
+                <div className="relative inline-block w-full overflow-hidden">
                     <span
                         ref={spanRef}
-                        className="invisible text-nowrap absolute text-[32px] font-bold font-nobel"
+                        className={`invisible absolute text-[32px] text-truncate text-nowrap font-bold font-nobel ${!smallScreen() ? 'text-nowrap' : 'max-w-[80%]'}`}
                     >
                         {titleText}
                     </span>
@@ -182,7 +183,7 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
                                 setIsEditing(false);
                             }
                         }}
-                        className="text-[32px] font-bold text-indigo-dye font-nobel bg-transparent outline-none border-none p-0 mr-4"
+                        className={`text-[32px] font-bold text-indigo-dye font-nobel text-truncate bg-transparent outline-none border-none p-0 mr-4 w-full ${smallScreen() ? 'max-w-[80%]' : ''}`}
                         autoFocus
                     />
                 </div>
@@ -203,16 +204,20 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
                     setIsEditing(true)
                 }
             }}>
-                <div className="text-[32px] font-bold text-indigo-dye text-nowrap font-nobel p-0" title={titleText}>{titleText}</div>
+                <div className={`text-[32px] font-bold overflow-hidden whitespace-nowrap text-ellipsis max-w-[80%] text-indigo-dye font-nobel p-0`} title={titleText}>
+                    {titleText}
+                </div>
                 <div className="mt-3 ml-10 mr-auto">
                     <Icon 
                         name="pencil" 
                         scale={16} 
                         className="opacity-20 group-hover:opacity-100 transition-opacity" 
-                        />
+                    />
                 </div>
             </div>
-        )
+            )
+        }
+        </div>
     );
 
     const renderButtons = () => {

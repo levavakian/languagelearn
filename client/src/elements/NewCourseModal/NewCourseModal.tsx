@@ -12,9 +12,11 @@ export const NewCourseModal = () => {
     const [language, setLanguage] = useState('');
     const jwt = useStateValue(state => state.auth.token);
     const onRequestError = useStateValue(state => state.auth.onRequestError);
+    const [isCreating, setIsCreating] = useState(false);
 
     const handleCreateCourse = useCallback(async (name: string, language: string) => {
         try {
+            setIsCreating(true);
             const response = await fetch('/api/course/default', {
                 method: 'POST',
                 headers: {
@@ -63,8 +65,22 @@ export const NewCourseModal = () => {
                     </button>
                     <button 
                         style={{ paddingLeft: basePadding, paddingRight: basePadding }}
-                        className={`py-3 bg-coral hover:bg-coral border-solid border-[1px] border-indigo-dye text-baby-powder rounded-xl font-nobel text-[${textSize}] shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-125 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3`}
-                        onClick={() => console.log("hello")}
+                        className={`py-3 bg-coral hover:bg-coral border-solid border-[1px] border-indigo-dye text-baby-powder rounded-xl font-nobel text-[${textSize}] shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-125 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3 ${isCreating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={() => {
+                            if (isCreating) return;
+                            if (!language) {
+                                toast.error("Please enter a language");
+                                return;
+                            }
+            
+                            let tmpTitle = title.trim()
+                            if (!title) {
+                                tmpTitle = language.trim() + " Course";
+                            }
+    
+                            handleCreateCourse(tmpTitle, language);
+                        }}
+                        disabled={isCreating}
                     >
                         Create Course
                     </button>
@@ -141,8 +157,9 @@ export const NewCourseModal = () => {
                 >
                     Cancel
                 </div>
-                <div className="px-5 rounded-xl cursor-pointer flex border-2 font-semibold text-[26px] border-solid border-[--indigo-dye] bg-[--coral] text-[--baby-powder] rounded-xl min-w-[150px] mx-6 py-2 items-center justify-center shadow-[0_4px_0_var(--indigo-dye)] transition-all hover:brightness-95 active:translate-y-1 active:shadow-[0_0px_0_var(--indigo-dye)]"
+                <div className={`px-5 rounded-xl cursor-pointer flex border-2 font-semibold text-[26px] border-solid border-[--indigo-dye] bg-[--coral] text-[--baby-powder] rounded-xl min-w-[150px] mx-6 py-2 items-center justify-center shadow-[0_4px_0_var(--indigo-dye)] transition-all hover:brightness-95 active:translate-y-1 active:shadow-[0_0px_0_var(--indigo-dye)] ${isCreating ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={() => {
+                        if (isCreating) return;
                         if (!language) {
                             toast.error("Please enter a language");
                             return;
@@ -156,7 +173,7 @@ export const NewCourseModal = () => {
                         handleCreateCourse(tmpTitle, language);
                     }}
                 >
-                    Create Course
+                    {isCreating ? 'Creating...' : 'Create Course'}
                 </div>
             </div>
             </div>

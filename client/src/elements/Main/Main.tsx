@@ -59,7 +59,6 @@ const Main = () => {
         }
 
         if (_.isEqual(currentState, pageChoice)) {
-            console.log("was equal")
             return;
         }
 
@@ -100,7 +99,7 @@ const Main = () => {
     }, [jwt, setState, pageChoice, modalSelector, backspaceFn]);
 
     return (
-        <div key={key} className="main-container h-[100dvh]">
+        <div key={key} className="main-container overflow-y-auto bg-indigo-dye flex flex-1 flex-col h-svh">
             <QueryClientProvider client={queryClient}>
                 <GoogleOAuthProvider clientId="1056661477394-8rm7us9g7di3k4t51dpbegkp3ahuorrk.apps.googleusercontent.com">
                     <div>
@@ -120,7 +119,7 @@ const Main = () => {
                         {!jwt ? (
                             <Landing />
                         ) : (
-                            <div className="h-[100dvh]">
+                            <div className="h-svh">
                                 <Workspace />
                             </div>
                         )}

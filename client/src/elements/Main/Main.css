@@ -1,11 +1,4 @@
 .main-container {
-  display: flex;
-  min-height: 100vh;
-  flex: 1;
-  flex-direction: column;
-  margin-left: sidebar-width;
-  overflow-y: auto;
-  color: var(--indigo-dye);
   font-family: 'Nobel Uno', sans-serif !important;
 }
 

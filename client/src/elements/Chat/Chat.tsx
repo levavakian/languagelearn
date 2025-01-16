@@ -7,6 +7,7 @@ import { ChatInput } from './ChatInput';
 import { AudioInput } from './AudioInput';
 import { AudioOutput } from './AudioOutput';
 import { Icon } from '../Icon/Icon';
+import { smallScreen, useWindowSize } from "../../utils/globals";
 
 const Chat = () => {
     const setState = useSetStateValue();
@@ -57,10 +58,17 @@ const Chat = () => {
         fetchChat();
     }, [fetchChat]);
 
+    useWindowSize();
+
     return (
         <div className="overflow-hidden relative h-[100%] flex flex-col">
             <div className="flex items-center">
-                <Icon className="ml-10 mt-2 cursor-pointer" name="learning" scale={24} onClick={() => setState(draft => { draft.pageChoice.workPage = WorkPage.Course })} />
+                <Icon 
+                    className={`${smallScreen() ? 'ml-2' : 'ml-10'} mt-2 cursor-pointer`} 
+                    name="learning" 
+                    scale={24} 
+                    onClick={() => setState(draft => { draft.pageChoice.workPage = WorkPage.Course })} 
+                />
                 <div className="font-nobel truncate max-w-[800px] text-[32px] ml-3 font-semibold">
                     {chat?.name}
                 </div>

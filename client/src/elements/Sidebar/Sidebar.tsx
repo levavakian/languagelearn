@@ -275,13 +275,13 @@ const Sidebar = () => {
 
     return (
         <div ref={sidebarRef} className={`
-            min-w-0 bg-alice-blue min-h-screen m-0 p-0 pb-10 top-0 overflow-visible scrollbar-none relative
+            min-w-0 bg-alice-blue h-svh m-0 p-0 pb-10 top-0 overflow-visible scrollbar-none relative
             transition-all duration-300 ease-in-out
         `}>
             <div className={`
                 transition-all duration-300 ease-in-out 
                 ${sidebarOpen ? 'w-[250px] opacity-100' : 'w-0 opacity-0'}
-                h-screen overflow-y-auto scrollbar-none
+                h-svh overflow-y-auto scrollbar-none
             `}>
                 <div className="h-full">
                     <div className="text-center text-indigo-dye py-[30px] cursor-pointer"
