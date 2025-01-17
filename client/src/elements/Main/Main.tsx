@@ -99,7 +99,7 @@ const Main = () => {
     }, [jwt, setState, pageChoice, modalSelector, backspaceFn]);
 
     return (
-        <div key={key} className="main-container overflow-y-auto bg-indigo-dye flex flex-1 flex-col h-svh">
+        <div key={key} className="main-container overflow-y-auto flex flex-1 flex-col h-svh">
             <QueryClientProvider client={queryClient}>
                 <GoogleOAuthProvider clientId="1056661477394-8rm7us9g7di3k4t51dpbegkp3ahuorrk.apps.googleusercontent.com">
                     <div>

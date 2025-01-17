@@ -18,23 +18,23 @@ export const Landing = () => {
     
     if (window.innerWidth < 1500) {
         return (
-            <div className="bg-baby-powder h-[100dvh] w-screen flex flex-col">
+            <div className="bg-baby-powder h-dvh w-screen flex flex-col">
                 <div className="absolute w-[100%] h-[100%] bg-baby-powder z-[-1]"></div>
-                <div className="pt-[10%] mb-[0em] text-[500%] items-center justify-center flex font-ancorli font-regular tracking-tight">
+                <div className="pt-[10%] mb-[0em] text-[500%] items-center text-indigo-dye justify-center flex font-ancorli font-regular tracking-tight">
                     ARATTA
                 </div>
                 <div className="pl-[5%] flex-1 flex flex-col">
-                    <div className="text-[250%] mt-[15%] font-nobel font-semibold">
+                    <div className="text-[250%] mt-[15%] font-nobel font-semibold text-indigo-dye">
                         Language learning,
                     </div>
                     <div className="text-[250%] font-nobel font-semibold text-coral">
                         reimagined<span className="text-indigo-dye">.</span>
                     </div>
-                    <div className="text-[175%] mt-[1.25rem] max-w-[34.375rem] font-nobel font-regular">
+                    <div className="text-[175%] mt-[1.25rem] max-w-[34.375rem] font-nobel font-regular text-indigo-dye">
                         Experience personalized language learning powered by AI. Have natural conversations, get instant feedback, and progress at your own pace.
                     </div>
                     <div className="mt-auto mb-[2rem] mr-[1rem] ml-auto flex flex-col items-rights justify-right gap-2">
-                        <div className="text-[1.25rem] font-nobel font-regular">Sign in to start learning</div>
+                        <div className="text-[1.25rem] font-nobel font-regular text-indigo-dye">Sign in to start learning</div>
                         <GoogleLogin
                             onSuccess={handleLoginSuccess}
                             onError={handleLoginFailure}
@@ -52,8 +52,8 @@ export const Landing = () => {
 
     return (
         <>
-            <div className="absolute w-[100%] h-[100%] bg-baby-powder z-[-1]"></div>
-            <div className="w-full h-full bg-baby-powder">
+            <div className="absolute w-[100%] h-dvh bg-baby-powder z-[-1]"></div>
+            <div className="w-full bg-baby-powder">
                 {/* SVG "portal" background */}
                 <svg
                     style={{
@@ -114,22 +114,22 @@ export const Landing = () => {
                 </svg>
             </div>
 
-            <div className="overflow-y-auto max-h-[calc(100vh)]">
+            <div className="overflow-y-auto max-h-[calc(100dvh)]">
                 <div className="mt-[10vh] ml-[7.5rem] mb-[10vh]">
-                    <div className="text-[8rem] font-ancorli font-regular tracking-tight">
+                    <div className="text-[8rem] font-ancorli font-regular tracking-tight text-indigo-dye">
                         ARATTA
                     </div>
-                    <div className="text-[3.375rem] mt-[10rem] font-nobel font-semibold">
+                    <div className="text-[3.375rem] mt-[10rem] font-nobel font-semibold text-indigo-dye">
                         Language learning,
                     </div>
                     <div className="text-[3.375rem] font-nobel font-semibold text-coral">
                         reimagined<span className="text-indigo-dye">.</span>
                     </div>
-                    <div className="text-[2rem] mt-[1.25rem] max-w-[34.375rem] font-nobel font-regular">
+                    <div className="text-[2rem] mt-[1.25rem] max-w-[34.375rem] font-nobel font-regular text-indigo-dye">
                         Experience personalized language learning powered by AI. Have natural conversations, get instant feedback, and progress at your own pace.
                     </div>
                     <div className="mt-[1.25rem] flex items-center gap-2">
-                        <div className="text-[1.25rem] font-nobel font-regular mr-2">Sign in to start learning</div>
+                        <div className="text-[1.25rem] font-nobel font-regular mr-2 text-indigo-dye">Sign in to start learning</div>
                         <GoogleLogin
                             onSuccess={handleLoginSuccess}
                             onError={handleLoginFailure}
