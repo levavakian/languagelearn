@@ -89,6 +89,7 @@ export const UnifiedListMobile: React.FC<{
     onEdit: (lesson: Lesson) => void;
     onDelete: (lesson: Lesson) => void;
 }> = ({ filterFn, title, newTitle, onNew, onEdit, onDelete }) => {
+    const setState = useSetStateValue();
     const [showDropdown, setShowDropdown] = useState(false);
     const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
     const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
@@ -96,7 +97,6 @@ export const UnifiedListMobile: React.FC<{
 
     useEffect(() => {
         const handleResize = () => {
-            console.log("Main component resize detected");
             setSelectedLesson(null);
         };
 
@@ -116,6 +116,13 @@ export const UnifiedListMobile: React.FC<{
         return lessons.filter(filterFn).sort((a, b) => a.updated_at.localeCompare(b.updated_at));
     }, [lessons, filterFn]);
 
+    const handleLessonChoice = (lesson: Lesson) => {
+        setState(draft => {
+            draft.pageChoice.workPage = WorkPage.Chat;
+            draft.pageChoice.selectedLesson = lesson.id;
+        });
+    }
+
     return (
         <div className="mr-3 mb-5">
             <div className="text-2xl font-semibold">
@@ -127,7 +134,7 @@ export const UnifiedListMobile: React.FC<{
             {filtered.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).map((lesson) => {
                 return (
                     <div key={lesson.id} className="mt-5 flex flex-row w-full">
-                        <div className="w-full flex flex-row justify-between min-w-0 bg-alice-blue border-indigo-dye border-solid border-[1px] shadow-[0_4px_0_var(--indigo-dye)] rounded-lg p-2 transition-all duration-200 active:translate-y-1 active:shadow-none" onClick={() => console.log("hello")}>
+                        <div className="w-full flex flex-row justify-between min-w-0 bg-alice-blue border-indigo-dye border-solid border-[1px] shadow-[0_4px_0_var(--indigo-dye)] rounded-lg p-2 transition-all duration-200 active:translate-y-1 active:shadow-none" onClick={() => handleLessonChoice(lesson)}>
                             <div className="flex flex-col justify-between flex-1 min-w-0">
                                 <div className="w-full overflow-hidden">
                                     <div className="truncate">

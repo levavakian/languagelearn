@@ -203,14 +203,14 @@ const ChatInput = () => {
                     <div className="icon-with-background" onClick={submitText}>
                         <Icon scale={12} rotation={90} name="arrow" />
                     </div>
-                    <div className={`icon-with-background ${isRecentAudio ? 'glowing' : ''} ${!audioInput.hasPermission ? 'disabled' : ''}`}
+                    <div className={`icon-with-background select-none ${isRecentAudio ? 'glowing' : ''} ${!audioInput.hasPermission ? 'disabled' : ''}`}
                         onMouseDown={() => audioInput.triggerRecording()}
                         onMouseUp={() => audioInput.triggerStopRecording()}
                         onMouseLeave={() => audioInput.triggerStopRecording()}
                         onTouchStart={() => audioInput.triggerRecording()}
                         onTouchEnd={() => audioInput.triggerStopRecording()}
                     >
-                        <Icon scale={12} name="micFilled" />
+                        <Icon scale={12} name="micFilled" className="pointer-events-none" />
                     </div>
                 </div>
             </div>
