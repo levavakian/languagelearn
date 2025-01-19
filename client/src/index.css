@@ -25,3 +25,7 @@ code {
     display: none;
   }
 }
+
+html {
+  @apply text-indigo-dye
+}

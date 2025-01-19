@@ -1,10 +1,11 @@
 import React, { ChangeEvent, useCallback, useEffect } from 'react';
-import { ShowModal } from '../Modal/Modal';
+import { ShowMobileModal, ShowModal } from '../Modal/Modal';
 import { useSetStateValue, PreferredInstructorStyle, ModalSelector, useStateValue, WorkPage, LessonPlan } from '../../state/state';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Icon } from '../Icon/Icon';
 import { useQuery } from '@tanstack/react-query'
+import { smallScreen } from '../../utils/globals';
 
 export const NewLessonModal = () => {
     const setState = useSetStateValue();
@@ -15,7 +16,8 @@ export const NewLessonModal = () => {
     const [title, setTitle] = useState('');
     const [lessonPlanText, setLessonPlanText] = useState('');
     const [focusAreas, setFocusAreas] = useState('');
-    const [generating, isGenerating] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [genPage, setGenPage] = useState(false);
 
     const jwt = useStateValue(state => state.auth.token);
     const onRequestError = useStateValue(state => state.auth.onRequestError);
@@ -38,7 +40,7 @@ export const NewLessonModal = () => {
     }, []);
 
     useEffect(() => {
-        if (generating) {
+        if (isGenerating) {
             document.body.style.cursor = 'wait';
         } else {
             document.body.style.cursor = 'default';
@@ -48,10 +50,14 @@ export const NewLessonModal = () => {
         return () => {
             document.body.style.cursor = 'default';
         };
-    }, [generating]);
+    }, [isGenerating]);
 
     const onLessonGenerate = useCallback(async () => {
-        isGenerating(true);
+        if (isGenerating) {
+            return;
+        }
+
+        setIsGenerating(true);
         const response = await fetch(`/api/lesson/generate-next-plan`, {
             method: 'POST',
             headers: {
@@ -64,7 +70,7 @@ export const NewLessonModal = () => {
                 course_id: selectedCourseId,
             })
         });
-        isGenerating(false);
+        setIsGenerating(false);
 
         if (!response.ok) {
             onRequestError(response, "Failed to generate lesson plan", "generate-new-lesson-modal");
@@ -74,6 +80,7 @@ export const NewLessonModal = () => {
         const data = await response.json();
         setTitle(data.title);
         setLessonPlanText(data.plan);
+        setGenPage(false);
     }, [selectedCourseId, jwt, onRequestError, lessons, focusAreas]);
 
     const fetchLessonPlans = useCallback(async () => {
@@ -92,7 +99,7 @@ export const NewLessonModal = () => {
     }, [selectedCourseId, jwt, onRequestError]);
 
     const onStartLesson = useCallback(async () => {
-        isGenerating(true);
+        setIsGenerating(true);
 
         let instructorStyleNote = '';
         if (preferredInstructorStyle === 'strict') {
@@ -113,7 +120,7 @@ export const NewLessonModal = () => {
                 lesson_plan_content: lessonPlanWithStyle,
             })
         });
-        isGenerating(false);
+        setIsGenerating(false);
         
         if (!response.ok) {
             onRequestError(response, "Failed to start lesson", "new-lesson-modal-create");
@@ -133,6 +140,152 @@ export const NewLessonModal = () => {
         queryKey: ['lesson-plans-new-lesson-modal'],
         queryFn: fetchLessonPlans
     })
+
+    if (smallScreen()) {
+        const renderButtons = () => {
+            const textSize = smallScreen() ? "16px" : "26px";
+            const iconSize = smallScreen() ? 18 : 22;
+            const basePadding = smallScreen() ? "14px" : "16px";
+            const basePaddingLarge = smallScreen() ? "18px" : "20px";
+            
+            return (
+                <div className="flex ml-2 justify-end gap-4 mt-8">
+                    <button 
+                        style={{ paddingLeft: basePaddingLarge, paddingRight: basePaddingLarge }}
+                        className={`py-3 bg-alice-blue text-[${textSize}] hover:bg-alice-blue border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-1 transition-all duration-100`}
+                        onClick={() => setState(draft => draft.modalSelector = ModalSelector.None)}
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        style={{ paddingLeft: basePadding, paddingRight: basePadding }}
+                        className={`py-3 bg-coral hover:bg-coral border-solid border-[1px] border-indigo-dye text-baby-powder rounded-xl font-nobel text-[${textSize}] shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-125 active:shadow-none active:translate-y-1 transition-all duration-100 flex items-center gap-3`}
+                        onClick={onStartLesson}
+                    >
+                        Start
+                        <Icon name="next" scale={iconSize} style={{ marginBottom: '-3px', filter: 'invert(100%) sepia(0%) saturate(0%) hue-rotate(180deg) brightness(125%) contrast(100%)' }} />
+                    </button>
+                </div>
+            );
+        };
+
+        const renderGenButtons = () => {
+            const textSize = smallScreen() ? "16px" : "26px";
+            const iconSize = smallScreen() ? 18 : 22;
+            const basePadding = smallScreen() ? "14px" : "16px";
+            const basePaddingLarge = smallScreen() ? "18px" : "20px";
+            
+            return (
+                <div className="flex ml-2 justify-end gap-4 mt-8">
+                    <button 
+                        style={{ paddingLeft: basePaddingLarge, paddingRight: basePaddingLarge }}
+                        className={`py-3 bg-alice-blue text-[${textSize}] hover:bg-alice-blue border-solid border-[1px] border-indigo-dye text-indigo-dye rounded-xl font-nobel shadow-[0_4px_0_0_var(--indigo-dye)] hover:brightness-105 active:shadow-none active:translate-y-1 transition-all duration-100`}
+                        onClick={() => setGenPage(false)}
+                    >
+                        Back
+                    </button>
+                    <div className={`rounded-xl w-fit p-3 px-5 flex flex-row ${
+                        isGenerating 
+                            ? 'bg-gray-300 cursor-not-allowed' 
+                            : 'bg-indigo-dye cursor-pointer hover:brightness-125'
+                    } transition-all duration-300`} onClick={onLessonGenerate}>
+                        <div className="text-baby-powder font-semibold text-[18px]">
+                            {isGenerating ? "Generating..." : "Generate Plan"}
+                        </div>
+                        <Icon name="shuttle" scale={18} style={{ marginBottom: '-4px', filter: 'invert(100%) sepia(0%) saturate(0%) hue-rotate(180deg) brightness(125%) contrast(100%)', marginLeft: '15px' }} />
+                    </div>
+                </div>
+            );
+        };
+
+        const renderMain = () => {
+            return <div className="flex flex-col grow">
+                <div className="flex-0 text-[32px] font-bold overflow-hidden whitespace-nowrap text-ellipsis max-w-[80%] text-indigo-dye font-nobel p-0" title="New Lesson">
+                    New Lesson
+                </div>
+                <input 
+                className="w-[95%] flex-0 mt-4 px-3 py-2 border-solid text-indigo-dye font-semibold rounded-lg text-[20px] font-nobel focus:outline-none"
+                placeholder="Title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                />
+                <textarea 
+                className="w-[95%] flex-1 grow p-3 border-solid rounded-lg text-[20px] text-indigo-dye resize-none font-nobel mt-4 flex-1 focus:outline-none"
+                placeholder="Fill out or generate the lesson plan for today"
+                value={lessonPlanText}
+                onChange={(e) => setLessonPlanText(e.target.value)}
+                />
+                <h3 className="font-semibold mb-3">Choose Learning Style</h3>
+                <div className="flex gap-4">
+                    <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Strict ? 'bg-coral text-baby-powder' : 'bg-alice-blue text-indigo-dye'}`}
+                        onClick={() => {
+                            setState(drift => drift.preferredInstructorStyle = PreferredInstructorStyle.Strict );
+                        }}
+                    >
+                        Strict
+                    </div>
+                    <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Neutral ? 'bg-coral text-baby-powder' : 'bg-alice-blue text-indigo-dye'}`}
+                        onClick={() => {
+                            setState(drift => drift.preferredInstructorStyle = PreferredInstructorStyle.Neutral );
+                        }}
+                    >
+                        Neutral
+                    </div>
+                    <div className={`px-6 py-1 border-solid border border-gray-400 rounded-lg font-nobel text-[16px] hover:brightness-105 transition-all duration-300 cursor-pointer ${preferredInstructorStyle === PreferredInstructorStyle.Casual ? 'bg-coral text-baby-powder' : 'bg-alice-blue text-indigo-dye'}`}
+                        onClick={() => {
+                            setState(drift => drift.preferredInstructorStyle = PreferredInstructorStyle.Casual );
+                        }}
+                    >
+                        Casual
+                    </div>
+                </div>
+                <div className="mt-4">And Then</div>
+                <div className="mt-4 bg-indigo-dye rounded-xl w-fit p-3 px-5 flex flex-row cursor-pointer hover:brightness-125 transition-all duration-300" onClick={() => setGenPage(true)}>
+                    <div className="text-baby-powder font-semibold text-[18px]">
+                        Generate Plan
+                    </div>
+                    <Icon name="shuttle" scale={18} style={{ marginBottom: '-4px', filter: 'invert(100%) sepia(0%) saturate(0%) hue-rotate(180deg) brightness(125%) contrast(100%)', marginLeft: '15px' }} />
+                </div>
+                <div className="mt-4">Or</div>
+                <select className="w-full mt-4 flex-0 px-3 py-2 border-solid text-indigo-dye text-ellipsis font-semibold rounded-3xl bg-baby-powder text-indigo-dye font-nobel text-[16px]"
+                    onChange={(event: ChangeEvent<HTMLSelectElement>) => {onLessonPick(dataLessonPlans, event.target.value)}}
+                    disabled={isPendingLessonPlans}>
+                    <option value="">
+                        {isPendingLessonPlans 
+                            ? "Loading templates..." 
+                            : errorLessonPlans 
+                                ? "Error loading templates" 
+                                : "Fill Plan from Lesson Template"}
+                    </option>
+                    {dataLessonPlans?.map((lessonPlan: LessonPlan) => (
+                        <option key={lessonPlan.id} value={lessonPlan.id}>{lessonPlan.title}</option>
+                    ))}
+                </select>
+                {renderButtons()}
+                <div className="pb-5" />
+            </div>
+        }
+
+        const renderGen = () => {
+            return <div className="flex flex-col grow">
+                <textarea 
+                className="w-[95%] flex-1 grow p-3 border-solid rounded-lg text-[20px] text-indigo-dye resize-none font-nobel mt-4 flex-1 focus:outline-none"
+                placeholder="What topics or focus areas would you like the lesson to focus on? (optional)"
+                value={focusAreas}
+                onChange={(e) => setFocusAreas(e.target.value)}
+                />
+                {renderGenButtons()}
+                <div className="pb-5" />
+            </div>
+        }
+
+        return ShowMobileModal(
+            ModalSelector.NewLesson,
+            genPage ? renderGen() : renderMain(),
+            (iconPressed: boolean) => true
+        );
+    }
 
     return ShowModal(
         ModalSelector.NewLesson,
@@ -201,7 +354,11 @@ export const NewLessonModal = () => {
                             </div>
                         </div>
                         </div>
-                        <div className="bg-indigo-dye rounded-xl w-fit p-3 px-5 flex flex-row cursor-pointer hover:brightness-125 transition-all duration-300" onClick={onLessonGenerate}>
+                        <div className={`rounded-xl w-fit p-3 px-5 flex flex-row ${
+                            isGenerating 
+                                ? 'bg-gray-300 cursor-not-allowed' 
+                                : 'bg-indigo-dye cursor-pointer hover:brightness-125'
+                        } transition-all duration-300`} onClick={onLessonGenerate}>
                             <div className="text-baby-powder font-semibold text-[18px]">
                                 Generate Plan
                             </div>
