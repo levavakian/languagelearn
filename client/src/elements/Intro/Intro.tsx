@@ -1,6 +1,7 @@
 import { createAssessment } from "../../api/assessment";
 import { useSetStateValue, useStateValue, State, Lesson, WorkPage, ModalSelector } from "../../state/state";
 import { useCallback, useEffect, useState } from "react";
+import { smallScreen } from "../../utils/globals";
 
 export const Intro = () => {
     const courses = useStateValue(state => state.courses);
@@ -162,19 +163,36 @@ export const Intro = () => {
     </button>;
 
     const quickPracticeButton = <button 
-className="
-    px-6 py-3 font-nobel rounded-xl 
-    bg-coral text-baby-powder text-[32px]
-    border-2 border-indigo-dye
-    transform translate-y-0
-    shadow-[0_4px_0_0_var(--indigo-dye)]
-    transition-all duration-100
-    active:shadow-none active:translate-y-1
-"
-onClick={handleNewPractice}
->
-Quick Practice
-</button>;
+        className="
+            px-6 py-3 font-nobel rounded-xl 
+            bg-coral text-baby-powder text-[32px]
+            border-2 border-indigo-dye
+            transform translate-y-0
+            shadow-[0_4px_0_0_var(--indigo-dye)]
+            transition-all duration-100
+            active:shadow-none active:translate-y-1
+        "
+        onClick={handleNewPractice}
+        >
+    Quick Practice
+    </button>;
+
+    if (smallScreen()) {
+        return <div className="flex flex-col h-[100%] justify-between items-center">
+            <h1 className="text-[42px] ml-2 font-bold font-nobel mb-4 flex-1">
+                {course ? `Hey, are you ready for today's ${course?.name} lesson?` : "Hey, are you ready to start a new course?"}
+            </h1>
+            <div className="flex-0">
+                {course ? (
+                    <div className="flex flex-col gap-8">
+                        {latestLesson ?  continueLessonButton : initialAssessmentButton}
+                        {quickPracticeButton}
+                    </div>
+                ) : startCourseButton}
+            </div>
+            <div className="flex-1"></div>
+        </div>
+    }
 
     return (
         <div className="flex flex-col items-center mt-[30vh] gap-4 p-4">
