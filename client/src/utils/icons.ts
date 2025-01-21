@@ -20,6 +20,7 @@ export const IconPaths = {
     arrow: '/icons/arrow.svg',
     check: '/icons/check.svg',
     x: '/icons/x.svg',
+    xcircle: '/icons/xcircle.svg',
     pencil: '/icons/pencil.svg',
     chevright: '/icons/chevright.svg',
     bin: '/icons/bin.svg',

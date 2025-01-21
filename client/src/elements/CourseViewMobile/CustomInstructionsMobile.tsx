@@ -3,7 +3,6 @@ import { ModalSelector, State } from "../../state/state";
 
 import { useStateValue, useSetStateValue } from "../../state/state";
 import { Icon } from "../Icon/Icon";
-import { templateSettings } from "lodash";
 
 export const CustomInstructionsMobile = () => {
     const setState = useSetStateValue();

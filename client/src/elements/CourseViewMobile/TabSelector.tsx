@@ -21,8 +21,8 @@ export const TabSelector = () => {
                 <Icon name="altchat" scale={24}/>
             </div>
             <div 
-                onClick={() => setState(draft => { draft.pageChoice.tabSelection = TabSelection.Tooltip })}
-                className={`rounded-lg p-2 ${tabSelection === TabSelection.Tooltip ? 'bg-baby-powder-dark' : ''}`}
+                onClick={() => setState(draft => { draft.pageChoice.tabSelection = TabSelection.Vocab })}
+                className={`rounded-lg p-2 ${tabSelection === TabSelection.Vocab ? 'bg-baby-powder-dark' : ''}`}
             >
                 <Icon name="dictionary" scale={24}/>
             </div>

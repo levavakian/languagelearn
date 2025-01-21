@@ -7,7 +7,7 @@ import { produce } from "immer";
 import { smallScreen, useWindowSize } from "../../utils/globals";
 import { MobileNav, Tab } from "../Sidebar/MobileNav";
 import { IconName } from "../../utils/icons";
-
+import { Dropdown } from "../../utils/Dropdown";
 export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: Lesson, summaryInput?: string, vocabEdit?: Record<string, VocabItem>}) => {
     const setState = useSetStateValue();
     const settings = useStateValue(state => state.currentCourse.settings);
@@ -22,6 +22,7 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
     const onRequestError = useStateValue(state => state.auth.onRequestError);
     const [isGenerating, setIsGenerating] = useState(false);
     const [mobileSelection, setMobileSelection] = useState("summary");
+    const [clickPos, setClickPos] = useState<{x: number, y: number, key: string} | null>(null);
 
     useEffect(() => {
         document.body.style.cursor = isGenerating ? 'wait' : 'default';
@@ -38,6 +39,17 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
             inputRef.current.style.width = `${width + 20}px`;
         }
     }, [titleText, isEditing]);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (clickPos) {
+                setClickPos(null);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll, true);
+        return () => window.removeEventListener('scroll', handleScroll, true);
+    }, [clickPos]);
 
     const fetchVocabUpdates = useCallback(async () => {
         setIsGenerating(true);
@@ -289,6 +301,39 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
         }
 
         const renderVocab = () => {
+            const renderDropdown = () => {
+                return <div>
+                    {clickPos && <Dropdown x={clickPos.x} y={clickPos.y} onClose={() => {
+                        console.log("clicked");
+                        setClickPos(null);
+                    }}>
+                        <div className="flex flex-col gap-[4px] bg-indigo-dye p-[1px] border-2 border-solid border-indigo-dye rounded-[8px]">
+                            <div className="flex bg-alice-blue font-semibold text-warn-red rounded-[6px] p-1 flex-row gap-[6px]"
+                                onClick={() => {
+                                    setVocab(prev => {
+                                        const newVocab = {...prev};
+                                        delete newVocab[clickPos.key];
+                                        return newVocab;
+                                    });
+                                    setClickPos(null);
+                                }}
+                            >
+                                <Icon name="bin" scale={12} style={{ cursor: 'pointer', marginTop: '1px', marginLeft: '8px' }} />
+                                <div>Delete</div>
+                            </div>
+                            <div className="flex bg-alice-blue font-semibold text-indigo-dye rounded-[6px] p-1 flex-row gap-[6px]"
+                                onClick={() => {
+                                    setClickPos(null);
+                                }}
+                            >
+                                <Icon name="xcircle" scale={12} style={{ cursor: 'pointer', marginTop: '1px', marginLeft: '8px' }} />
+                                <div>Cancel</div>
+                            </div>
+                        </div>
+                    </Dropdown>}
+                </div>
+            }
+
             return <div className="h-full flex flex-col pr-[0px]">
                 <div className="flex-0 mt-4">
                     <button 
@@ -300,25 +345,20 @@ export const LessonEditModal = ({ lesson, summaryInput, vocabEdit }: { lesson: L
                         <div className="text-nowrap">{isGenerating ? "Generating Vocab Updates..." : "Generate Vocab Updates"}</div>
                     </button>
                 </div>
+                {renderDropdown()}
                 <div className="flex-1 mt-5 mb-5 overflow-y-auto">
                     {Object.entries(vocab)
                         .sort(([, a], [, b]) => new Date(b.last_used).getTime() - new Date(a.last_used).getTime())
                         .map(([key, value]) => (
-                            <div key={key} className="vocab-item-container mt-4">
+                            <div key={key} className="vocab-item-container mt-4"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setClickPos({ x: e.clientX, y: e.clientY, key: key});
+                                }}
+                            >
                                 <div className="vocab-item">
                                     <div className="vocab-word" title={value.word}>{value.word}</div>
                                     <div className="vocab-definition" title={value.definition}>{value.definition}</div>
-                                </div>
-                                <div className="vocab-item-actions">
-                                    <Icon name="bin" scale={12} style={{ cursor: 'pointer', marginTop: '8px', marginLeft: '8px', marginRight: '8px' }}
-                                        onClick={() => {
-                                            setVocab(prev => {
-                                                const newVocab = {...prev};
-                                                delete newVocab[key];
-                                                return newVocab;
-                                            });
-                                        }}
-                                    />
                                 </div>
                             </div>
                         ))}

@@ -50,6 +50,7 @@ export const VocabList = () => {
             setTempAddWord('');
             setTempAddDefinition('');
         } catch (error) {
+            console.error(error);
             toast.error('Error saving vocabulary');
         }
     }
@@ -86,14 +87,17 @@ export const VocabList = () => {
             return;
         }
         const newVocabItems = produce(settings?.vocabItems || {}, draft => {
+            let primaryKey = editingKey;
             if (editingKey !== tempEditWord) {
-                draft[tempEditWord] = draft[editingKey];
-                draft[editingKey].definition = tempEditDefinition;
+                draft[tempEditWord] = {...draft[editingKey]};
+                draft[tempEditWord].definition = tempEditDefinition;
+                draft[tempEditWord].word = tempEditWord;
                 delete draft[editingKey];
+                primaryKey = tempEditWord;
             } else {
-                draft[editingKey].definition = tempEditDefinition;
+                draft[primaryKey].definition = tempEditDefinition;
             }
-            draft[editingKey].last_used = new Date().toISOString();
+            draft[primaryKey].last_used = new Date().toISOString();
         });
         await doRequest(newVocabItems);
     }
@@ -129,7 +133,7 @@ export const VocabList = () => {
 
     const renderItem = (key: string, value: VocabItem) => {
         if (editingKey === key) {
-            return <div style={{ display: 'flex', flexDirection: 'row' }}>
+            return <div key={key} style={{ display: 'flex', flexDirection: 'row' }}>
                 <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', flexDirection: 'row', gap: '10px', marginTop: '10px' }}>
                     <input className="vocab-bubble input" placeholder="Word" value={tempEditWord} onChange={(e) => setTempEditWord(e.target.value)}
                         onKeyDown={(e) => {

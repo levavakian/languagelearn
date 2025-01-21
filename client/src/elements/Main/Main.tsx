@@ -24,11 +24,8 @@ const Main = () => {
 
     useEffect(() => {
         setState(draft => {
-            console.log("Setting up response error handler");
             draft.auth.onRequestError = (response: any, msg?: string, id?: string) => {
-                console.log("Checking status",response.status);
                 if (response.status === 401) {
-                    console.log("Expiring token");
                     toast.error('Your session has expired. Please log in again.', {id: "session-expired"});
                     setState(draft => { draft.auth.token = "" });
                     return;
@@ -44,7 +41,6 @@ const Main = () => {
                     return;
                 }
 
-                console.log("Got response error", response);
                 if (msg) {
                     toast.error(msg, {id: id});
                 }
