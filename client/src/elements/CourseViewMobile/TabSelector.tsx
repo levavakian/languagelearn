@@ -5,7 +5,6 @@ export const TabSelector = () => {
     const tabSelection = useStateValue(state => state.pageChoice.tabSelection)
     const setState = useSetStateValue();
 
-
     return <div className="flex flex-col gap-4 w-full mt-16">
         <div className="mr-2">
             <div 
