@@ -182,7 +182,6 @@ export const Tooltip = () => {
                 const newDimensions = calculateTooltipDimensions(tooltipRef.current);
                 const newX = tooltipInfo.x - (!tooltipInfo.toRight ? newDimensions.width : 0);
                 const newY = tooltipInfo.y - (tooltipInfo.toDown ? newDimensions.height : 0);
-                console.log('Tooltip dimensions changed:', newDimensions, newX, newY);
                 setGhostBoxDimensions({
                     x: newX, 
                     y: newY, 
@@ -206,7 +205,6 @@ export const Tooltip = () => {
             const newDimensions = calculateTooltipDimensions(tooltipRef.current);
             const newX = tooltipInfo.x - (!tooltipInfo.toRight ? newDimensions.width : 0);
             const newY = tooltipInfo.y - (tooltipInfo.toDown ? newDimensions.height : 0);
-            console.log('Tooltip dimensions changed:', newDimensions, newX, newY);
             setGhostBoxDimensions({
                 x: newX, 
                 y: newY, 
@@ -228,10 +226,8 @@ export const Tooltip = () => {
 
     // Determine which half of the screen was clicked.
 
-    const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
-    const screenHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
     const isLeft = tooltipInfo?.toRight;
-    const isTop = tooltipInfo?.toDown;
+    const isTop = !tooltipInfo?.toDown;
 
     // Based on quadrant, pick transform origin and translation classes.
     const positionClass = classNames('transform', {

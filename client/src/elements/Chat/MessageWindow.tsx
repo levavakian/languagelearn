@@ -67,7 +67,7 @@ const UserMessage = ({ messages, messageWindowRef }: {
                     x: e.clientX,
                     y: e.clientY,
                     toRight: false,
-                    toDown: e.clientY - rect.top > rect.height / 2,
+                    toDown: e.clientY > (window.visualViewport?.height ?? 0) / 2,
                     onSelect: (note: NoteNode) => {
                         const template = note.name.replace('@word', word).replace('@sentence', sentence);
                         onChatInputChange(template);
@@ -105,28 +105,25 @@ const AssistantMessage = ({ messages, messageWindowRef }: {
     const onChatInputChange = useStateValue(state => state.currentChat.setChatInput);
     const size = useWindowSize();
     const handleWordClick = useCallback((word: string, sentence: string, e: React.MouseEvent) => {
-        const rect = messageWindowRef.current?.getBoundingClientRect();
-        if (rect) {
-            setState(draft => {
-                if (smallScreen()) {
-                    draft.modalSelector = ModalSelector.Tooltip;
+        setState(draft => {
+            if (smallScreen()) {
+                draft.modalSelector = ModalSelector.Tooltip;
+            }
+            draft.currentChat.tooltipInfo = {
+                x: e.clientX,
+                y: e.clientY,
+                toRight: true,
+                toDown: e.clientY > (window.visualViewport?.height ?? 0) / 2,
+                onSelect: (note: NoteNode) => {
+                    const template = note.name.replace('@word', word).replace('@sentence', sentence);
+                    onChatInputChange(template);
+                    setState(draft => { 
+                        draft.currentChat.tooltipInfo = null; 
+                        draft.modalSelector = ModalSelector.None;
+                    });
                 }
-                draft.currentChat.tooltipInfo = {
-                    x: e.clientX,
-                    y: e.clientY,
-                    toRight: true,
-                    toDown: e.clientY - rect.top > rect.height / 2,
-                    onSelect: (note: NoteNode) => {
-                        const template = note.name.replace('@word', word).replace('@sentence', sentence);
-                        onChatInputChange(template);
-                        setState(draft => { 
-                            draft.currentChat.tooltipInfo = null; 
-                            draft.modalSelector = ModalSelector.None;
-                        });
-                    }
-                };
-            });
-        }
+            };
+        });
     }, [setState, onChatInputChange, size, messageWindowRef]);
 
     return (
