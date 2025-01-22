@@ -319,7 +319,7 @@ export const QuickPrompts = () => {
         <div className="notes-editor-container">
             <div className="notes-editor-title">Tooltip Prompts</div>
             <div className="notes-editor-info">
-                Welcome to the tooltip prompts editor. Here you can add, edit, and delete tooltip prompts for your course. Just click on a word or sentence when chatting to quickly ask a question about it! Use @word to reference the clicked word, or @sentence to reference the entire clicked message.
+                {highlight('Welcome to the tooltip prompts editor. Here you can add, edit, and delete tooltip prompts for your course. Just click on a word or sentence when chatting to quickly ask a question about it! Use @word to reference the clicked word, or @sentence to reference the entire clicked message.')}
             </div>
             <div className="notes-editor">
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: '600', marginLeft: '20px', marginTop: '10px', alignItems:'baseline'}}>

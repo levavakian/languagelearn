@@ -365,6 +365,9 @@ export const TooltipSettings = () => {
         <div className="text-2xl font-semibold flex flex-row">
             Tooltip Settings
         </div>
+        <div className="text-lg text-left mt-4">
+            {highlight('Welcome to the tooltip prompts editor. Here you can add, edit, and delete tooltip prompts for your course. Just click on a word or sentence when chatting to quickly ask a question about it! Use @word to reference the clicked word, or @sentence to reference the entire clicked message.')}
+        </div>
         {topActions()}
         {renderTooltip()}
     </div>
