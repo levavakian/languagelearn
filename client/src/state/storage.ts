@@ -1,6 +1,9 @@
 import { atom, WritableAtom } from 'jotai'
 import { produce } from 'immer'
 import { Draft } from 'immer'
+import { enableMapSet } from 'immer';
+
+enableMapSet();
 
 export type PersistedValue<T> = {
     type: 'persisted'

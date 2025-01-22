@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import './MessageWindow.css';
-import { Message, NoteNode, useSetStateValue, useStateValue } from '../../state/state';
+import { Message, ModalSelector, NoteNode, useSetStateValue, useStateValue } from '../../state/state';
 import { Connection } from './Connection';
 import { Tooltip } from '../Tooltip/Tooltip';
 import toast from 'react-hot-toast';
+import { smallScreen, useWindowSize } from '../../utils/globals';
+import { TooltipMobile } from '../Tooltip/TooltipMobile';
 
 const Avatar = ({ size }: { size: number }) => {
     return (
@@ -53,10 +55,14 @@ const UserMessage = ({ messages, messageWindowRef }: {
 }) => {
     const setState = useSetStateValue();
     const onChatInputChange = useStateValue(state => state.currentChat.setChatInput);
+    const size = useWindowSize();
     const handleWordClick = useCallback((word: string, sentence: string, e: React.MouseEvent) => {
         const rect = messageWindowRef.current?.getBoundingClientRect();
         if (rect) {
             setState(draft => {
+                if (smallScreen()) {
+                    draft.modalSelector = ModalSelector.Tooltip;
+                }
                 draft.currentChat.tooltipInfo = {
                     x: e.clientX - rect.left,
                     y: e.clientY - rect.top + (messageWindowRef.current?.scrollTop || 0),
@@ -65,12 +71,15 @@ const UserMessage = ({ messages, messageWindowRef }: {
                     onSelect: (note: NoteNode) => {
                         const template = note.name.replace('@word', word).replace('@sentence', sentence);
                         onChatInputChange(template);
-                        setState(draft => { draft.currentChat.tooltipInfo = null; });
+                        setState(draft => { 
+                            draft.currentChat.tooltipInfo = null; 
+                            draft.modalSelector = ModalSelector.None;
+                        });
                     }
                 };
             });
         }
-    }, [setState, onChatInputChange, messageWindowRef]);
+    }, [setState, onChatInputChange, size, messageWindowRef]);
 
     return (
         <div className="message-container user-message">
@@ -94,10 +103,14 @@ const AssistantMessage = ({ messages, messageWindowRef }: {
 }) => {
     const setState = useSetStateValue();
     const onChatInputChange = useStateValue(state => state.currentChat.setChatInput);
+    const size = useWindowSize();
     const handleWordClick = useCallback((word: string, sentence: string, e: React.MouseEvent) => {
         const rect = messageWindowRef.current?.getBoundingClientRect();
         if (rect) {
             setState(draft => {
+                if (smallScreen()) {
+                    draft.modalSelector = ModalSelector.Tooltip;
+                }
                 draft.currentChat.tooltipInfo = {
                     x: e.clientX - rect.left,
                     y: e.clientY - rect.top + (messageWindowRef.current?.scrollTop || 0),
@@ -106,12 +119,15 @@ const AssistantMessage = ({ messages, messageWindowRef }: {
                     onSelect: (note: NoteNode) => {
                         const template = note.name.replace('@word', word).replace('@sentence', sentence);
                         onChatInputChange(template);
-                        setState(draft => { draft.currentChat.tooltipInfo = null; });
+                        setState(draft => { 
+                            draft.currentChat.tooltipInfo = null; 
+                            draft.modalSelector = ModalSelector.None;
+                        });
                     }
                 };
             });
         }
-    }, [setState, onChatInputChange, messageWindowRef]);
+    }, [setState, onChatInputChange, size, messageWindowRef]);
 
     return (
         <div className="message-container assistant-message">
@@ -137,6 +153,7 @@ export const MessageWindow: React.FC = () => {
 
     const messages = useStateValue(state => state.currentChat.messages);
     const tooltipInfo = useStateValue(state => state.currentChat.tooltipInfo);
+    const modalSelector = useStateValue(state => state.modalSelector);
     const hiddenText = useStateValue(state => state.currentChat.chatOpts.hiddenText);
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
     const jwt = useStateValue(state => state.auth.token);
@@ -215,6 +232,8 @@ export const MessageWindow: React.FC = () => {
         };
     }, [onMessage, setState, uuid]);
 
+    useWindowSize();
+
     // Group messages by sender
     const groupedMessages = messages.reduce((acc: { sender: string; messages: string[] }[], message) => {
         const lastGroup = acc[acc.length - 1];
@@ -252,7 +271,8 @@ export const MessageWindow: React.FC = () => {
                     />
                 )
             ))}
-            {tooltipInfo && <Tooltip />}
+            {tooltipInfo && !smallScreen() && <Tooltip />}
+            {tooltipInfo && smallScreen() && modalSelector === ModalSelector.Tooltip && <TooltipMobile />}
         </div>
     );
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useSetStateValue, useStateValue } from '../../state/state';
 import type { NoteNode } from '../../state/state';
 import { Icon } from '../Icon/Icon';
+import { highlight } from '../../utils/display';
 
 interface DropdownMenuProps {
     nodes: NoteNode[];
@@ -82,28 +83,6 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
 
     const shouldFolderBeOpen = (node: NoteNode) => {
         return descendents.get(node.id)?.has(lastHoveredNode) || false;
-    };
-
-    const highlight = (text: string) => {
-        const normalizedText = text.trim().replace(/\s+/g, ' ');
-        const parts = normalizedText.split(/(@(?:word|sentence)\b)/g);
-        
-        const elements = parts.map((part, i) => {
-            if (part === '@word' || part === '@sentence') {
-                return (
-                    <span key={i} className="text-coral">
-                        {part}
-                    </span>
-                );
-            }
-            return <span key={i}>{part}</span>;
-        });
-        
-        return (
-            <div className="text-left inline-block">
-                {elements}
-            </div>
-        );
     };
 
     return (

@@ -11,6 +11,7 @@ export enum ModalSelector {
     LessonPlan = 'lesson-plan',
     AlwaysOn = 'always-on',
     LessonEdit = 'lesson-edit',
+    Tooltip = 'tooltip',
 }
 
 export enum TabSelection {
