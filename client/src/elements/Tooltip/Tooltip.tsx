@@ -3,6 +3,8 @@ import { useSetStateValue, useStateValue } from '../../state/state';
 import type { NoteNode } from '../../state/state';
 import { Icon } from '../Icon/Icon';
 import { highlight } from '../../utils/display';
+import { useWindowSize } from '../../utils/globals';
+import classNames from 'classnames';
 
 interface DropdownMenuProps {
     nodes: NoteNode[];
@@ -91,7 +93,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
             border-[1px] border-solid border-[--indigo-dye]
             mb-0 rounded-t-md rounded-b-md w-max max-w-[400px]
             flex flex-col-reverse
-            ${!tooltipInfo?.toRight ? 'ml-5 mr-0' : 'mr-5 ml-0'}
+            }
         `}>
             {nodes.map((node) => {
                 return (
@@ -220,17 +222,37 @@ export const Tooltip = () => {
         }
     }, [tooltipInfo]);
 
+    useWindowSize();
+
     if (!tooltipInfo || !settings) return null;
+
+    // Determine which half of the screen was clicked.
+
+    const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
+    const screenHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
+    const isLeft = tooltipInfo?.toRight;
+    const isTop = tooltipInfo?.toDown;
+
+    // Based on quadrant, pick transform origin and translation classes.
+    const positionClass = classNames('transform', {
+        // top-left quadrant
+        'origin-top-left translate-x-0 translate-y-0': isLeft && isTop,
+        // top-right quadrant
+        'origin-top-right -translate-x-full': !isLeft && isTop,
+        // bottom-left quadrant
+        'origin-bottom-left -translate-y-full': isLeft && !isTop,
+        // bottom-right quadrant
+        'origin-bottom-right -translate-x-full -translate-y-full': !isLeft && !isTop,
+    });
 
     return (
         <div>
             <div 
                 ref={tooltipRef}
-                className={`
-                    absolute z-50
-                    ${!tooltipInfo.toRight ? '-translate-x-full' : ''}
-                    ${tooltipInfo.toDown ? '-translate-y-full' : ''}
-                `}
+                className={classNames(
+                    'fixed z-50',
+                    positionClass
+                )}
                 style={{
                     left: `${tooltipInfo.x}px`,
                     top: `${tooltipInfo.y}px`,

@@ -64,8 +64,8 @@ const UserMessage = ({ messages, messageWindowRef }: {
                     draft.modalSelector = ModalSelector.Tooltip;
                 }
                 draft.currentChat.tooltipInfo = {
-                    x: e.clientX - rect.left,
-                    y: e.clientY - rect.top + (messageWindowRef.current?.scrollTop || 0),
+                    x: e.clientX,
+                    y: e.clientY,
                     toRight: false,
                     toDown: e.clientY - rect.top > rect.height / 2,
                     onSelect: (note: NoteNode) => {
@@ -112,8 +112,8 @@ const AssistantMessage = ({ messages, messageWindowRef }: {
                     draft.modalSelector = ModalSelector.Tooltip;
                 }
                 draft.currentChat.tooltipInfo = {
-                    x: e.clientX - rect.left,
-                    y: e.clientY - rect.top + (messageWindowRef.current?.scrollTop || 0),
+                    x: e.clientX,
+                    y: e.clientY,
                     toRight: true,
                     toDown: e.clientY - rect.top > rect.height / 2,
                     onSelect: (note: NoteNode) => {
@@ -252,7 +252,7 @@ export const MessageWindow: React.FC = () => {
 
     return (
         <div 
-            className={`pt-6 message-window ${hiddenText ? 'hidden-text' : ''} relative`} 
+            className={`pt-6 overflow-auto message-window ${hiddenText ? 'hidden-text' : ''} relative`} 
             ref={messageWindowRef}
         >
             {uuid in onMessageCallbacks && <Connection />}
