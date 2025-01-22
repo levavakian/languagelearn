@@ -2,6 +2,7 @@ import { TabSelection, useStateValue } from '../../state/state';
 import { CustomInstructionsMobile } from './CustomInstructionsMobile';
 import { LessonListMobile, PracticeListMobile } from './LessonListMobile';
 import { TabSelector } from './TabSelector';
+import { TooltipSettings } from './TooltipSettings';
 import { VocabMobile } from './VocabMobile';
 import { useCourseInfo } from './courseHooks';
 
@@ -23,6 +24,7 @@ export const CourseViewMobile = () => {
                         {tabSelection === TabSelection.Lessons && <LessonListMobile />}
                         {tabSelection === TabSelection.Practice && <PracticeListMobile />}
                         {tabSelection === TabSelection.Vocab && <VocabMobile />}
+                        {tabSelection === TabSelection.Tooltip && <TooltipSettings />}
                         {tabSelection === TabSelection.CustomInstructions && <CustomInstructionsMobile />}
                     </div>
                 </div>

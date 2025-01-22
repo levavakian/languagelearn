@@ -26,6 +26,12 @@ export const TabSelector = () => {
                 <Icon name="dictionary" scale={24}/>
             </div>
             <div 
+                onClick={() => setState(draft => { draft.pageChoice.tabSelection = TabSelection.Tooltip })}
+                className={`rounded-lg p-2 ${tabSelection === TabSelection.Tooltip ? 'bg-baby-powder-dark' : ''}`}
+            >
+                <Icon name="settings" scale={24}/>
+            </div>
+            <div 
                 onClick={() => setState(draft => { draft.pageChoice.tabSelection = TabSelection.CustomInstructions })}
                 className={`rounded-lg p-2 ${tabSelection === TabSelection.CustomInstructions ? 'bg-baby-powder-dark' : ''}`}
             >
