@@ -13,8 +13,26 @@ interface DropdownMenuProps {
     setLastHoveredNode: React.Dispatch<React.SetStateAction<string>>;
 }
 
-const calculateTooltipDimensions = (element: HTMLElement | null): { width: number; height: number } => {
-    if (!element) return { width: 0, height: 0 };
+const calculateTooltipDimensions = (
+    element: HTMLElement | null
+): {
+    width: number;
+    height: number;
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+} => {
+    if (!element) {
+        return {
+            width: 0,
+            height: 0,
+            minX: 0,
+            maxX: 0,
+            minY: 0,
+            maxY: 0,
+        };
+    }
     
     // Get all nested dropdown menus
     const dropdowns = element.querySelectorAll('[data-node-id]');
@@ -43,7 +61,11 @@ const calculateTooltipDimensions = (element: HTMLElement | null): { width: numbe
     
     return {
         width: maxX - minX,
-        height: maxY - minY
+        height: maxY - minY,
+        minX,
+        maxX,
+        minY,
+        maxY
     };
 };
 

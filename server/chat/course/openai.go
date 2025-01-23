@@ -865,6 +865,7 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 		fmt.Printf("Error initializing OpenAI connection: %v\n", err)
 		openAIConn = &OpenAIConnection{
 			IsClosed: true,
+			Closed: make(chan bool, 1),
 		}
 	}
 
@@ -890,6 +891,7 @@ func handleOpenAIConnection(chat *Chat, chatConns *ChatConnections, newMessage <
 					fmt.Printf("Error initializing OpenAI connection: %v\n", err)
 					openAIConn = &OpenAIConnection{
 						IsClosed: true,
+						Closed: make(chan bool, 1),
 					}
 					continue
 				}
