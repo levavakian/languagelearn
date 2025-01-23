@@ -21,7 +21,7 @@ export const CourseViewMobile = () => {
             </div>
             <div className="flex flex-1 w-full relative">
                 <div className="flex-1 flex min-w-0 pr-16">
-                    <div className="flex-1 ml-2 mt-2">
+                    <div className="flex-1 max-w-[100%] ml-2 mt-2">
                         {tabSelection === TabSelection.Lessons && <LessonListMobile />}
                         {tabSelection === TabSelection.Practice && <PracticeListMobile />}
                         {tabSelection === TabSelection.Vocab && <VocabMobile />}
