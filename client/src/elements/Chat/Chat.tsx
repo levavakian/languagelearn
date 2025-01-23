@@ -69,7 +69,7 @@ const Chat = () => {
                     scale={24} 
                     onClick={() => setState(draft => { draft.pageChoice.workPage = WorkPage.Course })} 
                 />
-                <div className="font-nobel truncate max-w-[800px] text-[32px] ml-3 font-semibold text-indigo-dye">
+                <div className="font-nobel text-nowrap scrollbar-none max-w-[80%] overflow-x-auto text-[32px] ml-3 font-semibold text-indigo-dye">
                     {chat?.name}
                 </div>
             </div>

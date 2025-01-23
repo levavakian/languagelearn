@@ -39,6 +39,7 @@ export const IconPaths = {
     bars: '/icons/bars.svg',
     altchat: '/icons/altchat.svg',
     gear: '/icons/gear.svg',
+    question: '/icons/question.svg',
   } as const;
   
   export type IconName = keyof typeof IconPaths;
