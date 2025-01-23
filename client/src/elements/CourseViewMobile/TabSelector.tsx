@@ -7,6 +7,12 @@ export const TabSelector = () => {
 
     return <div className="flex flex-col gap-4 w-full mt-16">
         <div className="mr-2">
+        <div 
+                onClick={() => setState(draft => { draft.pageChoice.tabSelection = TabSelection.Main })}
+                className={`rounded-lg p-2 ${tabSelection === TabSelection.Main ? 'bg-baby-powder-dark' : ''}`}
+            >
+                <Icon name="shuttle" scale={24}/>
+            </div>
             <div 
                 onClick={() => setState(draft => { draft.pageChoice.tabSelection = TabSelection.Lessons })}
                 className={`rounded-lg p-2 ${tabSelection === TabSelection.Lessons ? 'bg-baby-powder-dark' : ''}`}

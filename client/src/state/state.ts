@@ -26,6 +26,7 @@ export enum HelpChat {
 
 export enum TabSelection {
     Lessons = 'lessons',
+    Main = 'main',
     Practice = 'practice',
     Vocab = 'vocab',
     CustomInstructions = 'custom-instructions',

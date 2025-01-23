@@ -1,11 +1,11 @@
 import { createAssessment } from "../../api/assessment";
-import { useSetStateValue, useStateValue, State, Lesson, WorkPage, ModalSelector } from "../../state/state";
+import { useSetStateValue, useStateValue, State, Lesson, WorkPage, ModalSelector, Course } from "../../state/state";
 import { useCallback, useEffect, useState } from "react";
 import { smallScreen } from "../../utils/globals";
 
-export const Intro = () => {
+export const Intro = ({ providedCourse }: { providedCourse?: Course | null }) => {
     const courses = useStateValue(state => state.courses);
-    const course = courses.length > 0 
+    const course = providedCourse || courses.length > 0 
         ? courses.reduce((latest, course) => {
             return new Date(course.updated_at) > new Date(latest.updated_at) ? course : latest;
         })
@@ -179,9 +179,13 @@ export const Intro = () => {
 
     if (smallScreen()) {
         return <div className="flex flex-col h-[100%] justify-between items-center">
-            <h1 className="text-[42px] ml-2 font-bold font-nobel mb-4 flex-1">
-                {course ? `Hey, are you ready for today's ${course?.name} lesson?` : "Hey, are you ready to start a new course?"}
-            </h1>
+            {providedCourse ? (
+                <div className="text-[42px] font-semibold font-nobel mb-4 text-center">Welcome back to class!</div>
+            ) : (
+                <h1 className="text-[42px] ml-2 font-bold font-nobel mb-4 flex-1">
+                    {course ? `Hey, are you ready for today's ${course?.name} lesson?` : "Hey, are you ready to start a new course?"}
+                </h1>
+            )}
             <div className="flex-0">
                 {course ? (
                     <div className="flex flex-col gap-8">
@@ -196,9 +200,13 @@ export const Intro = () => {
 
     return (
         <div className="flex flex-col items-center mt-[30vh] gap-4 p-4">
-            <h1 className="text-[42px] font-bold font-nobel mb-4">
-                {course ? `Hey, are you ready for today's ${course?.name} lesson?` : "Hey, are you ready to start a new course?"}
-            </h1>
+            {providedCourse ? (
+                <div>hello</div>
+            ) : (
+                <h1 className="text-[42px] font-bold font-nobel mb-4">
+                    {course ? `Hey, are you ready for today's ${course?.name} lesson?` : "Hey, are you ready to start a new course?"}
+                </h1>
+            )}
             {course ? (
                 <div className="flex gap-8">
                     {latestLesson ?  continueLessonButton : initialAssessmentButton}
