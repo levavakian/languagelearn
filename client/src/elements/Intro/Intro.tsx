@@ -5,11 +5,11 @@ import { smallScreen } from "../../utils/globals";
 
 export const Intro = ({ providedCourse }: { providedCourse?: Course | null }) => {
     const courses = useStateValue(state => state.courses);
-    const course = providedCourse || courses.length > 0 
+    const course = providedCourse || (courses && courses.length > 0 
         ? courses.reduce((latest, course) => {
             return new Date(course.updated_at) > new Date(latest.updated_at) ? course : latest;
         })
-        : null;
+        : null);
 
     const setState = useSetStateValue();
     const jwt = useStateValue((state: State) => state.auth.token);

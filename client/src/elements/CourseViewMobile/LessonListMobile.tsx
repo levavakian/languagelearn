@@ -90,7 +90,6 @@ export const UnifiedListMobile: React.FC<{
     onDelete: (lesson: Lesson) => void;
 }> = ({ filterFn, title, newTitle, onNew, onEdit, onDelete }) => {
     const setState = useSetStateValue();
-    const [showDropdown, setShowDropdown] = useState(false);
     const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
     const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
     const iconRef = useRef<HTMLDivElement>(null);
@@ -209,9 +208,6 @@ export const LessonListMobile = () => {
 export const PracticeListMobile = () => {
     const setState = useSetStateValue();
     const modalSelector = useStateValue(state => state.modalSelector);
-    const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
-    const onRequestError = useStateValue(state => state.auth.onRequestError);
-    const jwt = useStateValue(state => state.auth.token);
     const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
 
     const handleNewPractice = useHandleNewPractice();

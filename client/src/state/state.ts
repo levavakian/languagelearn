@@ -31,6 +31,7 @@ export enum TabSelection {
     Vocab = 'vocab',
     CustomInstructions = 'custom-instructions',
     Tooltip = 'tooltip',
+    Templates = 'templates',
 }
 
 export enum PreferredInstructorStyle {
@@ -156,9 +157,10 @@ export type WrappedState = {
         key: number
         timeLastPayment: number
         timeLastLessonMod: number
+        timeLastLessonPlans: number
     }
     pageChoice: Persistable<PageChoice>
-    courseInfo: Record<string, {content: Course | null, lessons: Lesson[], settings: CourseSettings | null}>
+    courseInfo: Record<string, {content: Course | null, lessons: Lesson[], lessonPlans: LessonPlan[], settings: CourseSettings | null}>
     currentCourse: {
         content: Course | null
         lessons: Lesson[]
@@ -203,6 +205,7 @@ const { value: initialState, persistedPaths } = unwrapState<WrappedState>({
         key: 0,
         timeLastPayment: 0,
         timeLastLessonMod: 0,
+        timeLastLessonPlans: 0,
     },
     pageChoice: persisted('page-choice', {
         workPage: WorkPage.Intro,

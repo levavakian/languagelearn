@@ -22,6 +22,7 @@ export const IconPaths = {
     x: '/icons/x.svg',
     xcircle: '/icons/xcircle.svg',
     pencil: '/icons/pencil.svg',
+    bookmark: '/icons/bookmark.svg',
     chevright: '/icons/chevright.svg',
     bin: '/icons/bin.svg',
     plus: '/icons/plus.svg',

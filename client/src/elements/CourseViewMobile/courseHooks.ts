@@ -8,6 +8,7 @@ export const useCourseInfo = () => {
     const selectedCourseId = useStateValue(state => state.pageChoice.selectedCourse);
     const jwt = useStateValue(state => state.auth.token);
     const onRequestError = useStateValue(state => state.auth.onRequestError);
+    const timeLastLessonPlans = useStateValue(state => state.triggers.timeLastLessonPlans);
 
     const fetchLessons = useCallback(async () => {
         const response = await fetch(`/api/course/${selectedCourseId}/lessons`, {
@@ -36,6 +37,7 @@ export const useCourseInfo = () => {
                     draft.courseInfo[selectedCourseId] = {
                         content: null,
                         lessons: [],
+                        lessonPlans: [],
                         settings: null
                     }
                 }
@@ -43,6 +45,42 @@ export const useCourseInfo = () => {
             });
         }
     }, [dataLessons, setState, isPendingLessons, errorLessons, selectedCourseId]);
+
+    const fetchLessonPlans = useCallback(async () => {
+        const response = await fetch(`/api/course/${selectedCourseId}/lesson-plans`, {
+            headers: {
+                'Authorization': `Bearer ${jwt}`
+            }
+        })
+
+        if (!response.ok) {
+            onRequestError(response, "Error fetching lesson templates");
+            return;
+        }
+
+        return response.json();
+    }, [selectedCourseId, jwt, onRequestError]);
+
+    const {isPending: isPendingLessonPlans, error: errorLessonPlans, data: dataLessonPlans} = useQuery({
+        queryKey: ['use-course-info-lesson-plans-' + selectedCourseId + '-' + timeLastLessonPlans],
+        queryFn: fetchLessonPlans
+    })
+
+    useEffect(() => {
+        if (!isPendingLessonPlans && !errorLessonPlans && selectedCourseId) {
+            setState(draft => {
+                if (!(selectedCourseId in draft.courseInfo)) {
+                    draft.courseInfo[selectedCourseId] = {
+                        content: null,
+                        lessons: [],
+                        lessonPlans: [],
+                        settings: null
+                    }
+                }
+                draft.courseInfo[selectedCourseId].lessonPlans = dataLessonPlans || []
+            });
+        }
+    }, [dataLessonPlans, setState, isPendingLessonPlans, errorLessonPlans, selectedCourseId]);
     
     const fetchCourse = useCallback(async () => {
         try {
@@ -83,6 +121,7 @@ export const useCourseInfo = () => {
                     draft.courseInfo[selectedCourseId] = {
                         content: null,
                         lessons: [],
+                        lessonPlans: [],
                         settings: null
                     }
                 }
@@ -118,6 +157,7 @@ export const useCourseInfo = () => {
                     draft.courseInfo[selectedCourseId] = {
                         content: null,
                         lessons: [],
+                        lessonPlans: [],
                         settings: null
                     }
                 }
