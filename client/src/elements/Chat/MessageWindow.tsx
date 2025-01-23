@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import './MessageWindow.css';
-import { Message, ModalSelector, NoteNode, useSetStateValue, useStateValue } from '../../state/state';
+import { HelpChat, Message, ModalSelector, NoteNode, useSetStateValue, useStateValue } from '../../state/state';
 import { Connection } from './Connection';
 import { Tooltip } from '../Tooltip/Tooltip';
 import toast from 'react-hot-toast';
 import { smallScreen, useWindowSize } from '../../utils/globals';
 import { TooltipMobile } from '../Tooltip/TooltipMobile';
+import { CyclingHelpChat } from '../Tooltip/Info';
 
 const Avatar = ({ size }: { size: number }) => {
     return (

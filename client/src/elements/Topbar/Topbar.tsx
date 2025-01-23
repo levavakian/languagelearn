@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import './Topbar.css';
-import { useSetStateValue, ModalSelector, useStateValue, WorkPage } from '../../state/state';
+import { useSetStateValue, ModalSelector, useStateValue, WorkPage, HelpChat } from '../../state/state';
 import { ShowMobileModal, ShowModal } from '../Modal/Modal';
 import { PaymentForm, CreditCard, GooglePay } from 'react-square-web-payments-sdk';
 import toast from 'react-hot-toast';
@@ -436,6 +436,8 @@ export const Topbar = () => {
     const modalSelector = useStateValue(state => state.modalSelector);
     const [showUserDropdown, setShowUserDropdown] = useState(false);
     const userIconRef = useRef<HTMLDivElement>(null);
+    const workPage = useStateValue(state => state.pageChoice.workPage);
+    const helpChat = useStateValue(state => state.helpChat);
 
     return (
         <div>
@@ -447,6 +449,17 @@ export const Topbar = () => {
                 padding: '10px 20px',
                 gap: '15px',
             }}>
+                {workPage === WorkPage.Chat && <div className="topbar-icon"
+                    onClick={() => {
+                        setState(draft => { 
+                            if (draft.helpChat === HelpChat.None) { 
+                                draft.helpChat = Object.values(HelpChat)[1];
+                            } else { 
+                                draft.helpChat = HelpChat.None 
+                            } 
+                        })
+                    }}
+                ><Icon name="question" className={helpChat === HelpChat.None ? 'opacity-50' : 'opacity-100'} scale={24} /></div>}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="topbar-icon">
                     <CoinCount />
                     <Icon name="profit" scale={24} />

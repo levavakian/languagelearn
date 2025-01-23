@@ -1,9 +1,10 @@
 import './ChatInput.css';
 import { useCallback, useEffect, useState } from 'react';
-import { useStateValue, useSetStateValue, Message, MessageType, PreferredResponseType, ModalSelector, AlwaysOnMode, VocabItem, Lesson } from '../../state/state';
+import { useStateValue, useSetStateValue, Message, MessageType, PreferredResponseType, ModalSelector, AlwaysOnMode, VocabItem, Lesson, HelpChat } from '../../state/state';
 import { Icon } from '../Icon/Icon';
 import { AlwaysOnModal } from './AlwaysOnModal';
 import { LessonEditModal } from '../LessonEditModal/LessonEditModal';
+import { CyclingHelpChat } from '../Tooltip/Info';
 
 const ChatInput = () => {
     const setState = useSetStateValue();
@@ -168,6 +169,12 @@ const ChatInput = () => {
             </div>
             <div className="chat-input-bottom">
                 <div className="left-icons">
+                    <CyclingHelpChat choice={HelpChat.AlwaysOn} x={125} y={-80}>
+                        <div className="w-[200px]">
+                            <Icon scale={18} name="ear" className="mr-2"/>
+                            Want hands off mode? Click the Always On button to leave your microphone running!
+                        </div>
+                    </CyclingHelpChat>
                     <div 
                         className={`icon ${chatOpts.alwaysOn !== AlwaysOnMode.Off ? '' : 'inactive'}`}
                         title={`${chatOpts.alwaysOn !== AlwaysOnMode.Off ? 'Click to disable always listening mode' : 'Click to enable always listening mode'}`}
@@ -177,6 +184,12 @@ const ChatInput = () => {
                     >
                         <Icon scale={24} name="ear" />
                     </div>
+                    <CyclingHelpChat choice={HelpChat.PreferAudio} x={125} y={-80}>
+                        <div className="w-[200px]">
+                            <Icon scale={18} name="speaker" className="mr-2"/>
+                            Can't talk but still want to listen? Use Prefer Audio mode to have the tutor respond with audio even to text messages
+                        </div>
+                    </CyclingHelpChat>
                     <div 
                         className={`icon ${chatOpts.preferAudio ? '' : 'inactive'}`}
                         title={`${chatOpts.preferAudio ? 'Click to disable prefer audio mode' : 'Click to enable prefer audio mode, which will respond with audio even to text messages'}`}
@@ -184,6 +197,12 @@ const ChatInput = () => {
                     >  
                         <Icon scale={24} name="speaker" />
                     </div>
+                    <CyclingHelpChat choice={HelpChat.HiddenText} x={125} y={-90}>
+                        <div className="w-[200px]">
+                            <Icon scale={18} name="eyebrow" className="mr-2"/>
+                            Want to practice listening without seeing the text? Use Hidden Text mode to blur the chat text. Just hover over the text to take a peek!
+                        </div>
+                    </CyclingHelpChat>
                     <div 
                         className={`icon ${chatOpts.hiddenText ? '' : 'inactive'}`}
                         title={`${chatOpts.hiddenText ? 'Click to disable hidden text mode' : 'Click to enable hidden text mode, which will blur the chat text to help with listening practice'}`}
@@ -191,6 +210,12 @@ const ChatInput = () => {
                     >
                         <Icon scale={24} name="eyebrow" />
                     </div>
+                    <CyclingHelpChat choice={HelpChat.Save} x={125} y={-90}>
+                        <div className="w-[200px]">
+                            <Icon scale={18} name="save" className="mr-2"/>
+                            Done with your lesson? Don't forget to save your progress so that the tutor can update its knowledge about your learning
+                        </div>
+                    </CyclingHelpChat>
                     <div 
                         className={`icon ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`} 
                         title="Generate a summary and save your progress"
@@ -203,14 +228,19 @@ const ChatInput = () => {
                     <div className="icon-with-background" onClick={submitText}>
                         <Icon scale={12} rotation={90} name="arrow" />
                     </div>
-                    <div className={`icon-with-background select-none ${isRecentAudio ? 'glowing' : ''} ${!audioInput.hasPermission ? 'disabled' : ''}`}
-                        onMouseDown={() => audioInput.triggerRecording()}
-                        onMouseUp={() => audioInput.triggerStopRecording()}
-                        onMouseLeave={() => audioInput.triggerStopRecording()}
-                        onTouchStart={() => audioInput.triggerRecording()}
-                        onTouchEnd={() => audioInput.triggerStopRecording()}
-                    >
-                        <Icon scale={12} name="micFilled" className="pointer-events-none" />
+                    <div>
+                        <CyclingHelpChat choice={HelpChat.Mic} x={-100} y={-75}>
+                            <div className="w-[200px]">Press and hold the microphone to speak, or use the keyboard controls for text and audio</div>
+                        </CyclingHelpChat>
+                        <div className={`icon-with-background select-none ${isRecentAudio ? 'glowing' : ''} ${!audioInput.hasPermission ? 'disabled' : ''}`}
+                            onMouseDown={() => audioInput.triggerRecording()}
+                            onMouseUp={() => audioInput.triggerStopRecording()}
+                            onMouseLeave={() => audioInput.triggerStopRecording()}
+                            onTouchStart={() => audioInput.triggerRecording()}
+                            onTouchEnd={() => audioInput.triggerStopRecording()}
+                        >
+                            <Icon scale={12} name="micFilled" className="pointer-events-none" />
+                        </div>
                     </div>
                 </div>
             </div>

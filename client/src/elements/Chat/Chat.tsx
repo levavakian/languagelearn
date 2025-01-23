@@ -1,13 +1,14 @@
 import './ChatInput.css';
 import { useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { useStateValue, useSetStateValue, WorkPage } from '../../state/state';
+import { useStateValue, useSetStateValue, WorkPage, HelpChat } from '../../state/state';
 import { MessageWindow } from './MessageWindow';
 import { ChatInput } from './ChatInput';
 import { AudioInput } from './AudioInput';
 import { AudioOutput } from './AudioOutput';
 import { Icon } from '../Icon/Icon';
 import { smallScreen, useWindowSize } from "../../utils/globals";
+import { CyclingHelpChat } from '../Tooltip/Info';
 
 const Chat = () => {
     const setState = useSetStateValue();
@@ -72,6 +73,9 @@ const Chat = () => {
                 <div className="font-nobel text-nowrap scrollbar-none max-w-[80%] overflow-x-auto text-[32px] ml-3 font-semibold text-indigo-dye">
                     {chat?.name}
                 </div>
+                <CyclingHelpChat choice={HelpChat.Tooltip} x={-100} y={150}>
+                    <div className="w-[200px]">Click on a word or sentence to ask questions using quick prompts</div>
+                </CyclingHelpChat>
             </div>
             <AudioInput />
             <AudioOutput />
