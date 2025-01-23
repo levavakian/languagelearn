@@ -163,7 +163,7 @@ export const GetBuyModal = () => {
     
     const mobilePayButton = (amount: number, id: number) => {
         return <div key={id} className="flex flex-row space-x-4 overflow-visible mt-4">
-            <div className={`w-full flex flex-row items-center p-4 bg-[var(--alice-blue)] px-[60] rounded-lg shadow-[0_6px_0_var(--indigo-dye)] hover:bg-[var(--alice-dark)] ${selectedId === id ? 'outline outline-[8px] outline-[var(--coral)]' : 'border-[2px] border-solid border-[--indigo-dye]'}`}
+            <div className={`w-full flex flex-row justify-center items-center p-4 bg-[var(--alice-blue)] px-[60] rounded-lg shadow-[0_6px_0_var(--indigo-dye)] hover:bg-[var(--alice-dark)] ${selectedId === id ? 'outline outline-[8px] outline-[var(--coral)]' : 'border-[2px] border-solid border-[--indigo-dye]'}`}
                 onClick={() => {
                     setSelectedAmount(amount);
                     setSelectedId(id);
@@ -186,7 +186,7 @@ export const GetBuyModal = () => {
             {mobilePayButton(1000, 1)}
             {mobilePayButton(2000, 2)}
             <div className="flex flex-row space-x-4 overflow-visible mt-4">
-                <div className={`w-[100%] flex flex-row items-center p-4 bg-[var(--alice-blue)] px-[60] rounded-lg shadow-[0_6px_0_var(--indigo-dye)] hover:bg-[var(--alice-dark)] ${selectedId === 3 ? 'outline outline-[8px] outline-[var(--coral)]' : 'border-[2px] border-solid border-[--indigo-dye]'}`}
+                <div className={`w-[100%] flex flex-row justify-center items-center p-4 bg-[var(--alice-blue)] px-[60] rounded-lg shadow-[0_6px_0_var(--indigo-dye)] hover:bg-[var(--alice-dark)] ${selectedId === 3 ? 'outline outline-[8px] outline-[var(--coral)]' : 'border-[2px] border-solid border-[--indigo-dye]'}`}
                     onClick={() => {
                         setSelectedAmount(customAmount);
                         setSelectedId(3);
