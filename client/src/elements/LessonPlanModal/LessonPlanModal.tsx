@@ -1,10 +1,11 @@
 import React, { ChangeEvent, useCallback, useEffect } from 'react';
-import { ShowModal } from '../Modal/Modal';
+import { ShowMobileModal, ShowModal } from '../Modal/Modal';
 import { useSetStateValue, ModalSelector, useStateValue, LessonPlan } from '../../state/state';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Icon } from '../Icon/Icon';
 import { useQuery } from '@tanstack/react-query'
+import { smallScreen, useWindowSize } from '../../utils/globals';
 
 export const LessonPlanModal = ({lessonTemplateExisting}: {lessonTemplateExisting: LessonPlan | null}) => {
     const setState = useSetStateValue();
@@ -18,6 +19,8 @@ export const LessonPlanModal = ({lessonTemplateExisting}: {lessonTemplateExistin
 
     const jwt = useStateValue(state => state.auth.token);
     const onRequestError = useStateValue(state => state.auth.onRequestError);
+
+    useWindowSize();
 
     const onLessonPick = useCallback((lessonPlans: LessonPlan[], chosen: string) => {
         if (!chosen) {
@@ -122,6 +125,14 @@ export const LessonPlanModal = ({lessonTemplateExisting}: {lessonTemplateExistin
         queryKey: ['lesson-plans-lesson-plan-modal'],
         queryFn: fetchLessonPlans
     })
+
+    if (smallScreen()) {
+        return ShowMobileModal(
+            ModalSelector.LessonPlan,
+            <div>hello</div>,
+            (iconPressed: boolean) => true
+        );
+    }
 
     return ShowModal(
         ModalSelector.LessonPlan,
