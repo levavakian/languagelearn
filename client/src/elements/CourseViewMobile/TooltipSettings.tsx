@@ -256,7 +256,7 @@ export const TooltipSettings = () => {
                                 }
                             }}
                             />:
-                            <div className="bg-white border-1 border-solid border-indigo-dye text-[20px] font-medium rounded-xl flex-1 mt-[-3px] p-4"
+                            <div className="bg-white border-[3px] border-solid border-indigo-dye text-[20px] font-medium rounded-xl flex-1 mt-[-3px] p-4"
                                 onClick={() => {
                                     setLastClickedNote(note.id);
                                 }}
@@ -299,7 +299,7 @@ export const TooltipSettings = () => {
                             }
                         }}
                         />:
-                        <div className={`transition-all duration-300 ease-in-out flex flex-row justify-between border-1 border-solid border-indigo-dye text-[20px] font-medium rounded-xl flex-1 mt-[-3px] p-4 ${
+                        <div className={`transition-all duration-300 ease-in-out flex flex-row justify-between border-[3px] border-solid border-indigo-dye text-[20px] font-medium rounded-xl flex-1 mt-[-3px] p-4 ${
                                 expandedNodes.has(note.id) 
                                     ? 'bg-coral text-baby-powder' 
                                     : 'bg-alice-blue text-indigo-dye'
