@@ -253,7 +253,7 @@ const ChatInput = () => {
                 <CyclingHelpChat choice={HelpChat.Mic} x={-100} y={-150}>
                     <div className="w-[200px]">Press and hold the microphone to speak, or use the keyboard controls for text and audio</div>
                 </CyclingHelpChat>
-                <div className={`bg-alice-dark flex items-center justify-center transition-all duration-200 rounded-[50%] w-[5rem] h-[5rem] select-none ${isRecentAudio ? 'glowing' : ''} ${!audioInput.hasPermission ? 'disabled' : ''}`}
+                <div className={`bg-alice-dark flex items-center justify-center transition-all duration-200 rounded-[50%] w-[5rem] h-[5rem] select-none ${isRecentAudio ? 'glowing pulse-animation' : ''} ${!audioInput.hasPermission ? 'disabled' : ''}`}
                     onMouseDown={() => audioInput.triggerRecording()}
                     onMouseUp={() => audioInput.triggerStopRecording()}
                     onMouseLeave={() => audioInput.triggerStopRecording()}
