@@ -180,9 +180,9 @@ func calculateRealtimeCreditUsage(usage OpenAIResponseDoneUsage) int64 {
         textInputRate        int64 = int64(1.2 * 500000)    // 500 credits per million tokens
         textCachedInputRate  int64 = int64(1.2 * 250000)    // 250 credits per million tokens
         textOutputRate       int64 = int64(1.2 * 2000000)   // 2000 credits per million tokens
-        audioInputRate       int64 = int64(1.2 * 10000000)  // 10000 credits per million tokens
-        audioCachedInputRate int64 = int64(1.2 * 2000000)   // 2000 credits per million tokens
-        audioOutputRate      int64 = int64(1.2 * 20000000)  // 20000 credits per million tokens
+        audioInputRate       int64 = int64(1.2 * 4000000)   // 4000 credits per million tokens
+        audioCachedInputRate int64 = int64(1.2 * 250000)    // 250 credits per million tokens
+        audioOutputRate      int64 = int64(1.2 * 8000000)   // 8000 credits per million tokens
     )
 
     var totalCost int64 = 0
