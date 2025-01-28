@@ -79,9 +79,7 @@ const Chat = () => {
             </div>
             <AudioInput />
             <AudioOutput />
-            <div className="flex-1 overflow-y-auto">
-                <MessageWindow />
-            </div>
+            <MessageWindow />
             <div className="flex-0">
                 <ChatInput />
             </div>

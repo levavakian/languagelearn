@@ -6,7 +6,6 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import toast from 'react-hot-toast';
 import { smallScreen, useWindowSize } from '../../utils/globals';
 import { TooltipMobile } from '../Tooltip/TooltipMobile';
-import { CyclingHelpChat } from '../Tooltip/Info';
 
 const Avatar = ({ size }: { size: number }) => {
     return (
@@ -249,28 +248,29 @@ export const MessageWindow: React.FC = () => {
     }, []);
 
     return (
-        <div 
-            className={`pt-6 overflow-auto message-window ${hiddenText ? 'hidden-text' : ''} relative`} 
-            ref={messageWindowRef}
-        >
-            {uuid in onMessageCallbacks && <Connection />}
-            {groupedMessages.map((group, index) => (
-                group.sender === 'user' ? (
-                    <UserMessage 
-                        key={index} 
-                        messages={group.messages} 
-                        messageWindowRef={messageWindowRef}
-                    />
-                ) : (
-                    <AssistantMessage 
-                        key={index} 
-                        messages={group.messages} 
-                        messageWindowRef={messageWindowRef}
-                    />
-                )
-            ))}
-            {tooltipInfo && !smallScreen() && <Tooltip />}
-            {tooltipInfo && smallScreen() && modalSelector === ModalSelector.Tooltip && <TooltipMobile />}
+        <div className="flex-1 overflow-y-auto" ref={messageWindowRef}>
+            <div 
+                className={`pt-6 message-window ${hiddenText ? 'hidden-text' : ''}`} 
+            >
+                {uuid in onMessageCallbacks && <Connection />}
+                {groupedMessages.map((group, index) => (
+                    group.sender === 'user' ? (
+                        <UserMessage 
+                            key={index} 
+                            messages={group.messages} 
+                            messageWindowRef={messageWindowRef}
+                        />
+                    ) : (
+                        <AssistantMessage 
+                            key={index} 
+                            messages={group.messages} 
+                            messageWindowRef={messageWindowRef}
+                        />
+                    )
+                ))}
+                {tooltipInfo && !smallScreen() && <Tooltip />}
+                {tooltipInfo && smallScreen() && modalSelector === ModalSelector.Tooltip && <TooltipMobile />}
+            </div>
         </div>
     );
 };
