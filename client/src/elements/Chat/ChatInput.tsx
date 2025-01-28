@@ -153,7 +153,7 @@ const ChatInput = () => {
 
     return (
         <div className="flex flex-row">
-            <div className="rounded-t-xl flex-1 h-[7.25rem] bg-white">
+            <div className={`flex-1 h-[7.25rem] bg-white ${smallScreen() ? 'rounded-tl-xl' : 'rounded-tl-xl rounded-tr-xl'}`}>
                 {modalSelector === ModalSelector.LessonEdit && genLesson && <LessonEditModal lesson={genLesson} summaryInput={genSummary} vocabEdit={genVocab} />}
                 {modalSelector === ModalSelector.AlwaysOn && <AlwaysOnModal />}
                 <div className="h-[50%] p-[0.5rem]">
@@ -236,7 +236,7 @@ const ChatInput = () => {
                             <CyclingHelpChat choice={HelpChat.Mic} x={-100} y={-75}>
                                 <div className="w-[200px]">Press and hold the microphone to speak, or use the keyboard controls for text and audio</div>
                             </CyclingHelpChat>
-                            <div className={`icon-with-background select-none ${isRecentAudio ? 'glowing' : ''} ${!audioInput.hasPermission ? 'disabled' : ''}`}
+                            <div className={`icon-with-background rounded-tr-[0%] select-none ${isRecentAudio ? 'glowing' : ''} ${!audioInput.hasPermission ? 'disabled' : ''}`}
                                 onMouseDown={() => audioInput.triggerRecording()}
                                 onMouseUp={() => audioInput.triggerStopRecording()}
                                 onMouseLeave={() => audioInput.triggerStopRecording()}
@@ -249,7 +249,7 @@ const ChatInput = () => {
                     </div>
                 </div>
             </div>
-            {smallScreen() && <div className="flex-0 bg-white h-[7.25rem] flex items-end">
+            {smallScreen() && <div className="flex-0 bg-white h-[7.25rem] rounded-tr-xl flex items-end">
                 <CyclingHelpChat choice={HelpChat.Mic} x={-100} y={-150}>
                     <div className="w-[200px]">Press and hold the microphone to speak, or use the keyboard controls for text and audio</div>
                 </CyclingHelpChat>
