@@ -37,7 +37,7 @@ export const TooltipMobile = () => {
         return notes.map((note) => {
             return <div>
                 {note.type === 'note' ? (
-                    <div className="bg-white border-1 border-solid border-indigo-dye text-[20px] font-medium rounded-xl flex-1 mt-[-3px] p-4" key={note.id}
+                    <div className="bg-white border-[3px] border-solid border-indigo-dye text-[20px] font-medium rounded-xl flex-1 mt-[-3px] p-4" key={note.id}
                         onClick={() => {
                             tooltipInfo?.onSelect(note);
                             onClose(false);
@@ -47,7 +47,7 @@ export const TooltipMobile = () => {
                     </div>
                 ) : null}
                 {note.type === 'folder' ? (
-                    <div className={`transition-all duration-300 ease-in-out flex flex-row justify-between border-1 border-solid border-indigo-dye text-[20px] font-medium rounded-xl flex-1 mt-[-3px] p-4 ${
+                    <div className={`transition-all duration-300 ease-in-out flex flex-row justify-between border-[3px] border-solid border-indigo-dye text-[20px] font-medium rounded-xl flex-1 mt-[-3px] p-4 ${
                         expandedNodes.has(note.id) 
                             ? 'bg-coral text-baby-powder' 
                             : 'bg-alice-blue text-indigo-dye'
