@@ -105,7 +105,7 @@ func generateLessonSummary(w http.ResponseWriter, r *http.Request) {
 	messages := []ChatMessage{
 		{
 			Role: "system",
-			Content: "You are a professional language tutor writing a summary for another tutor who will be taking over this student. Your task is to analyze the chat and provide a concise but informative summary focusing on: 1) What topics were covered, 2) What the student did well on, 3) What the student struggled with, and 4) Recommendations for what to cover in the next lesson. Remember, the next tutor will only see this summary and the lesson plan, not the full chat history.",
+			Content: "You are a professional language tutor writing a summary for another tutor who will be taking over this student. Your task is to analyze the chat and provide a concise but informative summary focusing on: 1) What topics were covered, 2) What the student did well on, 3) What the student struggled with, and 4) Recommendations for what to cover in the next lesson. Remember, the next tutor will only see this summary and the lesson plan, not the full chat history, so make sure the summary is comprehensive and detailed.",
 		},
 		{
 			Role:    "assistant",
@@ -128,7 +128,7 @@ func generateLessonSummary(w http.ResponseWriter, r *http.Request) {
 	// Add final request for summary
 	messages = append(messages, ChatMessage{
 		Role: "user",
-		Content: "Please provide a summary for this chat. Focus on what topics were covered, what the student did well on, what they struggled with, and what would be helpful to cover in the next lesson. Make it concise but informative for the next tutor.",
+		Content: "Please provide a summary for this chat. Focus on what topics were covered, what the student did well on, what they struggled with, and what would be helpful to cover in the next lesson. Make it concise but informative for the next tutor.\n\nThe summary should follow this format:\n\n[Topics Covered]\n-- [Vocabulary]\n-- [Grammar]\n-- [Conversation]\n[What the student did well on]\n[What the student struggled with]\n[Summary of CEFR Level]\n[Advice for Student]\n[Notes for Next Instructor]",
 	})
 
 	// Prepare the request to OpenAI
@@ -261,8 +261,9 @@ func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
 			Content: `You are an AI language tutor responsible for maintaining a vocabulary and grammar reference list. 
 					 Analyze the lesson content and identify important vocabulary words, grammar concepts, idioms, or 
 					 language patterns that should be added to or updated in the reference list. Keep entries concise 
-					 and information-dense. The word should be in the language the user is trying to learn, and the definition
-					 should be in the languate the user speaks natively. The word and definition should each be as few
+					 and information-dense. This list will be the only information that is passed from instructor to instructor, so it should be comprehensive and detailed.
+					 The word should be in the language the user is trying to learn, and the definition
+					 should be in the language the user speaks natively (default to English, but if the chat indicates their native language is different, use that). The word and definition should each be as few
 					 words as possible, preferably one or two max. Each entry should be categorized by type
 					 (word, verb, tense, idiom, etc.).`,
 		},
@@ -302,8 +303,7 @@ func generateVocabUpdates(w http.ResponseWriter, r *http.Request) {
 	// Add final instruction
 	messages = append(messages, ChatMessage{
 		Role: "user",
-		Content: "Based on this lesson, provide updates or additions to the vocabulary list. Suggestions should be concise and information-dense. They do not have to be only vocab words and their definitions, they can be tenses, idioms, conjunctions, etc. Anything that would be helpful during language learning. Focus on things that seemed new or tough for the student, or things they seemed to be particularly curious or interested in. The word should be in the language the user is trying to learn, and the definition should be in the languate the user speaks natively. Be comphrehensive in capturing all of the important words, tenses, concepts, and grammar structures covered, as this vocabulary list is passed from instructor to instructor for subsequent lessons, and this vocab list is the only reference they have for what the student has covered thus far." +
-		"Return the response in the specified JSON format.",
+		Content: "Based on this lesson, provide updates or additions to the vocabulary list. Suggestions should be concise and information-dense. They do not have to be only vocab words and their definitions, they can be tenses, idioms, conjunctions, etc. Anything that would be helpful during language learning. Focus on things that seemed new or tough for the student, or things they seemed to be particularly curious or interested in. The word should be in the language the user is trying to learn, and the definition should be in the languate the user speaks natively (default to English, but if the chat indicates their native language is different, use that). Be comphrehensive in capturing all of the important words, tenses, concepts, and grammar structures covered, as this vocabulary list is passed from instructor to instructor for subsequent lessons, and this vocab list is the only reference they have for what the student has covered thus far. Return the response in the specified JSON format.",
 	})
 
 	// Prepare the request to OpenAI
@@ -525,7 +525,7 @@ func generateNextLessonPlan(w http.ResponseWriter, r *http.Request) {
 		promptBuilder.WriteString("\n")
 	}
 
-	promptBuilder.WriteString("Please create a lesson plan for their next lesson. The lesson plan should contain all the information needed to structure the lesson, as the assistant giving the lesson will not have access to previous chats, summaries, or lesson plans, only this lesson plan. The tutor will be an AI assistant, so only make lesson plans that can be done via a chat interface, or a back and forth voice chat.")
+	promptBuilder.WriteString("Please create a lesson plan for their next lesson. The lesson plan should contain all the information needed to structure the lesson, as the assistant giving the lesson will not have access to previous chats, summaries, or lesson plans, only this lesson plan. The tutor will be an AI assistant, so only make lesson plans that can be done via a chat interface, or a back and forth voice chat. The lesson plan should be in the following format:\n\n[Goal]\n[Past Vocabulary/Phrases to Review]\n[New Vocabulary/Phrases to Learn]\n[Past Grammar to Review]\n[New Grammar to Learn]\n[Special Excercises (Optional)]\n[How student should be evaluated by summarizing instructor]\n[Conditions of whether to repeat or pass the lesson]\n[Notes for the next instructor]")
 
 	// Prepare the request to OpenAI
 	messages := []ChatMessage{
