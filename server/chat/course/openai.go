@@ -781,11 +781,11 @@ func InitOpenAIConnection(chat *Chat, chatConns *ChatConnections) (*OpenAIConnec
 		Type: "conversation.item.create",
 		Item: Item{
 			Type: "message",
-			Role: "system",
+			Role: "user",
 			Content: []Content{
 				{
 					Type: "input_text",
-					Text: "<system_message>Audio modality is initialized</system_message>",
+					Text: "<system-message>Audio modality is activated, respond with audio modality.</system-message>",
 				},
 			},
 		},
