@@ -157,7 +157,7 @@ func connectToOpenAI() (*OpenAIConnection, error) {
 		return nil, fmt.Errorf("OPENAI_SECRET_KEY environment variable is not set")
 	}
 
-	conn, _, err := websocket.DefaultDialer.Dial("wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17", http.Header{
+	conn, _, err := websocket.DefaultDialer.Dial("wss://api.openai.com/v1/realtime?model=gpt-realtime", http.Header{
 		"Authorization": []string{"Bearer " + secretKey},
 		"OpenAI-Beta":   []string{"realtime=v1"},
 	})
